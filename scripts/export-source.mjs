@@ -6,12 +6,12 @@ import path from 'node:path';
 import { root } from '../service/config.mjs';
 
 const target = path.resolve(process.argv[2] || path.join(root, '../smart-subtitles-for-hulu-site'));
-const SOURCE = ['extension', 'shared', 'service', 'scripts', 'tests', 'config/default.json', 'docs/VALIDATION.md', 'docs/store/LISTING.md', 'package.json', 'Start Subtitles.cmd', 'Stop Subtitles.cmd', 'Check Environment.cmd'];
+const SOURCE = ['extension', 'shared', 'service', 'scripts', 'tests', 'config/default.json', 'README.md', 'docs/store/assets', 'package.json', 'Start Subtitles.cmd', 'Stop Subtitles.cmd', 'Check Environment.cmd'];
 for (const entry of [...SOURCE, 'docs', 'config', 'README-DEVELOPMENT.md']) await rm(path.join(target, entry), { recursive: true, force: true });
 for (const entry of SOURCE) { await mkdir(path.dirname(path.join(target, entry)), { recursive: true }); await cp(path.join(root, entry), path.join(target, entry), { recursive: true }); }
-await cp(path.join(root, 'README.md'), path.join(target, 'README-DEVELOPMENT.md'));
+
 await cp(path.join(root, 'extension/legal.html'), path.join(target, 'index.html')); // GitHub Pages: Terms and Privacy
-await writeFile(path.join(target, '.gitignore'), ['config/local.json', 'data/', 'logs/', 'dist/', 'models/', 'runtime/', 'codex/', 'node/', 'node_modules/', '*.sqlite', 'local-connection.json', ''].join('\n'));
+await writeFile(path.join(target, '.gitignore'), ['config/local.json', 'data/', 'logs/', 'dist/', 'models/', 'runtime/', 'codex/', 'node/', 'node_modules/', '*.sqlite', 'local-connection.json', 'CLAUDE.md', 'AGENTS.md', 'README-DEVELOPMENT.md', 'docs/VALIDATION.md', 'docs/incidents/', 'docs/research/', 'docs/store/LISTING.md', ''].join('\n'));
 
 const own = JSON.parse(await readFile(path.join(root, 'config/local.json'), 'utf8'));
 const secrets = [own.pairingToken, own.googleApiKey].filter(Boolean);

@@ -9,3 +9,12 @@ node/
 node_modules/
 *.sqlite
 local-connection.json
+
+# Local development notes (not published)
+/CLAUDE.md
+/AGENTS.md
+/README-DEVELOPMENT.md
+/docs/VALIDATION.md
+/docs/incidents/
+/docs/research/
+/docs/store/LISTING.md

@@ -3,7 +3,7 @@
 // illustration (no Hulu content or logos); the popup is the real popup with sample data.
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { root } from '../service/config.mjs';
@@ -57,29 +57,9 @@ for (const [file, title, translation, original, popupImage, caption] of screens)
   await writeFile(page, scene(title, translation, original, popupImage, caption));
   shot(page, file, 1280, 800);
 }
-// Small promo tile: the product name and its three core features; no sample subtitles.
-const tile = path.join(work, 'promo.html');
-await writeFile(tile, `<!doctype html><html><head><meta charset="utf-8"><style>
-body{margin:0;width:440px;height:280px;overflow:hidden;background:#f6f5f1;font-family:"Segoe UI",system-ui,sans-serif;color:#141614;display:flex;align-items:center}
-.brand{width:196px;flex:none;padding-left:24px;box-sizing:border-box}
-.brand img{width:64px;height:64px;display:block;margin-bottom:16px}
-h1{margin:0;font-size:38px;line-height:1;font-weight:800;letter-spacing:-1.2px}
-.for{margin-top:7px;font-size:20px;font-weight:650;color:#13a865}
-.features{flex:1;min-width:0;padding-right:16px;display:flex;flex-direction:column;gap:20px;border-left:1px solid #e3e1da;padding-left:18px;margin:22px 0}
-.f{display:flex;align-items:center;gap:11px;font-size:18.5px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
-.f svg{width:38px;height:38px;flex:none;padding:8px;box-sizing:border-box;border-radius:10px;background:#13a8651a;stroke:#13a865;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-</style></head><body>
-<div class="brand"><img src="${ext('icon.svg')}"><h1>Smart<br>Subtitles</h1><div class="for">for Disney+<br>&amp; Hulu</div></div>
-<div class="features">
-  <div class="f"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>55 languages</div>
-  <div class="f"><svg viewBox="0 0 24 24"><path d="M9.5 12.5a2.5 2.5 0 1 1 0-.01V12c0 2.6-1.4 4.6-3.6 5.4M18.5 12.5a2.5 2.5 0 1 1 0-.01V12c0 2.6-1.4 4.6-3.6 5.4" stroke-width="2.2"/><circle cx="7" cy="10.8" r="2.4" fill="#13a865" stroke="none"/><circle cx="16" cy="10.8" r="2.4" fill="#13a865" stroke="none"/></svg>Natural translation</div>
-  <div class="f"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Perfect timing</div>
-</div>
-<script>
-// Fonts wider than Segoe UI (e.g. Noto on Linux) would push the text to the edge; shrink it to fit.
-const rows = [...document.querySelectorAll('.f')], overflows = () => rows.some(f => f.scrollWidth > f.clientWidth);
-for (let size = 18.5; overflows() && size > 14; size -= 0.5) for (const f of rows) f.style.fontSize = size + 'px';
-</script></body></html>
-`);
-shot(tile, 'promo-440x280.png', 440, 280);
+// Use the approved artwork stored with the public source.
+for (const name of ['promo-440x280.png', 'promo-1280x800.png']) {
+  await copyFile(path.join(root, 'docs/store/assets', name), path.join(out, name));
+}
+await writeFile(path.join(work, 'promo.html'), '<!doctype html><html><body style="margin:0"><img src="../promo-440x280.png" width="440" height="280" alt="Smart Subtitles"></body></html>');
 console.log(`Store images written to ${out}`);
