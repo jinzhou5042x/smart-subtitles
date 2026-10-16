@@ -33,5 +33,8 @@ if ($LASTEXITCODE -ne 0) {
   Invoke-Codex @('login') | Out-Host
   if ($LASTEXITCODE -ne 0) { throw 'Codex sign-in did not complete. Run "Set Up Codex.cmd" again.' }
 }
+# Let the browser start the service and connect by itself (current user only).
+& $nodePath (Join-Path $PSScriptRoot 'register-host.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Could not set up the connection to the browser. Run "Check Environment.cmd".' }
 Write-Host ''
 Write-Host 'Codex is ready. If the service is already running, run "Stop Subtitles.cmd" and then "Start Subtitles.cmd".'

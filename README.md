@@ -17,8 +17,8 @@ Supports 55 target languages, adjustable text size and draggable subtitles. Tran
 Requires Chrome 127+ and Windows x64 or macOS 13+. Install both the extension and the translation program:
 
 1. Install the extension from the Chrome Web Store.
-2. Download the translation program for Windows x64, Mac Apple Silicon (`darwin-arm64`) or Mac Intel (`darwin-x64`). Extract the ZIP and keep the folder.
-3. Run **Set Up Codex.cmd** on Windows or **Set Up Codex.command** on Mac. Complete the ChatGPT sign-in.
+2. Download the translation program: [Windows x64](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip), [Mac Apple Silicon](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip) or [Mac Intel](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip). Extract the ZIP and keep the folder.
+3. Run **Start Subtitles.cmd** on Windows or **Start Subtitles.command** on Mac once. For Codex, also run **Set Up Codex** and complete the ChatGPT sign-in. For Google, skip Codex setup and select your key file in the extension.
 4. Open a video, click the extension icon, and select a **Language**. Turn on the top-right switch. Click **Connect** if prompted.
 
 Subtitles appear as translation progresses. After setup, the extension starts the translation program automatically. The download includes the required runtime; no developer tools are needed.
@@ -126,8 +126,8 @@ Smart Subtitles 是一个双语字幕扩展，目前支持 Hulu 和 Disney+，�
 需要 Chrome 127+，以及 Windows x64 或 macOS 13 及以上。扩展和翻译程序都需要安装：
 
 1. 从 Chrome 应用商店安装扩展。
-2. 下载对应系统的翻译程序：Windows x64、Mac Apple Silicon（`darwin-arm64`）或 Mac Intel（`darwin-x64`）。完整解压 ZIP，保留文件夹。
-3. Windows 运行 **Set Up Codex.cmd**，Mac 运行 **Set Up Codex.command**，按提示完成 ChatGPT 登录。
+2. 下载对应系统的翻译程序：[Windows x64](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip)、[Mac Apple Silicon](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip) 或 [Mac Intel](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip)。完整解压 ZIP，保留文件夹。
+3. Windows 运行一次 **Start Subtitles.cmd**，Mac 运行一次 **Start Subtitles.command**。使用 Codex 时，再运行 **Set Up Codex** 并完成 ChatGPT 登录；使用 Google 时，跳过 Codex 设置，在扩展里选择密钥文件即可。
 4. 打开视频，点击扩展图标，在 **Language** 中选择语言，打开右上角开关。若显示 **Connect**，点击连接。
 
 字幕会随翻译进度出现。首次配置完成后，扩展会自动启动翻译程序。下载包自带运行环境，不需要安装开发工具。
@@ -228,8 +228,8 @@ Permite traducir a 55 idiomas, ajustar el tamaño del texto y mover los subtítu
 Requiere Chrome 127+ y Windows x64 o macOS 13+. Hay que instalar tanto la extensión como el programa de traducción:
 
 1. Instala la extensión desde Chrome Web Store.
-2. Descarga el programa para Windows x64, Mac con Apple Silicon (`darwin-arm64`) o Mac con Intel (`darwin-x64`). Extrae el ZIP y conserva la carpeta.
-3. Ejecuta **Set Up Codex.cmd** en Windows o **Set Up Codex.command** en Mac. Completa el inicio de sesión con ChatGPT.
+2. Descarga el programa: [Windows x64](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip), [Mac con Apple Silicon](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip) o [Mac con Intel](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip). Extrae el ZIP y conserva la carpeta.
+3. Ejecuta **Start Subtitles.cmd** en Windows o **Start Subtitles.command** en Mac una vez. Para Codex, ejecuta también **Set Up Codex** e inicia sesión con ChatGPT. Para Google, omite la configuración de Codex y selecciona tu archivo de clave en la extensión.
 4. Abre un video, pulsa el icono de la extensión y selecciona el idioma en **Language**. Activa el interruptor de la esquina superior derecha. Pulsa **Connect** si aparece.
 
 Los subtítulos se muestran a medida que avanza la traducción. Después de la configuración inicial, la extensión inicia el programa automáticamente. La descarga incluye lo necesario para ejecutarlo; no hace falta instalar herramientas de desarrollo.

@@ -17,8 +17,7 @@ export const isExtensionOrigin = origin => /^chrome-extension:\/\/[a-p]{32}$/.te
 // Translators are loaded only when enabled in config.providers (the release enables Codex only).
 const TRANSLATORS = {
   codex: async config => new (await import('./codex.mjs')).CodexTranslator(config),
-  google: async config => new (await import('./google.mjs')).GoogleTranslator(config),
-  local: async config => new (await import('./local.mjs')).LocalTranslator(config)
+  google: async config => new (await import('./google.mjs')).GoogleTranslator(config)
 };
 export const enabledProviders = config => (Array.isArray(config.providers) ? config.providers : ['codex']).filter(p => TRANSLATORS[p]);
 export function tokenMatches(actual, expected) {
@@ -49,7 +48,7 @@ export function createServer(config, queue, episodes, codexAccount) {
       res.setHeader('Access-Control-Allow-Private-Network', 'true'); res.writeHead(204); return res.end();
     }
     const url = new URL(req.url, `http://127.0.0.1:${config.port}`);
-    if (req.method === 'GET' && url.pathname === '/health') return json(200, { app: 'hulu-context-subtitles', version, ready: true });
+    if (req.method === 'GET' && url.pathname === '/health') return json(200, { app: 'smart-subtitles', version, ready: true });
     // Development only: the demo clip is served when tests/fixtures exists (not in the release).
     const publicFiles = { '/demo': 'tests/fixtures/demo.html', '/demo.vtt': 'tests/fixtures/demo.vtt', '/demo.mp4': 'tests/fixtures/demo.mp4' };
     if (req.method === 'GET' && publicFiles[url.pathname] && await access(path.join(root, 'tests/fixtures')).then(() => true, () => false)) {
@@ -67,7 +66,7 @@ export function createServer(config, queue, episodes, codexAccount) {
     }
     if (!tokenMatches(req.headers.authorization, `Bearer ${config.pairingToken}`)) return json(401, { error: 'Pairing token required' });
     try {
-      if (req.method === 'GET' && url.pathname === '/status') return json(200, { app: 'hulu-context-subtitles', queued: [...queue.jobs.values()].filter(j => j.status === 'queued').length, running: queue.running, maxAgents: queue.limit, model: config.model || 'Codex default model', providers: enabledProviders(config), availableProviders: [...new Set([...enabledProviders(config), 'google'])], googleConfigured: config.googleApiKeyFile !== null && !!(config.googleApiKeyFile || config.googleApiKey || process.env.GOOGLE_TRANSLATE_API_KEY), googleApiKeyFile: config.googleApiKeyFile || null, googlePicker: keyPicker.get(), ...(codexAccount && enabledProviders(config).includes('codex') ? { codex: codexAccount.get(), codexSignIn: codexAccount.describe() } : {}) });
+      if (req.method === 'GET' && url.pathname === '/status') return json(200, { app: 'smart-subtitles', queued: [...queue.jobs.values()].filter(j => j.status === 'queued').length, running: queue.running, maxAgents: queue.limit, model: config.model || 'Codex default model', providers: enabledProviders(config), availableProviders: [...new Set([...enabledProviders(config), 'google'])], googleConfigured: config.googleApiKeyFile !== null && !!(config.googleApiKeyFile || config.googleApiKey || process.env.GOOGLE_TRANSLATE_API_KEY), googleApiKeyFile: config.googleApiKeyFile || null, googlePicker: keyPicker.get(), ...(codexAccount && enabledProviders(config).includes('codex') ? { codex: codexAccount.get(), codexSignIn: codexAccount.describe() } : {}) });
       if (req.method === 'POST' && url.pathname === '/settings/google/picker/focus') { const { id } = await readJson(req); return json(200, keyPicker.focus(id)); }
       if (req.method === 'POST' && url.pathname === '/settings/google/picker/cancel') { const { id } = await readJson(req); return json(200, keyPicker.cancel(id)); }
       if (req.method === 'POST' && url.pathname === '/settings/google/picker') return json(202, keyPicker.start(await readJson(req, 4096)));

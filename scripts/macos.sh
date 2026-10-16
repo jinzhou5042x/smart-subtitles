@@ -20,6 +20,8 @@ node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if
 case "${1:-}" in
   start)
     if [ -f scripts/build.mjs ]; then node scripts/build.mjs; fi
+    # Let the browser start the service and connect by itself from now on (current user only).
+    node scripts/register-host.mjs
     node scripts/companion.mjs start ;;
   stop) node scripts/companion.mjs stop ;;
   doctor) node scripts/doctor.mjs ;;
@@ -40,6 +42,7 @@ case "${1:-}" in
       echo 'Sign in to Codex with your ChatGPT account in the browser window that opens.'
       "${codex[@]}" login || { echo 'Codex sign-in did not complete. Run "Set Up Codex.command" again.'; exit 1; }
     fi
+    node scripts/register-host.mjs
     echo 'Codex is ready. A running subtitle service notices within a few seconds.' ;;
   *) echo 'Usage: macos.sh start|stop|doctor|setup'; exit 1 ;;
 esac

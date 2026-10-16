@@ -1,10 +1,10 @@
-// Builds the Windows companion service for users: dist/release/SmartSubtitlesForDisneyPlusAndHulu-Service-<version>-win-x64.zip
+// Builds the Windows companion service for users: dist/release/SmartSubtitles-Service-<version>-win-x64.zip
 // - Only an allowlist of files is copied: the Codex backend, the shared language list and the
 //   launch/setup scripts. config/local.json (pairing code, API keys), data, logs, models and the
 //   development tools are never included; each user's first start creates their own pairing code.
 // - Official portable Node.js is bundled after checking its SHA-256 against nodejs.org.
 // - The result is scanned for the developer's secrets and anything that looks like a key.
-import { cp, mkdir, readFile, rm, writeFile, readdir, stat, rename } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile, readdir, stat, rename, chmod } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -12,11 +12,13 @@ import path from 'node:path';
 import { root } from '../service/config.mjs';
 
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+pkg.version = process.env.RELEASE_VERSION || pkg.version;
+if (!/^\d+\.\d+\.\d+$/.test(pkg.version)) throw new Error('Invalid release version');
 const target = process.argv[2] || (process.platform === 'darwin' ? `darwin-${process.arch}` : 'win-x64');
 if (!['win-x64', 'darwin-arm64', 'darwin-x64'].includes(target)) throw new Error('Unsupported release target');
 const mac = target.startsWith('darwin-');
 if (mac && process.platform !== 'darwin') throw new Error('Build macOS releases on macOS');
-const name = `SmartSubtitlesForDisneyPlusAndHulu-Service-${pkg.version}-${target}`;
+const name = `SmartSubtitles-Service-${pkg.version}-${target}`;
 const releaseDir = path.join(root, 'dist/release'), out = path.join(releaseDir, name), cache = path.join(releaseDir, 'cache');
 // Windows' own bsdtar (zip support); a GNU tar earlier on PATH would read 'C:' as a remote host.
 const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe') : '/usr/bin/tar';
@@ -25,10 +27,10 @@ await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true }); await mkdir(cache, { recursive: true });
 
 const FILES = [
-  'service/codex.mjs', 'service/config.mjs', 'service/database.mjs', 'service/episodes.mjs', 'service/jobs.mjs', 'service/server.mjs', 'service/translation.mjs',
+  'service/codex.mjs', 'service/codex-account.mjs', 'service/config.mjs', 'service/database.mjs', 'service/episodes.mjs', 'service/jobs.mjs', 'service/server.mjs', 'service/translation.mjs',
   'service/checkpoints.mjs', 'service/keyed.mjs', 'service/google.mjs', 'service/google-settings.mjs', 'service/google-picker.mjs', 'service/key-picker.cs', 'service/native-key-picker.mjs',
   'shared/languages.js', 'config/default.json',
-  'service/key-picker.swift', 'service/local.mjs', 'service/local-format.mjs',
+  'service/key-picker.swift', 'service/launch.mjs', 'service/native-host.mjs', 'scripts/native-host.mjs', 'scripts/register-host.mjs',
   'scripts/companion.mjs', 'scripts/macos.sh',
   'scripts/start.ps1', 'scripts/stop.ps1', 'scripts/setup-codex.ps1', 'scripts/configure-codex.mjs', 'scripts/doctor.mjs'
 ];
@@ -46,36 +48,42 @@ await writeFile(path.join(out, 'Check Environment.cmd'), launcher('"%~dp0node\\n
 await writeFile(path.join(out, 'README.txt'), `Smart Subtitles - companion service ${pkg.version} (Windows)
 =====================================================================
 
-The Chrome extension shows bilingual subtitles on Hulu. This service runs on your own computer,
+The Chrome extension shows bilingual subtitles on streaming video sites (Hulu and Disney+ at this
+version). There is no Smart Subtitles server: this program runs on your own computer,
 translates the subtitles with Codex using your own ChatGPT sign-in, and keeps finished
-translations in a local database. It only listens on 127.0.0.1 and requires a pairing code.
+translations in a local database. It only listens on 127.0.0.1 and answers only your own copy of the extension.
 
 Install
   1. Unzip this folder somewhere permanent, for example Documents.
   2. Double-click "Set Up Codex.cmd" (once). It uses Codex if it is already installed, otherwise
      installs the official Codex CLI into this folder (about 430 MB download), and opens the ChatGPT
      sign-in in your browser. You need a ChatGPT account with Codex access.
-  3. Double-click "Start Subtitles.cmd" and copy the pairing code it shows.
-  4. Click the Smart Subtitles extension icon in Chrome, paste the pairing code, click Connect.
-  5. Open a Hulu video that has English subtitles and choose your language in the extension.
+  3. Install the Smart Subtitles extension in Chrome. It finds this program and starts it by
+     itself from now on. (If you skipped step 2, double-click "Start Subtitles.cmd" once first.)
+  4. Open a video that has English subtitles and choose your language in the extension.
 
 Every day
-  Start: "Start Subtitles.cmd"   Stop: "Stop Subtitles.cmd"   Problems: "Check Environment.cmd"
+  Just watch: Chrome starts the service when it is needed.
+  Stop: "Stop Subtitles.cmd"   Start by hand: "Start Subtitles.cmd"   Problems: "Check Environment.cmd"
 
 Notes
   - Translation uses your ChatGPT/Codex quota. Subtitles are sent to OpenAI through your Codex
     account and to no one else; finished translations stay in the "data" folder.
-  - Your pairing code is in config\\local.json, readable only by your Windows user. Do not share it.
+  - config\\local.json holds this computer's private access code, readable only by your Windows
+    user. Do not share it. If you move this folder, run "Start Subtitles.cmd" once again.
   - To uninstall, run "Stop Subtitles.cmd" and delete this folder.
-  - Unofficial tool, not affiliated with Hulu. See TERMS-AND-PRIVACY.html.
+  - Unofficial tool, not affiliated with any streaming service. See TERMS-AND-PRIVACY.html.
 `.replace(/\n/g, '\r\n'));
 
 }
 if (mac) {
-  for (const file of ['Start Subtitles.command', 'Stop Subtitles.command', 'Set Up Codex.command', 'Check Environment.command']) await cp(path.join(root, file), path.join(out, file));
+  for (const file of ['Start Subtitles.command', 'Stop Subtitles.command', 'Set Up Codex.command', 'Check Environment.command', 'scripts/macos.sh']) {
+    await writeFile(path.join(out, file), (await readFile(path.join(root, file), 'utf8')).replace(/\r\n/g, '\n'));
+    await chmod(path.join(out, file), 0o755);
+  }
   await mkdir(path.join(out, 'runtime/key-picker'), { recursive: true });
   execFileSync('/usr/bin/swiftc', [path.join(root, 'service/key-picker.swift'), '-target', target.endsWith('arm64') ? 'arm64-apple-macosx13.0' : 'x86_64-apple-macosx13.0', '-o', path.join(out, 'runtime/key-picker/picker')]);
-  await writeFile(path.join(out, 'README.txt'), `macOS Chrome companion ${pkg.version}\nUnzip into a permanent folder. Double-click Set Up Codex.command once, then Start Subtitles.command. Paste the pairing code into the Chrome extension. Google users can skip Codex setup and link their key file from the extension. Stop with Stop Subtitles.command. macOS 13 or later. If macOS blocks a launcher, use Finder's Open action or Privacy & Security to allow this downloaded tool after reviewing its source.\n`);
+  await writeFile(path.join(out, 'README.txt'), `macOS Chrome companion ${pkg.version}\nUnzip into a permanent folder. Double-click Set Up Codex.command once (or Start Subtitles.command if you only use Google), then install the Chrome extension: it finds this program and starts it by itself from now on. Google users can skip Codex setup and link their key file from the extension. Stop with Stop Subtitles.command. macOS 13 or later. If macOS blocks a launcher, use Finder's Open action or Privacy & Security to allow this downloaded tool after reviewing its source.\n`);
 }
 
 // Official portable Node.js, the same version the service is developed and tested with.
