@@ -4,91 +4,83 @@
 
 ## English
 
-A Chrome extension that adds translated subtitles to **Hulu and Disney+**, alongside the original English. It also works with Hulu shows inside Disney+.
+Smart Subtitles is a bilingual subtitle extension for Hulu and Disney+, including Hulu content on Disney+. It translates English subtitles with Codex or Google and displays the translation alongside the original.
 
-Pick a language, open a video, and let it translate. You can change the text size or drag the subtitles out of the way. Finished translations stay on your computer, so watching the same episode again doesn't mean translating it again.
+[Chrome Web Store](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno) · [Downloads](https://github.com/jinzhou5042x/smart-subtitles/releases) · [Issues](https://github.com/jinzhou5042x/smart-subtitles/issues)
 
-[Install the extension](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno) · [Download the translation program](https://github.com/jinzhou5042x/smart-subtitles/releases) · [Issues](https://github.com/jinzhou5042x/smart-subtitles/issues)
+<img src="docs/store/assets/promo-original.png" alt="Smart Subtitles settings" width="354">
 
-### Setup
+Supports 55 target languages, adjustable text size and draggable subtitles. Translations are cached locally. Videos must have English subtitles; Netflix, YouTube and live TV are not supported yet.
 
-You'll need **Chrome 127+**, **Windows x64 or macOS 13+**, and a video with English subtitles. There are 55 target languages to choose from. Netflix, YouTube and live TV aren't supported yet.
+### Installation
 
-There are two things to install: the Chrome extension and a small program that handles translation on your computer. The download includes what it needs to run; you don't need Node.js or any developer tools.
+Requires Chrome 127+ and Windows x64 or macOS 13+. Install both the extension and the translation program:
 
-1. Install the extension from the link above. Pin it in Chrome's Extensions menu so you can find it.
-2. Download the program for your computer: Windows x64, Mac Apple Silicon (`darwin-arm64`), or Mac Intel (`darwin-x64`). Unzip it somewhere you plan to keep it.
-3. Double-click **Set Up Codex.cmd** on Windows or **Set Up Codex.command** on Mac. Follow the ChatGPT sign-in in your browser and wait for setup to finish.
-4. Open a Hulu or Disney+ video, click the extension, and choose your **Language**. Make sure the top-right switch is on. If you see **Connect**, click it.
+1. Install the extension from the Chrome Web Store.
+2. Download the translation program for Windows x64, Mac Apple Silicon (`darwin-arm64`) or Mac Intel (`darwin-x64`). Extract the ZIP and keep the folder.
+3. Run **Set Up Codex.cmd** on Windows or **Set Up Codex.command** on Mac. Complete the ChatGPT sign-in.
+4. Open a video, click the extension icon, and select a **Language**. Turn on the top-right switch. Click **Connect** if prompted.
 
-Once Codex says **Logged in** and the program says **Running**, you're ready. Subtitles appear as they're translated—you don't have to wait for the whole episode.
+Subtitles appear as translation progresses. After setup, the extension starts the translation program automatically. The download includes the required runtime; no developer tools are needed.
 
-That's the one-time setup. The extension starts the program for you afterward. If you move its folder, run **Start Subtitles** once from the new location. If macOS blocks a launcher you trust, use Finder's **Open** action or **System Settings → Privacy & Security**.
+If you move the program folder, run **Start Subtitles** from the new location. On Mac, a blocked launcher can be opened through Finder's **Open** action or **System Settings → Privacy & Security**, after checking that you trust the download.
 
-Using Google instead? Skip the Codex sign-in, run **Start Subtitles** once, and follow the Google section below.
+### Translators
 
-### Codex or Google?
+**Codex** uses your ChatGPT login and translates with episode context. The default model is **GPT-6 Luna** (`gpt-6-luna`), with reasoning effort set to **low** to limit reasoning-token use. Translation shares your Codex allowance with other usage.
 
-**Codex is the default.** It uses your ChatGPT login and reads the episode for context, which helps with dialogue that doesn't make sense one subtitle at a time.
+A plan with GPT-6 Luna access in Codex is required. Plus is listed at **US$20/month**; see [OpenAI's pricing](https://learn.chatgpt.com/docs/pricing) for current access and rates. Smart Subtitles itself is free.
 
-The model is **GPT-6 Luna, with reasoning set to low** (`gpt-6-luna` / `low`). The idea is to spend fewer tokens on reasoning for an everyday task like subtitles. It still counts toward your Codex usage, so a long viewing session can eat into the allowance you use elsewhere.
+**Google Cloud Translation** translates each subtitle separately using your API key. Usage is billed to your Google Cloud account. Release packages default to Codex only; see [For developers](#for-developers) to enable Google. For Google-only setup, skip **Set Up Codex** and run **Start Subtitles** once instead.
 
-You'll need a ChatGPT plan that includes GPT-6 Luna in Codex. Plus is currently listed at **US$20/month**; check [OpenAI's pricing](https://learn.chatgpt.com/docs/pricing) before subscribing. Smart Subtitles itself is free.
+#### Google API key
 
-**Google Cloud Translation** is the other option. It translates subtitles individually and uses your own API key, with charges going to your Google Cloud account. The release defaults to Codex only. If you don't see Google, the setting to enable it is under [For developers](#for-developers).
+Official instructions: [Set up Cloud Translation](https://docs.cloud.google.com/translate/docs/setup) · [Create an API key](https://docs.cloud.google.com/docs/authentication/api-keys#create).
 
-#### Getting a Google API key
+1. Create or select a project in [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable billing. Under **APIs & Services → Library**, enable **Cloud Translation API**.
+3. Open **APIs & Services → Credentials → Create credentials → API key**. Restrict the key to **Cloud Translation API**.
+4. Save only the key in a UTF-8 text file.
+5. In the extension, select **Google → API key → Choose file…** and select the file.
 
-This is the fiddliest part of the Google setup. Google's [setup guide](https://docs.cloud.google.com/translate/docs/setup) and [API key guide](https://docs.cloud.google.com/docs/authentication/api-keys#create) cover it in detail. The short version:
+This uses **Cloud Translation Basic (v2)**. No SDK or service-account JSON file is needed. [Advanced (v3) does not support API keys](https://docs.cloud.google.com/translate/docs/authentication). Check Google's rates and configure usage quotas before translating.
 
-1. Open [Google Cloud Console](https://console.cloud.google.com/) and create a project, or select one you already have.
-2. Enable billing for that project. Then go to **APIs & Services → Library**, find **Cloud Translation API**, and enable it.
-3. Go to **APIs & Services → Credentials → Create credentials → API key**. Restrict the key to **Cloud Translation API**.
-4. Put just the key in a UTF-8 text file on your computer.
-5. In the extension, select **Google**, click **Choose file…** next to **API key**, and pick that file.
+The program remembers the key file's path. Keep the file private; select it again if you move it. Click the filename to change files, or **Unlink** to remove the association without deleting the file. The extension also links to setup instructions under **How to get one**.
 
-Use **Cloud Translation Basic (v2)**. You don't need an SDK or a service-account JSON file; [Advanced (v3) doesn't accept API keys](https://docs.cloud.google.com/translate/docs/authentication). Billing must be enabled, so check Google's rates and set a usage quota you're comfortable with.
+### Usage
 
-Keep the key file somewhere private and don't move it afterward—the program remembers its location. To change it, click the filename in the extension. **Unlink** forgets the file without deleting it. There's also a **How to get one** link in the extension if you need these instructions later.
+- Change **Size** to resize subtitles; drag them vertically to reposition them. The position is saved.
+- The top-right switch controls the extension's subtitles. Turn off the player's own captions separately if they overlap.
+- Translations are saved per language and translator. Closing a video stops its translation; reopening resumes from saved progress.
+- **Translate again** retranslates a finished title and uses your allowance again. New subtitles appear progressively. If interrupted, the previous translation is restored; the saved copy is replaced only when the new one finishes.
+- **Stop** stops the translation program; **Connect** restarts it.
+- **Log out** also affects other apps using the same Codex login on this computer.
 
-### While watching
+Subtitles are hidden during ads. If Disney+ asks for a sync interaction, move the pointer over the video or pause once. Refresh video pages after updating the extension.
 
-<img src="docs/store/assets/promo-original.png" alt="The Smart Subtitles popup" width="354">
+### Troubleshooting
 
-This screenshot has both translators enabled. With only Codex enabled, you may not see the translator selector.
+**Cannot connect:** run **Start Subtitles** from the program folder, then click **Connect**. Run **Check Environment** in that folder if the problem continues.
 
-Use **Size** to change the text size, or drag the subtitles up and down on the video. The position is saved. The top-right switch hides the bilingual subtitles; it doesn't change the player's own captions. If you see two overlapping sets, turn off the player's captions yourself.
+**No subtitles:** check that the switch is on and the video has English subtitles. The extension shows installation, sign-in, key-file and quota errors. Run **Set Up Codex** if Codex is missing; use **Log in** if signed out.
 
-Translations are saved separately for each language and translator. Close a video and translation stops; come back and it resumes from saved progress. During ads, subtitles stay hidden until the show returns. On Disney+, a sync prompt may ask you to move your pointer over the video or pause once.
+For other problems, open an [issue](https://github.com/jinzhou5042x/smart-subtitles/issues) with the output of **Copy diagnostics**, your OS, browser and extension versions, and steps to reproduce. Remove keys and login information before posting.
 
-Want another attempt at a finished episode? Click **Translate again**. It uses your allowance again and clears the displayed subtitles while the new ones arrive. If the attempt stops, the old translation comes back; the saved copy is replaced only when the new one finishes.
+Windows has the most live testing. macOS, ad-supported plans and long sessions need more coverage.
 
-**Stop** quits the translation program, and **Connect** starts it again. **Log out** signs Codex out on this computer, including other apps sharing that login, so it asks you to confirm.
+### Data
 
-### If something goes wrong
+Subtitles, translations, settings and logs are stored on your computer. Text for translation is sent directly to OpenAI through Codex or to Google under your account. Smart Subtitles has no backend, accounts, analytics or tracking.
 
-- **Can't connect:** run **Start Subtitles** from the program folder, then click **Connect**. If that doesn't help, run **Check Environment** in the same folder.
-- **Codex isn't installed or logged in:** run **Set Up Codex** for installation, or use **Log in** in the extension.
-- **No subtitles:** check that the switch is on and the video has English subtitles. Open the extension to see any error.
-- **Quota error:** wait for your allowance to reset or sort out the account issue, then retry.
-- **Google can't read the key:** select the file again and check that it contains only the key.
-- **Things broke after an update:** refresh the video page. Reload the extension too if the error asks you to.
+To delete cached translations and logs, stop the program and remove its `data` and `logs` folders. To uninstall, remove the extension and stop the program. [Terms & Privacy](https://jinzhou5042x.github.io/smart-subtitles/).
 
-If you're still stuck, click **Copy diagnostics** and paste the result into an [issue](https://github.com/jinzhou5042x/smart-subtitles/issues). Tell us your OS, browser and extension versions, which site you were watching, and what happened. Don't post your API key or login details.
+### Planned
 
-Windows has had the most testing so far. Mac, ad-supported plans and long sessions could use more real-world testing; reports from those setups are especially useful.
+- DeepSeek, Claude and Qwen translators
+- Local model support
+- More streaming sites
 
-### Where your data goes
-
-There's no Smart Subtitles account, backend or analytics. Subtitles, translations, settings and logs stay on your computer. The text you ask to translate goes directly to OpenAI through Codex or to Google, using your account. Their terms and data policies still apply.
-
-To clear saved translations and logs, stop the program and delete its `data` and `logs` folders. To stop using it, remove the extension and stop the program. [Terms & Privacy](https://jinzhou5042x.github.io/smart-subtitles/).
-
-### What's next
-
-I'd like to add **DeepSeek, Claude, Qwen and local models**, along with more video sites. None of those translators are wired up yet.
-
-PRs are welcome. If you want to add a translator or a site, open an issue first so we can work out the approach. Bug reports, awkward translations, docs fixes and testing on a different machine all help too.
+These are not implemented yet. Issues and pull requests are welcome, including translation corrections and testing on other platforms. Please discuss new translator or site integrations in an issue before starting a large change.
 
 ### For developers
 
@@ -117,94 +109,85 @@ npm run release
 
 `package` writes the Chrome Web Store ZIP to `dist/store/`; `release` builds the translation-program archive for the host platform. Build macOS archives on macOS. Site adapters live in `extension/players/`, the site registry in `extension/sites.js`, translation code in `service/`, and tests in `tests/`. Keep keys, local configuration, logs and user data out of commits.
 
-
 ---
 
 ## 中文
 
-看 Hulu、Disney+，但想要的语言没有字幕？这个扩展会把英文字幕翻译出来，和原文一起显示在视频上。Disney+ 里的 Hulu 内容也能用。
+Smart Subtitles 是一个双语字幕扩展，目前支持 Hulu 和 Disney+，包括 Disney+ 中的 Hulu 内容。使用 Codex 或 Google 翻译英文字幕，并与原文同时显示。
 
-选好语言就可以开始看，字号和位置都能调。翻译过的内容保存在自己电脑上，下次重看不用再翻一遍。
+[Chrome 应用商店](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno) · [下载](https://github.com/jinzhou5042x/smart-subtitles/releases) · [反馈问题](https://github.com/jinzhou5042x/smart-subtitles/issues) · [界面截图](docs/store/assets/promo-original.png)
 
-[安装扩展](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno) · [下载翻译程序](https://github.com/jinzhou5042x/smart-subtitles/releases) · [反馈问题](https://github.com/jinzhou5042x/smart-subtitles/issues)
+支持 55 种目标语言，可调字号、拖动字幕位置，译文缓存在本机。视频必须有英文字幕；暂不支持 Netflix、YouTube 和直播电视。
 
-### 怎么装
+### 安装
 
-需要 **Chrome 127+**，系统支持 **Windows x64、macOS 13 及以上**。视频必须有英文字幕，可以翻译成包括中文在内的 55 种语言。目前还不能用于 Netflix、YouTube 或直播电视。
+需要 Chrome 127+，以及 Windows x64 或 macOS 13 及以上。扩展和翻译程序都需要安装：
 
-一共装两个东西：Chrome 扩展，以及在电脑上负责翻译的小程序。下载包自带运行环境，不用自己装 Node.js，也不用懂编程。
+1. 从 Chrome 应用商店安装扩展。
+2. 下载对应系统的翻译程序：Windows x64、Mac Apple Silicon（`darwin-arm64`）或 Mac Intel（`darwin-x64`）。完整解压 ZIP，保留文件夹。
+3. Windows 运行 **Set Up Codex.cmd**，Mac 运行 **Set Up Codex.command**，按提示完成 ChatGPT 登录。
+4. 打开视频，点击扩展图标，在 **Language** 中选择语言，打开右上角开关。若显示 **Connect**，点击连接。
 
-1. 点上面的链接安装扩展，建议在 Chrome 扩展菜单里把它固定下来。
-2. 下载对应系统的翻译程序：Windows x64、Mac Apple Silicon（`darwin-arm64`）或 Mac Intel（`darwin-x64`）。完整解压到一个以后不会随手删掉的文件夹。
-3. Windows 双击 **Set Up Codex.cmd**，Mac 双击 **Set Up Codex.command**。按提示在浏览器里登录 ChatGPT，等配置完成。
-4. 打开 Hulu 或 Disney+ 视频，点扩展图标，在 **Language** 里选 **Chinese (Simplified)** 或其他语言。右上角开关要打开；如果显示 **Connect**，点一下。
+字幕会随翻译进度出现。首次配置完成后，扩展会自动启动翻译程序。下载包自带运行环境，不需要安装开发工具。
 
-看到 Codex 显示 **Logged in**、程序显示 **Running**，就可以用了。字幕边翻译边出现，不用等整集翻完。
+移动程序文件夹后，需要在新位置运行一次 **Start Subtitles**。Mac 若拦截启动文件，确认下载来源可信后，可通过 Finder 的“打开”或“系统设置 → 隐私与安全性”放行。
 
-这些只需要配置一次，以后扩展会自动启动程序。如果移动了文件夹，在新位置运行一次 **Start Subtitles** 就行。Mac 如果拦截了你确认可信的启动文件，可以通过 Finder 的“打开”或“系统设置 → 隐私与安全性”放行。
+### 翻译器
 
-如果打算用 Google，可以跳过 Codex 登录，运行一次 **Start Subtitles**，然后看下面的密钥配置。
+**Codex** 使用自己的 ChatGPT 登录，结合整集上下文翻译。默认模型为 **GPT-6 Luna**（`gpt-6-luna`），推理强度设为 **low**，以减少推理 token 开销。翻译与其他 Codex 使用共享账号额度。
 
-### 用哪个翻译器
+需要支持在 Codex 中使用 GPT-6 Luna 的套餐。Plus 标价为 **20 美元/月**，实际价格和权限见 [OpenAI 官方说明](https://learn.chatgpt.com/docs/pricing)。Smart Subtitles 本身免费。
 
-**默认用 Codex。** 直接登录自己的 ChatGPT 账号，会结合整集上下文翻译，对需要联系前后文才能看懂的对白比较有帮助。
+**Google Cloud Translation** 使用自己的 API key，逐条翻译字幕，费用由 Google Cloud 账号承担。发行包默认只启用 Codex，开启 Google 的方法见[开发者](#开发者)。仅使用 Google 时，可跳过 **Set Up Codex**，改为运行一次 **Start Subtitles**。
 
-模型用的是 **GPT-6 Luna，推理强度 low**（`gpt-6-luna` / `low`）。字幕这种日常任务，选择 low 是为了少花一些推理 token。不过它还是会占用你的 Codex 额度，连续看很多集，也会挤占你做其他事情的额度。
+#### 申请 Google API key
 
-账号需要能在 Codex 中使用 GPT-6 Luna。Plus 目前标价是 **20 美元/月**，订阅前看一下 [OpenAI 官方价格](https://learn.chatgpt.com/docs/pricing)。Smart Subtitles 本身免费。
+官方教程：[配置 Cloud Translation](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn) · [创建 API key](https://docs.cloud.google.com/docs/authentication/api-keys?hl=zh-cn#create)。
 
-**也可以用 Google Cloud Translation。** 它逐条翻译字幕，需要自己的 API key，费用记在自己的 Google Cloud 账号上。发行包默认只开了 Codex；没看到 Google 选项的话，[开发者部分](#开发者)有开启方法。
+1. 登录 [Google Cloud Console](https://console.cloud.google.com/)，创建或选择项目。
+2. 为项目启用结算，在 **API 和服务 → 库** 中启用 **Cloud Translation API**。
+3. 进入 **API 和服务 → 凭据 → 创建凭据 → API 密钥**，将密钥的 API 限制设为 **Cloud Translation API**。
+4. 将密钥单独保存为 UTF-8 文本文件。
+5. 在扩展中选择 **Google → API key → Choose file…**，选中该文件。
 
-#### Google 的 key 怎么申请
+这里使用 **Cloud Translation Basic（v2）**，无需安装 SDK 或下载服务账号 JSON。[Advanced（v3）不支持 API key](https://docs.cloud.google.com/translate/docs/authentication)。开始翻译前请查看 Google 的计费说明，并设置用量配额。
 
-Google 这一步稍微麻烦一点。可以跟着官方的[翻译服务配置教程](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn)和[创建 API key 教程](https://docs.cloud.google.com/docs/authentication/api-keys?hl=zh-cn#create)操作，主要就是这几步：
+程序记住的是密钥文件路径。请勿公开文件，移动后需重新选择。点击文件名可更换文件；**Unlink** 只取消关联，不删除文件。扩展中的 **How to get one** 也提供配置说明。
 
-1. 登录 [Google Cloud Console](https://console.cloud.google.com/)，新建一个项目，或者选已有项目。
-2. 给项目启用结算，再到 **API 和服务 → 库**，搜索并启用 **Cloud Translation API**。
-3. 到 **API 和服务 → 凭据 → 创建凭据 → API 密钥**，把密钥的 API 限制设为 **Cloud Translation API**。
-4. 把密钥单独放进一个 UTF-8 文本文件，文件里不要写其他内容。
-5. 在扩展里选择 **Google**，点 **API key** 旁边的 **Choose file…**，选中这个文件。
+### 使用
 
-这里用的是 **Cloud Translation Basic（v2）**，不用装 SDK，也不用下载服务账号 JSON。[Advanced（v3）不支持 API key](https://docs.cloud.google.com/translate/docs/authentication)，别配错了。Google 要求启用结算，建议看清价格，再设一个合适的用量配额。
+- **Size** 调整字号，在视频上上下拖动字幕可调整位置，位置会被保存。
+- 右上角开关控制扩展字幕。如果与播放器原字幕重叠，需要单独关闭播放器字幕。
+- 不同语言、翻译器的译文分别保存。关闭视频会停止翻译，重新打开后从已保存进度继续。
+- **Translate again** 重新翻译已完成的视频，会再次消耗额度。重翻时逐步显示新字幕；中途停止则恢复旧译文，全部完成后才替换保存版本。
+- **Stop** 停止翻译程序，**Connect** 重新启动。
+- **Log out** 会影响本机其他共用同一 Codex 登录的应用。
 
-密钥文件放好以后尽量别移动，程序记的是它的位置。需要换文件时点扩展里的文件名；**Unlink** 只解除关联，不会删除文件。不要把密钥发到 GitHub。扩展里也有 **How to get one** 链接，忘了步骤可以随时打开。
+广告期间字幕隐藏。Disney+ 提示同步时，将鼠标移到视频上或暂停一次。更新扩展后，请刷新视频页面。
 
-### 看视频时
+### 常见问题
 
-[界面截图](docs/store/assets/promo-original.png)里启用了两种翻译器；只开 Codex 时可能看不到切换按钮。
+**无法连接：** 在程序文件夹中运行 **Start Subtitles**，再点 **Connect**。仍无法连接时，运行同目录的 **Check Environment**。
 
-**Size** 调字号，直接在视频上上下拖动字幕就能调位置，下次还会记住。右上角开关只控制这个扩展的字幕，不会替你关掉播放器原来的字幕。如果两套字幕叠在一起，手动关掉播放器那一套就行。
+**没有字幕：** 检查开关和视频的英文字幕。安装、登录、密钥文件和额度问题会在扩展中显示。Codex 未安装时运行 **Set Up Codex**，未登录时点击 **Log in**。
 
-不同语言、不同翻译器的译文分开保存。关闭视频就停止翻译，重新打开后从保存的进度接着翻。广告期间字幕会隐藏，回到正片后再出现。Disney+ 有时会提示同步，把鼠标移到视频上，或者暂停一下即可。
+其他问题请提交 [issue](https://github.com/jinzhou5042x/smart-subtitles/issues)，附上 **Copy diagnostics** 的结果、系统、浏览器和扩展版本，以及复现步骤。发布前去掉密钥和登录信息。
 
-整集翻完后，不满意可以点 **Translate again** 再试一次，但会再次消耗额度。重翻时画面上的字幕先清空，再逐步显示新的；如果中途停止，会恢复旧译文，只有全部完成后才替换保存的版本。
+目前 Windows 实测较多，macOS、含广告套餐和长时间播放仍需要更多测试。
 
-**Stop** 关闭翻译程序，**Connect** 重新启动。**Log out** 会退出这台电脑上的 Codex 登录，其他共用这个登录的应用也会受影响，所以会再让你确认一次。
+### 数据
 
-### 出问题了怎么办
+字幕、译文、设置和日志保存在本机。翻译文本使用个人账号直接发送给 Codex 使用的 OpenAI 服务或 Google。Smart Subtitles 没有后台、账号系统、统计或跟踪服务。
 
-- **连不上程序：** 在解压后的文件夹里运行 **Start Subtitles**，再点 **Connect**。还不行就运行同目录的 **Check Environment**。
-- **Codex 没装好或没登录：** 安装问题重新运行 **Set Up Codex**；没登录就点扩展里的 **Log in**。
-- **不出字幕：** 先看开关是否打开、视频有没有英文字幕，再打开扩展看具体报错。
-- **额度不够：** 等额度恢复，或者处理账号问题之后再重试。
-- **读不到 Google 密钥：** 重新选一下文件，确认里面只有密钥。
-- **更新后突然不能用了：** 刷新视频页面；报错要求重新加载扩展的话，也一起操作。
+清除翻译缓存和日志：停止程序，删除其目录中的 `data` 和 `logs` 文件夹。卸载时移除扩展并停止程序。详见[条款与隐私](https://jinzhou5042x.github.io/smart-subtitles/)。
 
-还解决不了的话，点 **Copy diagnostics**，把结果贴到 [issue](https://github.com/jinzhou5042x/smart-subtitles/issues) 里。说一下系统、浏览器和扩展版本、在哪个网站、具体发生了什么。别贴 API key 或登录信息。
+### 计划
 
-目前 Windows 测得最多，Mac、含广告套餐和连续长时间播放还需要更多实测。如果你在这些环境下碰到问题，欢迎反馈。
+- 接入 DeepSeek、Claude、Qwen
+- 支持本地模型
+- 支持更多视频网站
 
-### 数据放在哪里
-
-没有 Smart Subtitles 账号，也没有我这边的服务器或统计后台。字幕、译文、设置和日志都保存在你的电脑上。翻译时，文本会用你自己的账号直接发给 OpenAI 或 Google，仍然适用他们的数据政策和条款。
-
-想清掉翻译记录和日志，先停止程序，再删掉程序目录里的 `data` 和 `logs` 文件夹。不用了就卸载扩展、停止程序。[条款与隐私](https://jinzhou5042x.github.io/smart-subtitles/)里有更完整的说明。
-
-### 接下来想做的
-
-后面想接入 **DeepSeek、Claude、Qwen，还有自己电脑上跑的模型**，也想支持更多视频网站。这些目前还没接好。
-
-欢迎一起写。如果想加翻译器或网站支持，可以先开个 issue 聊聊怎么做。提 bug、指出翻译不对的地方、改文档，或者帮忙在不同电脑上试一试，也都很有用。
+以上尚未实现。欢迎提交 issue 和 PR，包括翻译纠错、文档修改和不同平台的测试反馈。新增翻译器或网站适配，建议先开 issue 讨论。
 
 ### 开发者
 
@@ -225,7 +208,6 @@ npm run build
 启用 Google：在 `config/local.json` 合并 `"providers": ["codex", "google"]`，重启程序，再通过扩展选择密钥文件。该配置不提交 Git；模型及推理强度也可在此通过 `model`、`effort` 调整。
 
 验证与打包命令为 `npm test`、`npm run check:browser`、`npm run package`、`npm run release`。扩展 ZIP 输出到 `dist/store/`；翻译程序按当前平台构建，macOS 包需在 macOS 构建。网站适配器位于 `extension/players/`，网站注册表位于 `extension/sites.js`，翻译代码位于 `service/`，测试位于 `tests/`。请勿提交密钥、本机配置、日志或用户数据。
-
 
 ---
 
