@@ -33,19 +33,17 @@ A plan with GPT-6 Luna access in Codex is required. Plus is listed at **US$20/mo
 
 **Google Cloud Translation** translates each subtitle separately using your API key. Usage is billed to your Google Cloud account. Release packages default to Codex only; see [For developers](#for-developers) to enable Google. For Google-only setup, skip **Set Up Codex** and run **Start Subtitles** once instead.
 
-#### Google API key
+#### How to get a Google Translate API key
 
-Official instructions: [Set up Cloud Translation](https://docs.cloud.google.com/translate/docs/setup) · [Create an API key](https://docs.cloud.google.com/docs/authentication/api-keys#create).
+Google's tutorials: [Set up Cloud Translation](https://docs.cloud.google.com/translate/docs/setup) and [Create an API key](https://docs.cloud.google.com/docs/authentication/api-keys#create).
 
-1. Create or select a project in [Google Cloud Console](https://console.cloud.google.com/).
-2. Enable billing. Under **APIs & Services → Library**, enable **Cloud Translation API**.
-3. Open **APIs & Services → Credentials → Create credentials → API key**. Restrict the key to **Cloud Translation API**.
-4. Save only the key in a UTF-8 text file.
-5. In the extension, select **Google → API key → Choose file…** and select the file.
+1. Sign in to [Google Cloud Console](https://console.cloud.google.com/) and create a project.
+2. Link a billing account, then enable **Cloud Translation API** under **APIs & Services → Library**.
+3. Go to **APIs & Services → Credentials → Create credentials → API key**.
+4. Restrict the key to **Cloud Translation API**, save, and copy the key.
+5. Paste only the key into a text file. In Smart Subtitles, select **Google → Choose file…** and open that file.
 
-This uses **Cloud Translation Basic (v2)**. No SDK or service-account JSON file is needed. [Advanced (v3) does not support API keys](https://docs.cloud.google.com/translate/docs/authentication). Check Google's rates and configure usage quotas before translating.
-
-The program remembers the key file's path. Keep the file private; select it again if you move it. Click the filename to change files, or **Unlink** to remove the association without deleting the file. The extension also links to setup instructions under **How to get one**.
+Google requires billing for Cloud Translation. Keep the key private and keep its file in the same location.
 
 ### Usage
 
@@ -140,19 +138,17 @@ Smart Subtitles 是一个双语字幕扩展，目前支持 Hulu 和 Disney+，�
 
 **Google Cloud Translation** 使用自己的 API key，逐条翻译字幕，费用由 Google Cloud 账号承担。发行包默认只启用 Codex，开启 Google 的方法见[开发者](#开发者)。仅使用 Google 时，可跳过 **Set Up Codex**，改为运行一次 **Start Subtitles**。
 
-#### 申请 Google API key
+#### 如何获取 Google Translate API key
 
-官方教程：[配置 Cloud Translation](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn) · [创建 API key](https://docs.cloud.google.com/docs/authentication/api-keys?hl=zh-cn#create)。
+Google 官方教程：[开通 Cloud Translation](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn)、[创建 API 密钥](https://docs.cloud.google.com/docs/authentication/api-keys?hl=zh-cn#create)。
 
-1. 登录 [Google Cloud Console](https://console.cloud.google.com/)，创建或选择项目。
-2. 为项目启用结算，在 **API 和服务 → 库** 中启用 **Cloud Translation API**。
-3. 进入 **API 和服务 → 凭据 → 创建凭据 → API 密钥**，将密钥的 API 限制设为 **Cloud Translation API**。
-4. 将密钥单独保存为 UTF-8 文本文件。
-5. 在扩展中选择 **Google → API key → Choose file…**，选中该文件。
+1. 登录 [Google Cloud Console](https://console.cloud.google.com/)，新建一个项目。
+2. 关联结算账号，在 **API 和服务 → 库** 中搜索并启用 **Cloud Translation API**。
+3. 打开 **API 和服务 → 凭据 → 创建凭据 → API 密钥**。
+4. 将密钥限制为仅用于 **Cloud Translation API**，保存并复制密钥。
+5. 将密钥单独粘贴到文本文件中，在 Smart Subtitles 里选择 **Google → Choose file…**，打开这个文件。
 
-这里使用 **Cloud Translation Basic（v2）**，无需安装 SDK 或下载服务账号 JSON。[Advanced（v3）不支持 API key](https://docs.cloud.google.com/translate/docs/authentication)。开始翻译前请查看 Google 的计费说明，并设置用量配额。
-
-程序记住的是密钥文件路径。请勿公开文件，移动后需重新选择。点击文件名可更换文件；**Unlink** 只取消关联，不删除文件。扩展中的 **How to get one** 也提供配置说明。
+Google 翻译 API 需要启用结算。密钥不要公开，保存后的文件不要随意移动。
 
 ### 使用
 
