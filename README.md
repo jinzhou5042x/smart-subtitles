@@ -33,6 +33,10 @@ A plan with GPT-6 Luna access in Codex is required. Plus is listed at **US$20/mo
 
 **Google Cloud Translation** translates each subtitle separately using your API key. Usage is billed to your Google Cloud account. Release packages default to Codex only; see [For developers](#for-developers) to enable Google. For Google-only setup, skip **Set Up Codex** and run **Start Subtitles** once instead.
 
+Google is usually much faster, but its line-by-line translation can miss English slang and the meaning of a conversation. Codex uses an LLM to interpret the dialogue in context before producing the translation, which generally gives more natural subtitles and a better viewing experience.
+
+The trade-off is speed. The current Codex integration translates each video's subtitles in order. Seeking ahead does not move that section to the front of the queue: if you jump to the middle before it has been translated, you may have to wait a long time for translation to reach it. This wait does not apply to sections already translated and saved.
+
 #### How to get a Google Translate API key
 
 Google's tutorials: [Set up Cloud Translation](https://docs.cloud.google.com/translate/docs/setup) and [Create an API key](https://docs.cloud.google.com/docs/authentication/api-keys#create).
@@ -138,6 +142,10 @@ Smart Subtitles 是一个双语字幕扩展，目前支持 Hulu 和 Disney+，�
 
 **Google Cloud Translation** 使用自己的 API key，逐条翻译字幕，费用由 Google Cloud 账号承担。发行包默认只启用 Codex，开启 Google 的方法见[开发者](#开发者)。仅使用 Google 时，可跳过 **Set Up Codex**，改为运行一次 **Start Subtitles**。
 
+Google 的优点是速度快，缺点是逐条翻译容易误解英文俚语，也容易丢失对话的上下文。Codex 则由大语言模型结合前后文理解对白后再输出译文，通常读起来更自然，观影体验也更好。
+
+Codex 的缺点是翻译较慢。目前同一视频的字幕按顺序处理，拖动进度条不会优先翻译跳转到的位置。如果直接跳到视频中部，而那里还没有翻译完成，可能需要等很久才能处理到。已经翻译并保存的部分不需要等待。
+
 #### 如何获取 Google Translate API key
 
 Google 官方教程：[开通 Cloud Translation](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn)、[创建 API 密钥](https://docs.cloud.google.com/docs/authentication/api-keys?hl=zh-cn#create)。
@@ -235,6 +243,10 @@ Si mueves la carpeta del programa, ejecuta **Start Subtitles** desde la nueva ub
 Necesitas un plan que permita usar GPT-6 Luna en Codex. Plus figura a **US$20 al mes**; consulta los [precios de OpenAI](https://learn.chatgpt.com/docs/pricing) para conocer las tarifas y el acceso vigentes. Smart Subtitles es gratuito.
 
 **Google Cloud Translation** traduce cada subtítulo por separado con tu propia clave de API. El consumo se factura a tu cuenta de Google Cloud. Los paquetes de descarga solo tienen Codex activado de forma predeterminada; consulta [Para desarrolladores](#para-desarrolladores) para activar Google. Si solo vas a usar Google, omite **Set Up Codex** y ejecuta **Start Subtitles** una vez.
+
+Google suele ser mucho más rápido, pero al traducir cada subtítulo por separado puede interpretar mal la jerga inglesa y perder el contexto de la conversación. Codex utiliza un modelo de lenguaje para interpretar el diálogo en contexto antes de traducirlo, lo que suele producir subtítulos más naturales y una mejor experiencia al ver el video.
+
+La desventaja es la velocidad. La integración actual de Codex procesa los subtítulos de cada video en orden. Adelantar el video no da prioridad a esa parte: si saltas a la mitad y todavía no está traducida, la espera puede ser larga hasta que el proceso llegue a ese punto. Las partes ya traducidas y guardadas no requieren esta espera.
 
 #### Cómo obtener una clave de API de Google Translate
 
