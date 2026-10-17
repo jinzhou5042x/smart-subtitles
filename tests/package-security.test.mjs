@@ -5,7 +5,7 @@ import path from 'node:path';
 import { buildExtension } from '../scripts/extension-build.mjs';
 import { checkExtensionSecurity } from '../scripts/extension-security.mjs';
 
-test('release validation rejects private files, remote code and broadened permissions', async () => {
+test('release validation rejects private files, remote code, invalid connection policies and broadened permissions', async () => {
   const directory = path.resolve('dist/checks/security-extension');
   await buildExtension(directory, { store: true });
   await checkExtensionSecurity(directory);
@@ -18,6 +18,13 @@ test('release validation rejects private files, remote code and broadened permis
   await assert.rejects(checkExtensionSecurity(directory), /Remote or dynamically evaluated code/);
   await writeFile(script, source);
   const file = path.join(directory, 'manifest.json'), manifest = JSON.parse(await readFile(file, 'utf8'));
+  const originalPolicy = manifest.content_security_policy.extension_pages;
+  for (const source of ['http://[::1]:*', 'http:']) {
+    manifest.content_security_policy.extension_pages = originalPolicy.replace('connect-src https:', `connect-src https: ${source}`);
+    await writeFile(file, JSON.stringify(manifest));
+    await assert.rejects(checkExtensionSecurity(directory), /Connection policy/);
+  }
+  manifest.content_security_policy.extension_pages = originalPolicy;
   manifest.permissions.push('debugger'); await writeFile(file, JSON.stringify(manifest));
   await assert.rejects(checkExtensionSecurity(directory), /release permissions/);
 });

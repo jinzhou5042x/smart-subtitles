@@ -5,6 +5,9 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
+import { buildExtension } from './extension-build.mjs';
+const extension = path.resolve('dist/checks/player-extension');
+await buildExtension(extension);
 const calls = [], errors = [];
 let releaseFirst, firstAborted = false;
 async function waitForCall(count) {
@@ -35,9 +38,12 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(404); res.end();
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const base = `http://127.0.0.1:${server.address().port}`, extension = path.resolve('dist/extension');
+const base = `http://127.0.0.1:${server.address().port}`;
 await writeFile(path.join(extension, 'browser-test-clock.js'), `globalThis.__testPlayback = { time: 900, paused: false, seeking: false }; Object.defineProperties(HTMLMediaElement.prototype, { duration: { configurable: true, get: () => 1800 }, currentTime: { configurable: true, get: () => globalThis.__testPlayback.time }, paused: { configurable: true, get: () => globalThis.__testPlayback.paused }, seeking: { configurable: true, get: () => globalThis.__testPlayback.seeking } });`);
 const context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`] });
+context.on('console', message => {
+  if (/Content Security Policy.*(?:invalid|unrecognized|ignored)/i.test(message.text())) errors.push(message.text());
+});
 try {
   let worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).hostname;

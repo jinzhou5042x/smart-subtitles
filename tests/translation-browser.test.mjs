@@ -5,6 +5,8 @@ const cues = [{ id: 'a', text: 'Hello\nthere & you.', start: 1, end: 3 }, { id: 
 const request = { cues, session: 'video1', epoch: 'one', context: [], title: 'Test' };
 test('custom endpoints require HTTPS except explicit loopback; presets cannot leak keys to another host', () => {
   assert.equal(endpoint('custom', { baseUrl: 'http://127.0.0.1:11434/v1' }), 'http://127.0.0.1:11434/v1');
+  assert.equal(endpoint('custom', { baseUrl: 'http://localhost:11434/v1' }), 'http://localhost:11434/v1');
+  assert.throws(() => endpoint('custom', { baseUrl: 'http://[::1]:11434/v1' }), /Use http:\/\/localhost with the same port and path/);
   for (const baseUrl of ['http://evil.example/v1', 'https://key@evil.example', 'https://api.example?key=secret']) assert.throws(() => endpoint('custom', { baseUrl }));
   assert.throws(() => endpoint('google', { baseUrl: 'https://evil.example' }));
 });

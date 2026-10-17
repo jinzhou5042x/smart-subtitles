@@ -20,6 +20,9 @@ const pair = await generateKeyPair('RS256'), key = { ...await exportJWK(pair.pub
 let auth, inferenceCount = 0, limit = false, refreshCount = 0, authorizations = 0;
 const errors = [];
 const context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`] });
+context.on('console', message => {
+  if (/Content Security Policy.*(?:invalid|unrecognized|ignored)/i.test(message.text())) errors.push(message.text());
+});
 const sendJSON = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const authRoute = async route => {
   const url = new URL(route.request().url());
@@ -77,6 +80,7 @@ try {
   const id = new URL(worker.url()).hostname;
   context.on('page', page => page.on('pageerror', e => errors.push(e.message)));
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#chatgpt`);
+  assert.deepEqual(errors, [], 'The browser must accept every CSP directive and source');
   // The shipped CSP must block injected scripts, including remote code on a permitted host.
   let remoteScripts = 0;
   await context.route('https://api.openai.com/security-check.js', route => { remoteScripts++; return route.fulfill({ contentType: 'text/javascript', body: 'globalThis.injectedRemote = true;' }); });

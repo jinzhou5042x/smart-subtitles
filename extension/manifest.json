@@ -11,7 +11,7 @@
   },
   "minimum_chrome_version": "127",
   "content_security_policy": {
-    "extension_pages": "default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src https: http://localhost:* http://127.0.0.1:* http://[::1]:*; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'"
+    "extension_pages": "default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src https: http://localhost:* http://127.0.0.1:*; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'"
   },
   "permissions": [
     "storage",
@@ -88,8 +88,7 @@
   "optional_host_permissions": [
     "https://*/*",
     "http://localhost/*",
-    "http://127.0.0.1/*",
-    "http://[::1]/*"
+    "http://127.0.0.1/*"
   ],
   "options_ui": {
     "page": "settings.html",

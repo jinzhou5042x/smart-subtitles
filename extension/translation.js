@@ -14,7 +14,10 @@ export const DEFAULTS = { enabled: true, target: 'zh-CN', provider: 'builtin', f
 export function endpoint(provider, profile = {}) {
   const preset = PROVIDERS[provider]; if (!preset) throw new Error('Unknown translator');
   const url = new URL(profile.baseUrl || preset.baseUrl);
-  const loopback = ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
+  // CSP host sources cannot express IPv6 literals. Keep settings aligned with the policy
+  // and ask for a supported address before requesting permission or sending credentials.
+  if (url.protocol === 'http:' && url.hostname === '[::1]') throw new Error('Use http://localhost with the same port and path for your local model; Chrome cannot allow an IPv6 literal in this connection policy.');
+  const loopback = ['127.0.0.1', 'localhost'].includes(url.hostname);
   if (url.username || url.password || url.search || url.hash || (url.protocol !== 'https:' && !(provider === 'custom' && loopback && url.protocol === 'http:'))) throw new Error('Use HTTPS, or HTTP on localhost for your own model');
   if (preset.baseUrl && url.origin !== new URL(preset.baseUrl).origin) throw new Error('Use Other / local model for a different API server');
   return url.href.replace(/\/$/, '');

@@ -12,10 +12,11 @@ export async function checkExtensionSecurity(directory) {
   assert.deepEqual([...(manifest.host_permissions || [])].sort(), [...hosts].sort(), 'No development or unrestricted hosts in the release');
   assert.ok(!manifest.externally_connectable && !manifest.update_url && !manifest.sandbox, 'No external messaging, private updater, or sandboxed remote code');
   assert.ok(!manifest.optional_permissions?.length);
-  assert.deepEqual([...(manifest.optional_host_permissions || [])].sort(), ['https://*/*', 'http://localhost/*', 'http://127.0.0.1/*', 'http://[::1]/*'].sort());
+  assert.deepEqual([...(manifest.optional_host_permissions || [])].sort(), ['https://*/*', 'http://localhost/*', 'http://127.0.0.1/*'].sort());
   for (const script of manifest.content_scripts) assert.ok(script.matches.every(host => hosts.slice(0, 4).includes(host)), 'Content scripts must stay on supported video sites');
   assert.deepEqual(manifest.web_accessible_resources, [{ resources: ['auth-callback.html'], matches: ['https://auth.openai.com/*', 'http://127.0.0.1/*'] }]);
   const csp = manifest.content_security_policy?.extension_pages || '';
+  assert.deepEqual(csp.split(';').map(s => s.trim()).filter(s => s.startsWith('connect-src')), ['connect-src https: http://localhost:* http://127.0.0.1:*'], 'Connection policy must use browser-supported sources and restrict HTTP to loopback');
   for (const rule of ["default-src 'none'", "script-src 'self'", "worker-src 'self'", "object-src 'none'", "base-uri 'none'", "frame-src 'none'", "form-action 'none'"]) assert.ok(csp.split(';').map(s => s.trim()).includes(rule), `Missing security policy: ${rule}`);
   assert.doesNotMatch(csp, /unsafe-eval|wasm-unsafe-eval/);
   const actual = new Set();
