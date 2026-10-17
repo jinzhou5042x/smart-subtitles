@@ -4,8 +4,9 @@ import { readSubtitleResource } from './subtitle-resource.js';
 import { DEFAULTS, PROVIDERS, endpoint, validateWindow, validateSegments, cacheKeys, translateRemote } from './translation.js';
 import { readCache, writeCache, clearCache } from './cache.js';
 import { chatgpt, beginLogin, finishLogin, clearLoginRule, loginStatus, cancelLogin, focusLogin } from './chatgpt-connection.js';
+import { ProfileStore } from './profiles.js';
 
-const storageReady = chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
+const profileStore = new ProfileStore(chrome.storage), storageReady = profileStore.ready;
 const active = new Map();
 const isPage = sender => !!sender.tab && !!globalThis.SubtitleSites.identify(sender.url);
 const isUI = sender => ['popup.html', 'settings.html'].some(file => sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL(file));
@@ -19,7 +20,7 @@ async function profile(provider) {
     const { chatgptMetadata = {} } = await chrome.storage.local.get('chatgptMetadata');
     return { model: chatgptMetadata.accounts?.find(a => a.id === chatgptMetadata.active)?.model || PROVIDERS.chatgpt.model };
   }
-  return (await chrome.storage.local.get('profiles')).profiles?.[provider] || {};
+  return (await profileStore.all())[provider] || {};
 }
 function cancelAll() { for (const controller of active.values()) controller.abort(); active.clear(); }
 async function broadcast(resetTranslations = false) {
@@ -57,12 +58,12 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       }
       case 'profiles': {
         if (!ui) throw new Error('Settings page only');
-        const { profiles = {} } = await chrome.storage.local.get('profiles');
+        const profiles = await profileStore.all();
         return Object.fromEntries(Object.entries(profiles).map(([id, { key, ...rest }]) => [id, { ...rest, configured: !!key || id === 'custom' }]));
       }
       case 'saveProfile': {
         if (!ui || !PROVIDERS[message.provider] || ['builtin', 'chatgpt'].includes(message.provider)) throw new Error('Invalid translator');
-        const { profiles = {} } = await chrome.storage.local.get('profiles');
+        const profiles = await profileStore.all();
         if (message.clear) delete profiles[message.provider];
         else {
           const previous = profiles[message.provider] || {};
@@ -75,7 +76,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
           if (!await chrome.permissions.contains({ origins: [new URL(p.baseUrl).origin + '/*'] })) throw new Error('Allow access to this API server first');
           profiles[message.provider] = p;
         }
-        await chrome.storage.local.set({ profiles }); await broadcast(true); return { saved: true };
+        await profileStore.set(message.provider, profiles[message.provider]); await broadcast(true); return { saved: true };
       }
       case 'clearCache': if (!ui) throw new Error('Settings page only'); cancelAll(); await clearCache(); await broadcast(true); return {};
       case 'testProfile': {

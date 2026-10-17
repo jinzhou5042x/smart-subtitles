@@ -10,7 +10,7 @@ function show() {
   $('builtin').hidden = id !== 'builtin'; $('chatgpt').hidden = id !== 'chatgpt'; $('cloud').hidden = ['builtin', 'chatgpt'].includes(id);
   $('baseUrl').value = p.baseUrl || preset.baseUrl || ''; $('baseUrl').readOnly = !!preset.baseUrl;
   $('model').value = p.model || preset.model || ''; $('model').disabled = id === 'google';
-  $('key').value = ''; $('key').placeholder = p.configured ? 'Saved — leave blank to keep it' : id === 'custom' ? 'Optional for local models' : 'Paste your API key';
+  $('key').value = ''; $('key').placeholder = p.configured ? 'Saved for this session — leave blank to keep it' : id === 'custom' ? 'Optional for local models' : 'Paste your API key';
   $('guide').hidden = !preset.guide; $('guide').href = preset.guide || '#'; $('result').textContent = '';
   if (id === 'chatgpt') void refreshAccount();
   $('endpointHelp').textContent = id === 'qwen' ? 'Copy the workspace API base URL for your region from Model Studio.' : 'Use your provider’s API base URL. Local models may use http://localhost:PORT/v1.';

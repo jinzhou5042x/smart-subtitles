@@ -35,7 +35,7 @@ Open **Translator settings** from the popup. Switching to a paid provider is alw
 | Other / local model | An OpenAI-compatible Chat Completions base URL and model; key optional for your local server |
 | ChatGPT subscription | **Continue with ChatGPT**; uses the plan allowance you authorize |
 
-Click **Save and use**, then optionally **Test with “Hello.”** The test sends one small request and may use paid quota. Keys stay in the extension's local storage, are not synced, and are not sent to the video website. Clear a key with **Remove key**. Changing API servers requires entering the key again.
+Click **Save and use**, then optionally **Test with “Hello.”** The test sends one small request and may use paid quota. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. Clear a key with **Remove key**. Changing API servers requires entering the key again.
 
 Google Cloud is fast and handled common idioms well in our small test. It does not receive the nearby context sent to LLMs. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
 
@@ -98,7 +98,7 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 
 ChatGPT credentials live in a dedicated worker hosted by an offscreen document. The extension uses the [official OAuth/PKCE flow](https://developers.openai.com/siwc/token-sharing-open-source/sign-in) and public Responses API. A temporary, tab-specific Chrome redirect rule captures the exact loopback callback; no local listener is started. The loopback flow is documented by OpenAI; this browser interception is our adaptation. Tokens are never written to Chrome storage. `jose` verifies ID-token signatures and claims.
 
-The store build injects scripts only on supported video sites. Provider hosts need separate permission when selected; the optional HTTPS wildcard allows custom API addresses, and is never requested as a wildcard. API calls omit cookies and referrers, refuse redirects, and do not use the browser's HTTP cache. API keys stay in local extension storage, which is not an encrypted vault; video-page content scripts cannot read it. ChatGPT tokens stay in memory.
+The store build injects scripts only on supported video sites. Provider hosts need separate permission when selected; the optional HTTPS wildcard allows custom API addresses, and is never requested as a wildcard. API calls omit cookies and referrers, refuse redirects, and do not use the browser's HTTP cache. API keys use Chrome's memory-only `storage.session`, restricted to trusted extension contexts. Existing keys are moved out of `storage.local` when this version starts. ChatGPT tokens stay in the dedicated worker's memory.
 
 The release checks enforce a file inventory, permissions and content security policy, and reject remote executable code, native helpers and test transports. CI runs dependency auditing and uses pinned GitHub Actions with limited permissions. These checks reduce specific risks; they do not constitute a security certification or guarantee sign-in eligibility. Public installation should go through the Chrome Web Store. A GitHub ZIP is a developer build, and publishing a GitHub release does not submit it for store review.
 
@@ -128,7 +128,7 @@ Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP �
 
 填写自己的 key 和模型名称，点击 **Save and use**。Qwen 还需要填对应区域的工作区 API base URL；本地模型填写 `http://localhost:端口/v1`，并先启动自己的模型服务。云端连接使用 HTTPS，选定服务后才请求对应权限。API 费用由服务商收取，与聊天产品订阅通常分开。
 
-**Test with “Hello.”** 会发送一次简短测试请求，可能使用付费额度。key 只存在扩展的本地存储，不同步、不传给视频网页。**Remove key** 删除凭据；更换服务器需要重新填 key。
+**Test with “Hello.”** 会发送一次简短测试请求，可能使用付费额度。key 只留在 Chrome 当前会话的内存中，不传给视频网页。重启 Chrome 或重新加载扩展后需要重新填 key，服务器地址和模型会保留。**Remove key** 删除凭据；更换服务器也需要重新填 key。
 
 ### 实测对比
 
@@ -191,7 +191,7 @@ La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/transl
 
 En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Introduce tu clave y modelo y pulsa **Save and use**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
 
-Las claves se guardan únicamente en este perfil del navegador, sin sincronizarse ni enviarse al sitio del video. **Remove key** las elimina. Cambiar de servidor requiere introducir la clave de nuevo. **Test with “Hello.”** envía una petición pequeña que puede consumir cuota de pago. La facturación API es independiente de las suscripciones de chat.
+Las claves permanecen en memoria durante esta sesión de Chrome y no se envían al sitio del video. Tras reiniciar Chrome o recargar la extensión, introduce la clave de nuevo; la dirección del servidor y el modelo se conservan. **Remove key** elimina la clave. Cambiar de servidor también requiere introducirla de nuevo. **Test with “Hello.”** envía una petición pequeña que puede consumir cuota de pago. La facturación API es independiente de las suscripciones de chat.
 
 ### Comparación medida
 

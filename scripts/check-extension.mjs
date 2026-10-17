@@ -18,6 +18,8 @@ const vtt = 'WEBVTT\n\n' + Array.from({ length: 600 }, (_, i) => {
 }).join('\n');
 const server = http.createServer(async (req, res) => {
   if (req.url === '/v1/chat/completions') {
+    assert.equal(req.headers.authorization, 'Bearer synthetic-api-key');
+    assert.equal(req.headers.cookie, undefined, 'API requests must not carry browser login cookies');
     const chunks = []; for await (const c of req) chunks.push(c);
     const body = JSON.parse(Buffer.concat(chunks)), prompt = JSON.parse(body.messages.at(-1).content); calls.push(prompt);
     if (calls.length === 1) {
@@ -43,8 +45,12 @@ try {
   context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#custom`);
   await settings.locator('#baseUrl').fill(base + '/v1'); await settings.locator('#model').fill('fixture-model');
+  await settings.locator('#key').fill('synthetic-api-key');
   await settings.getByRole('button', { name: 'Save and use', exact: true }).click();
   await settings.getByText('Saved. Translation uses this provider when you play a video.').waitFor();
+  assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-api-key/);
+  assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
+  await context.addCookies([{ name: 'browserSession', value: 'must-not-be-forwarded', url: base }]);
   const page = await context.newPage(); await page.goto(base + '/demo');
   const setPlayback = (time, paused = false, seeking = false) => worker.evaluate(async playback => { const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' }); await chrome.scripting.executeScript({ target: { tabId: tab.id }, args: [playback], func: playback => { globalThis.__testPlayback = playback; } }); }, { time, paused, seeking });
   const snapshot = () => settings.evaluate(async () => {
@@ -81,7 +87,9 @@ try {
   await popup.locator('body').screenshot({ path: 'dist/checks/popup.png' });
   await settings.screenshot({ path: 'dist/checks/settings.png', fullPage: true });
   // Content scripts cannot read provider credentials from extension storage.
-  const isolated = await worker.evaluate(async () => { const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' }); return chrome.scripting.executeScript({ target: { tabId: tab.id }, func: async () => { try { await chrome.storage.local.get('profiles'); return false; } catch { return true; } } }); });
+  const isolated = await worker.evaluate(async () => { const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' }); return chrome.scripting.executeScript({ target: { tabId: tab.id }, func: async () => {
+    for (const area of ['local', 'session']) { try { await chrome.storage[area].get(null); return false; } catch {} } return true;
+  } }); });
   assert.equal(isolated[0].result, true, 'API profiles are restricted to trusted extension contexts');
   const restricted = await worker.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' });
