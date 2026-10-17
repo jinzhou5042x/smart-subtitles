@@ -47,12 +47,22 @@ export class ChatGPTClient {
     }) };
   }
   async json(url, options = {}) {
+    const signal = options.signal || AbortSignal.timeout(15000);
+    const stage = url.endsWith('/oauth/token') ? 'Exchange sign-in credentials' : url.endsWith('/jwks.json') ? 'Verify OpenAI identity' : url.endsWith('/models') ? 'Load ChatGPT models' : 'Connect to OpenAI';
     let response;
-    try { response = await this.fetcher(url, { ...options, ...PRIVATE_REQUEST, signal: options.signal || AbortSignal.timeout(15000) }); }
-    catch (e) { if (options.signal?.aborted) throw e; throw fail('Could not reach OpenAI. Check your connection and try again.'); }
+    try { response = await this.fetcher(url, { ...options, ...PRIVATE_REQUEST, signal }); }
+    catch (e) {
+      if (signal.aborted && signal.reason?.name !== 'TimeoutError') throw e;
+      const host = new URL(url).hostname;
+      throw fail(`${stage}: ${signal.aborted ? 'request timed out' : 'Chrome could not complete the request'} to ${host}. Try connecting again. If it keeps failing, check this extension’s site access and your network connection.`, signal.aborted ? 'openai_timeout' : 'openai_network_error');
+    }
     const data = await readJSON(response);
     if (!response.ok) throw apiError(response.status, data, 'OpenAI request failed');
     return data;
+  }
+  async checkConnection() {
+    this.#keys = createLocalJWKSet(await this.json(`${AUTH_ORIGIN}/.well-known/jwks.json`, { signal: AbortSignal.timeout(10000) }));
+    return { reachable: true };
   }
   async verify(idToken, clientId, nonce) {
     // Refresh once when keys rotate; never use a key URL from an unverified JWT.

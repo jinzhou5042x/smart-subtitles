@@ -19,9 +19,10 @@ await writeFile(manifestFile, JSON.stringify(manifest));
 const pair = await generateKeyPair('RS256'), key = { ...await exportJWK(pair.publicKey), kid: 'browser-check', alg: 'RS256', use: 'sig' };
 let auth, inferenceCount = 0, limit = false, refreshCount = 0, authorizations = 0;
 const errors = [];
+let deliberateScriptViolations = false;
 const context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`] });
 context.on('console', message => {
-  if (/Content Security Policy.*(?:invalid|unrecognized|ignored)/i.test(message.text())) errors.push(message.text());
+  if (/Content Security Policy/i.test(message.text()) && !(deliberateScriptViolations && /script-src/.test(message.text()))) errors.push(message.text());
 });
 const sendJSON = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const authRoute = async route => {
@@ -61,8 +62,6 @@ await context.route('https://auth.openai.com/**', authRoute);
 // Playwright cannot route fetches from a worker owned by an offscreen document.
 // Redirect only this test build's worker transport to a local test server.
 const server = createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   const chunks = []; for await (const part of req) chunks.push(part);
   const data = Buffer.concat(chunks).toString(), url = decodeURIComponent(req.url.slice(1));
@@ -81,7 +80,9 @@ try {
   context.on('page', page => page.on('pageerror', e => errors.push(e.message)));
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#chatgpt`);
   assert.deepEqual(errors, [], 'The browser must accept every CSP directive and source');
+  assert.equal((await worker.evaluate(() => chrome.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] }))).length, 0, 'Opening settings must not initialize a connection before permission is granted');
   // The shipped CSP must block injected scripts, including remote code on a permitted host.
+  deliberateScriptViolations = true;
   let remoteScripts = 0;
   await context.route('https://api.openai.com/security-check.js', route => { remoteScripts++; return route.fulfill({ contentType: 'text/javascript', body: 'globalThis.injectedRemote = true;' }); });
   await settings.evaluate(() => {
@@ -93,6 +94,7 @@ try {
   await settings.waitForFunction(() => scriptViolations >= 2);
   assert.equal(await settings.evaluate(() => !!(globalThis.injectedInline || globalThis.injectedRemote)), false);
   assert.equal(remoteScripts, 0);
+  deliberateScriptViolations = false;
   // Exercise an unanswered native prompt and rejection without clicking a real OS dialog.
   await settings.evaluate(() => {
     globalThis.realPermissionRequest = chrome.permissions.request.bind(chrome.permissions);
@@ -131,7 +133,7 @@ try {
   await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
   await settings.getByText('Finish signing in on OpenAI', { exact: true }).waitFor();
   assert.equal(await settings.locator('#signin').isVisible(), false);
-  assert.equal(await settings.locator('#account').isDisabled(), true);
+  assert.equal(await settings.locator('#accountChoices button').evaluateAll(buttons => buttons.length > 0 && buttons.every(button => button.disabled)), true);
   await settings.locator('#signin').evaluate(button => button.click());
   assert.equal(authorizations, 1, 'repeat clicks cannot start another authorization');
   // A loopback callback in any other tab must not be captured by this login's rule.

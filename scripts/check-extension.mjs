@@ -42,7 +42,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 await writeFile(path.join(extension, 'browser-test-clock.js'), `globalThis.__testPlayback = { time: 900, paused: false, seeking: false }; Object.defineProperties(HTMLMediaElement.prototype, { duration: { configurable: true, get: () => 1800 }, currentTime: { configurable: true, get: () => globalThis.__testPlayback.time }, paused: { configurable: true, get: () => globalThis.__testPlayback.paused }, seeking: { configurable: true, get: () => globalThis.__testPlayback.seeking } });`);
 const context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`] });
 context.on('console', message => {
-  if (/Content Security Policy.*(?:invalid|unrecognized|ignored)/i.test(message.text())) errors.push(message.text());
+  if (/Content Security Policy/i.test(message.text())) errors.push(message.text());
 });
 try {
   let worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
@@ -106,9 +106,20 @@ try {
     } });
   });
   assert.ok(restricted[0].result.every(reply => !reply.ok && /Settings page only/.test(reply.error)), 'video content scripts cannot access accounts, keys, or privileged settings');
-  await settings.locator('#clear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();
+  // Exceed the old 30,000-line limit and verify the new capacity and its user-facing count.
+  await settings.evaluate(async () => {
+    const { writeCache } = await import('./cache.js');
+    const keys = Array.from({ length: 30500 }, (_, i) => 'capacity-fixture-' + i);
+    await writeCache(keys, keys.map(key => ({ sourceIds: [key], text: 'Saved translation', start: 0, end: 1 })));
+  });
+  const stats = await settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'cacheStats' })).data);
+  assert.equal(stats.limit, 1000000); assert.equal(stats.count, 31100);
+  await settings.reload(); await settings.getByText('31,100', { exact: true }).waitFor();
+  await settings.locator('#clear').click(); await settings.locator('#cancelClear').click();
+  assert.equal((await settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'cacheStats' })).data)).count, 31100);
+  await settings.locator('#clear').click(); await settings.locator('#confirmClear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();
   await waitForCall(before + 1); assert.equal(calls[before].cues[0].text, 'Dialogue 0', 'clearing the cache starts fresh at the beginning');
-  await settings.locator('#provider').selectOption('builtin'); await settings.locator('#useBuiltin').click();
+  await settings.locator('[data-mode=builtin]').click(); await settings.locator('#useBuiltin').click();
   await settings.getByText('Ready. Open your video and choose a language in the extension.').waitFor();
   await popup.reload(); await popup.locator('#provider').waitFor();
   assert.equal(await popup.locator('#provider').inputValue(), 'builtin');

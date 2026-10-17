@@ -2,7 +2,7 @@ import './languages.js';
 import './sites.js';
 import { readSubtitleResource } from './subtitle-resource.js';
 import { DEFAULTS, PROVIDERS, endpoint, validateWindow, validateSegments, cacheKeys, translateRemote } from './translation.js';
-import { readCache, writeCache, clearCache } from './cache.js';
+import { readCache, writeCache, clearCache, cacheStats } from './cache.js';
 import { chatgpt, beginLogin, finishLogin, clearLoginRule, loginStatus, cancelLogin, focusLogin } from './chatgpt-connection.js';
 import { ProfileStore } from './profiles.js';
 
@@ -79,6 +79,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         await profileStore.set(message.provider, profiles[message.provider]); await broadcast(true); return { saved: true };
       }
       case 'clearCache': if (!ui) throw new Error('Settings page only'); cancelAll(); await clearCache(); await broadcast(true); return {};
+      case 'cacheStats': if (!ui) throw new Error('Settings page only'); return cacheStats();
       case 'testProfile': {
         if (!ui) throw new Error('Settings page only');
         const s = { ...await settings(), provider: message.provider }, p = await profile(s.provider);

@@ -5,7 +5,8 @@ const RULE_BASE = 100000, LOGIN_ALARM = 'chatgpt-sign-in-expired';
 let creating, initialized = false, starting = null, loginError = '';
 export async function hasRuntime() { return (await chrome.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'], documentUrls: [chrome.runtime.getURL('chatgpt-runtime.html')] })).length > 0; }
 async function runtime() {
-  if (initialized) return;
+  if (initialized && await hasRuntime()) return;
+  initialized = false;
   if (!creating) creating = (async () => {
     if (!await hasRuntime()) await chrome.offscreen.createDocument({ url: 'chatgpt-runtime.html', reasons: ['WORKERS'], justification: 'Run the ChatGPT connection worker and keep its credentials in memory, without storing tokens on disk.' });
     const { chatgptMetadata = {} } = await chrome.storage.local.get('chatgptMetadata');
@@ -21,6 +22,11 @@ async function runtime() {
 }
 async function persist(reply) { if (reply?.metadata) await chrome.storage.local.set({ chatgptMetadata: reply.metadata }); }
 export async function chatgpt(command, args = {}, signal) {
+  // Merely viewing settings must not create a worker before optional host access is granted.
+  if (command === 'status' && !await hasRuntime()) {
+    const { chatgptMetadata = {} } = await chrome.storage.local.get('chatgptMetadata');
+    return { active: chatgptMetadata.active || '', pending: false, login: null, accounts: (chatgptMetadata.accounts || []).map(a => ({ ...a, connected: false, sharing: false, ready: false, models: [] })) };
+  }
   await runtime(); signal?.throwIfAborted();
   const id = crypto.randomUUID();
   const cancel = () => { chrome.runtime.sendMessage({ target: 'chatgpt-runtime', id: crypto.randomUUID(), command: 'cancelOperation', args: { id } }).catch(() => {}); };
@@ -62,6 +68,11 @@ async function startLogin(args, attempt) {
     if (!await step(chrome.permissions.contains(CHATGPT_PERMISSIONS))) throw new Error('Allow the Chrome connection to open ChatGPT.');
     const state = await step(chatgpt('status'));
     if (state.pending) return { opened: true };
+    // Recreate a disconnected runtime after permission changes, retaining only saved metadata.
+    if (!state.accounts.some(a => a.connected) && await hasRuntime()) {
+      await step(chrome.offscreen.closeDocument()); initialized = false;
+    }
+    await step(chatgpt('checkConnection'));
     await step(clearLoginRule());
     const creatingTab = chrome.tabs.create({ url: 'about:blank', active: true }).then(tab => { attempt.tabId = tab.id; if (signal.aborted) void chrome.tabs.remove(tab.id).catch(() => {}); return tab; });
     const tab = await step(creatingTab);

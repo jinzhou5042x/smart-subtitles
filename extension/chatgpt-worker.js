@@ -11,6 +11,7 @@ self.onmessage = async ({ data: { id, command, args } }) => {
     let data;
     switch (command) {
       case 'initialize': case 'status': data = client.status(); break;
+      case 'checkConnection': data = await client.checkConnection(); break;
       case 'begin': data = await client.begin(args); break;
       case 'finish': data = await client.finish(args); cancelTranslations(); break;
       case 'cancel': data = client.cancel(args?.tabId); break;

@@ -1,4 +1,5 @@
 // Only the extension origin stores translations. No SQLite or local daemon.
+export const CACHE_LIMIT = 1_000_000;
 let database;
 function open() {
   return database ||= new Promise((resolve, reject) => {
@@ -20,9 +21,15 @@ export async function writeCache(keys, segments) {
   await transaction('readwrite', store => keys.forEach((key, i) => store.put({ key, segment: segments[i], saved: Date.now() })));
   await transaction('readwrite', store => {
     const count = store.count(); count.onsuccess = () => {
-      let remove = count.result - 30000; if (remove <= 0) return;
+      let remove = count.result - CACHE_LIMIT; if (remove <= 0) return;
       const cursor = store.index('saved').openCursor(); cursor.onsuccess = () => { if (cursor.result && remove-- > 0) { cursor.result.delete(); cursor.result.continue(); } };
     };
   });
+}
+export async function cacheStats() {
+  let count = 0;
+  await transaction('readonly', store => { const request = store.count(); request.onsuccess = () => { count = request.result; }; });
+  const estimate = await navigator.storage.estimate().catch(() => ({}));
+  return { count, limit: CACHE_LIMIT, bytes: estimate.usage || 0 };
 }
 export const clearCache = () => transaction('readwrite', store => store.clear());

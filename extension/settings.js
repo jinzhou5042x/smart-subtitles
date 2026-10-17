@@ -3,21 +3,41 @@ import { CHATGPT_PERMISSIONS } from './chatgpt-permissions.js';
 import { withDeadline } from './async.js';
 const $ = id => document.getElementById(id);
 const call = async m => { const r = await chrome.runtime.sendMessage(m); if (!r?.ok) throw Object.assign(new Error(r?.error || 'Request failed'), { code: r?.code }); return r.data; };
-let profiles = {};
-for (const [id, p] of Object.entries(PROVIDERS)) $('provider').append(new Option(p.name, id));
+let profiles = {}, lastAPI = 'google';
+const modeOf = id => ['builtin', 'chatgpt'].includes(id) ? id : 'api';
+const activeProvider = id => { $('currentProvider').textContent = `Using ${PROVIDERS[id].name}`; };
+function choices(container, items, selected, pick, className = 'choice-button') {
+  const signature = JSON.stringify(items);
+  if (container.dataset.items !== signature) {
+    container.dataset.items = signature;
+    container.replaceChildren(...items.map(({ id, label }) => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = className;
+      button.dataset.value = id; button.textContent = label; button.onclick = () => pick(id); return button;
+    }));
+  }
+  for (const button of container.children) button.setAttribute('aria-pressed', String(button.dataset.value === selected));
+}
+function selectProvider(id) { $('provider').value = id; history.replaceState(null, '', '#' + id); show(); }
+for (const button of $('translationModes').children) button.onclick = () => selectProvider(button.dataset.mode === 'api' ? lastAPI : button.dataset.mode);
+$('version').textContent = 'v' + chrome.runtime.getManifest().version;
 function show() {
   const id = $('provider').value, preset = PROVIDERS[id], p = profiles[id] || {};
+  if (modeOf(id) === 'api') lastAPI = id;
+  for (const button of $('translationModes').children) button.setAttribute('aria-pressed', String(button.dataset.mode === modeOf(id)));
+  choices($('apiProviders'), Object.entries(PROVIDERS).filter(([key]) => modeOf(key) === 'api').map(([key, provider]) => ({ id: key, label: provider.name })), id, selectProvider, 'provider-chip');
   $('builtin').hidden = id !== 'builtin'; $('chatgpt').hidden = id !== 'chatgpt'; $('cloud').hidden = ['builtin', 'chatgpt'].includes(id);
   $('baseUrl').value = p.baseUrl || preset.baseUrl || ''; $('baseUrl').readOnly = !!preset.baseUrl;
+  $('endpointField').hidden = !!preset.baseUrl; $('modelField').hidden = id === 'google';
   $('model').value = p.model || preset.model || ''; $('model').disabled = id === 'google';
   $('key').value = ''; $('key').placeholder = p.configured ? 'Saved for this session — leave blank to keep it' : id === 'custom' ? 'Optional for local models' : 'Paste your API key';
+  $('keyState').textContent = p.configured ? 'Saved this session' : id === 'custom' ? 'Optional' : '';
+  $('remove').hidden = !profiles[id]; $('test').disabled = !p.configured;
   $('guide').hidden = !preset.guide; $('guide').href = preset.guide || '#'; $('result').textContent = '';
   if (id === 'chatgpt') void refreshAccount();
   $('endpointHelp').textContent = id === 'qwen' ? 'Copy the workspace API base URL for your region from Model Studio.' : 'Use your provider’s API base URL. Local models may use http://localhost:PORT/v1.';
 }
-async function run(action) { $('usageLimit').hidden = true; try { $('result').textContent = 'Working…'; const message = await action(); $('result').textContent = message || 'Saved.'; } catch (e) { $('result').textContent = e.message; $('usageLimit').hidden = e.code !== 'subscription_sharing_usage_limit_exceeded'; } }
-$('provider').onchange = show;
-$('useBuiltin').onclick = () => run(async () => { await call({ type: 'saveSettings', settings: { provider: 'builtin' } }); return 'Ready. Open your video and choose a language in the extension.'; });
+async function run(action) { $('usageLimit').hidden = true; $('result').dataset.tone = ''; try { $('result').textContent = 'Working…'; const message = await action(); $('result').textContent = message || 'Saved.'; } catch (e) { $('result').dataset.tone = 'error'; $('result').textContent = e.message; $('usageLimit').hidden = e.code !== 'subscription_sharing_usage_limit_exceeded'; } }
+$('useBuiltin').onclick = () => run(async () => { await call({ type: 'saveSettings', settings: { provider: 'builtin' } }); activeProvider('builtin'); return 'Ready. Open your video and choose a language in the extension.'; });
 $('cloud').onsubmit = e => {
   e.preventDefault(); const provider = $('provider').value;
   let baseUrl; try { baseUrl = endpoint(provider, { baseUrl: $('baseUrl').value }); } catch (e) { $('result').textContent = e.message; return; }
@@ -26,13 +46,24 @@ $('cloud').onsubmit = e => {
   run(async () => {
     if (!await permission) throw new Error('API server permission was not granted');
     await call({ type: 'saveProfile', provider, profile: { baseUrl, model: $('model').value, key: $('key').value } });
-    await call({ type: 'saveSettings', settings: { provider } }); profiles = await call({ type: 'profiles' }); show();
+    await call({ type: 'saveSettings', settings: { provider } }); activeProvider(provider); profiles = await call({ type: 'profiles' }); show();
     return 'Saved. Translation uses this provider when you play a video.';
   });
 };
 $('test').onclick = () => run(async () => { const r = await call({ type: 'testProfile', provider: $('provider').value }); return `Connected: ${r.text}`; });
 $('remove').onclick = () => run(async () => { await call({ type: 'saveProfile', provider: $('provider').value, clear: true }); profiles = await call({ type: 'profiles' }); show(); return 'Key removed.'; });
-$('clear').onclick = () => run(async () => { await call({ type: 'clearCache' }); return 'Saved translations cleared.'; });
+async function refreshCache() {
+  try {
+    const stats = await call({ type: 'cacheStats' });
+    $('cacheCount').textContent = stats.count.toLocaleString('en-US');
+    $('cacheBytes').textContent = `${(stats.bytes / 1048576).toFixed(1)} MB in this browser`;
+    $('cacheProgress').style.width = Math.min(100, stats.count / stats.limit * 100) + '%';
+    $('clear').disabled = !stats.count;
+  } catch { $('cacheBytes').textContent = 'Storage information unavailable'; }
+}
+$('clear').onclick = () => $('clearDialog').showModal();
+$('cancelClear').onclick = () => $('clearDialog').close();
+$('confirmClear').onclick = () => { $('clearDialog').close(); void run(async () => { await call({ type: 'clearCache' }); await refreshCache(); return 'Saved translations cleared.'; }); };
 let accountState = { accounts: [] }, refreshingAccount = false, selectedAccount, modelAccount;
 let loginAction = null, signInError = '', loginAttempt = 0;
 const accountCall = (action, extra = {}) => withDeadline(call({ type: 'chatgptAccount', action, ...extra }), action === 'begin' ? 23000 : 12000, action === 'begin' ? 'ChatGPT did not open. Please try again.' : 'The connection did not respond. Reload this page and try again.');
@@ -56,38 +87,39 @@ function renderLogin() {
   $('returnLogin').hidden = phase !== 'waiting';
   $('cancelLogin').hidden = !busy; $('cancelLogin').disabled = phase === 'cancelling';
   $('signout').hidden = busy || !account?.connected;
-  $('account').disabled = busy;
+  for (const button of $('accountChoices').children) button.disabled = busy;
 }
 async function refreshAccount() {
   if (refreshingAccount) return;
   refreshingAccount = true;
   try {
-    const previousActive = accountState.active;
+    const previousActive = accountState.active, previousAccountCount = accountState.accounts.length;
     accountState = await accountCall('status');
     if (selectedAccount === undefined || accountState.active !== previousActive) selectedAccount = accountState.active || '';
+    if (!selectedAccount && !accountState.active && !previousAccountCount && accountState.accounts.length === 1) selectedAccount = accountState.accounts[0].id;
     const entries = accountState.accounts;
     $('accountPicker').hidden = !entries.length;
-    $('account').replaceChildren(new Option('Add an account', ''), ...entries.map(a => new Option(`${a.email || 'Previous sign-in'} · ${a.id.slice(-6)}`, a.id)));
     $('account').value = selectedAccount;
+    choices($('accountChoices'), [...entries.map(a => ({ id: a.id, label: `${a.email || 'Previous sign-in'} · ${a.id.slice(-6)}` })), { id: '', label: '+ Add account' }], selectedAccount, id => { selectedAccount = id; signInError = ''; void refreshAccount(); });
     const account = entries.find(a => a.id === selectedAccount);
     renderLogin();
     $('chatgptModelSettings').hidden = !account?.sharing;
     const model = modelAccount === selectedAccount ? $('chatgptModel').value || account?.model : account?.model;
-    $('chatgptModel').replaceChildren(...(account?.models || []).map(m => new Option(m.name, m.slug)));
-    if (account?.sharing && !account.models.some(m => m.slug === model)) {
-      const unavailable = new Option(`${model || 'gpt-6-luna'} — unavailable; choose another model`, ''); unavailable.disabled = true; $('chatgptModel').prepend(unavailable);
-      $('chatgptModel').value = '';
-    } else $('chatgptModel').value = model || '';
+    $('chatgptModel').value = account?.models?.some(m => m.slug === model) ? model : '';
+    choices($('modelChoices'), (account?.models || []).map(m => ({ id: m.slug, label: m.name })), $('chatgptModel').value, id => {
+      $('chatgptModel').value = id; $('useChatgpt').disabled = false;
+      for (const button of $('modelChoices').children) button.setAttribute('aria-pressed', String(button.dataset.value === id));
+    });
+    $('modelHelp').textContent = account?.sharing && !$('chatgptModel').value ? `${model || 'gpt-6-luna'} is unavailable. Choose a model above.` : 'Default: gpt-6-luna · low reasoning effort.';
     modelAccount = selectedAccount;
     $('useChatgpt').disabled = !$('chatgptModel').value;
     $('testChatgpt').disabled = !account?.ready || account.id !== accountState.active;
     const active = entries.find(a => a.id === accountState.active);
+    if (active?.ready && previousActive !== accountState.active) activeProvider((await call({ type: 'settings' })).provider);
     if (active?.sharing && !active.welcomed && !$('planWelcome').open) $('planWelcome').showModal();
   } catch (e) { signInError = e.message; renderLogin(); }
   finally { refreshingAccount = false; }
 }
-$('account').onchange = () => { selectedAccount = $('account').value; signInError = ''; void refreshAccount(); };
-$('chatgptModel').onchange = () => { $('useChatgpt').disabled = !$('chatgptModel').value; };
 $('signin').onclick = () => {
   if (loginAction || accountState.login) return;
   const attempt = ++loginAttempt;
@@ -116,10 +148,11 @@ $('cancelLogin').onclick = async () => {
 };
 $('returnLogin').onclick = async () => { try { await accountCall('focus'); } catch (e) { signInError = e.message; await refreshAccount(); renderLogin(); } };
 $('signout').onclick = () => run(async () => { const r = await accountCall('signOut', { accountId: selectedAccount }); await refreshAccount(); return r.message; });
-$('useChatgpt').onclick = () => run(async () => { await accountCall('use', { accountId: selectedAccount, model: $('chatgptModel').value }); await refreshAccount(); return 'Saved. Subtitles use this ChatGPT account and model.'; });
+$('useChatgpt').onclick = () => run(async () => { await accountCall('use', { accountId: selectedAccount, model: $('chatgptModel').value }); activeProvider('chatgpt'); await refreshAccount(); return 'Saved. Subtitles use this ChatGPT account and model.'; });
 $('refreshModels').onclick = () => run(async () => { await accountCall('models', { accountId: selectedAccount }); await refreshAccount(); return 'Model list updated.'; });
 $('testChatgpt').onclick = () => run(async () => { const r = await call({ type: 'testProfile', provider: 'chatgpt' }); return `Connected: ${r.text}`; });
 $('welcomeDone').onclick = () => run(async () => { await accountCall('welcome'); $('planWelcome').close(); return 'Ready. Open your video to start subtitles.'; });
 $('planWelcome').addEventListener('cancel', e => { e.preventDefault(); $('welcomeDone').click(); });
 setInterval(() => { if ($('provider').value === 'chatgpt') void refreshAccount(); }, 2000);
-try { profiles = await call({ type: 'profiles' }); const s = await call({ type: 'settings' }); $('provider').value = PROVIDERS[location.hash.slice(1)] ? location.hash.slice(1) : s.provider; show(); } catch (e) { $('result').textContent = e.message; }
+setInterval(() => { if (!document.hidden) void refreshCache(); }, 15000);
+try { profiles = await call({ type: 'profiles' }); const s = await call({ type: 'settings' }); activeProvider(s.provider); $('provider').value = PROVIDERS[location.hash.slice(1)] ? location.hash.slice(1) : s.provider; show(); void refreshCache(); } catch (e) { $('result').dataset.tone = 'error'; $('result').textContent = e.message; }

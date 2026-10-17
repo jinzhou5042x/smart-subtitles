@@ -16,7 +16,7 @@ Bilingual subtitles for Hulu and Disney+, including Hulu content on Disney+. Eng
 
 The extension runs on desktop Chrome on Windows, macOS and Linux. There is no companion app to download or run. Browser translation needs no account or key; Chrome prepares the language pack on the video page on first use, without a separate installer. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
 
-Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 30,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
+Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 1,000,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
 
 Chrome's [built-in Translator API](https://developer.chrome.com/docs/ai/translator-api) is a local translation model, separate from Google Cloud Translation. Translation quality varies; cloud LLMs can use nearby dialogue to handle context and slang. LLMs may take longer, and short windows can lose some long-range context. Netflix, YouTube, mobile browsers and live TV are not supported.
 
@@ -35,7 +35,7 @@ Open **Translator settings** from the popup. Switching to a paid provider is alw
 | Other / local model | An OpenAI-compatible Chat Completions base URL and model; key optional for your local server |
 | ChatGPT subscription | **Continue with ChatGPT**; uses the plan allowance you authorize |
 
-Click **Save and use**, then optionally **Test with “Hello.”** The test sends one small request and may use paid quota. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. Clear a key with **Remove key**. Changing API servers requires entering the key again.
+Choose **API / local model** and your provider, then click **Save and use**. **Test connection** sends one small request and may use paid quota. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. Clear a key with **Remove key**. Changing API servers requires entering the key again.
 
 Google Cloud is fast and handled common idioms well in our small test. It does not receive the nearby context sent to LLMs. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
 
@@ -102,7 +102,7 @@ The store build injects scripts only on supported video sites. Provider hosts ne
 
 The release checks enforce a file inventory, permissions and content security policy, and reject remote executable code, native helpers and test transports. CI runs dependency auditing and uses pinned GitHub Actions with limited permissions. These checks reduce specific risks; they do not constitute a security certification or guarantee sign-in eligibility. Public installation should go through the Chrome Web Store. A GitHub ZIP is a developer build, and publishing a GitHub release does not submit it for store review.
 
-Browser checks use synthetic API responses and a fresh browser profile. They check callback validation, renewal, streaming, service-worker suspension, sign-out and the absence of stored tokens, but cannot prove real account access or streaming-site compatibility. `npm run check:chatgpt:live` builds the production extension and opens your regular Chrome's extensions page. Load or reload `dist/extension`, sign in from Translator settings, then click **Test with “Hello.”** to check a real translation using your allowance. Use regular Chrome for this check: [Google may reject sign-in in an automated browser](https://support.google.com/accounts/answer/7675428). `node scripts/check-native.mjs` separately checks Chrome's real local translator and may download a language pack.
+Browser checks use synthetic API responses and a fresh browser profile. They check callback validation, renewal, streaming, service-worker suspension, sign-out and the absence of stored tokens, but cannot prove real account access or streaming-site compatibility. `npm run check:chatgpt:live` builds the production extension and opens your regular Chrome's extensions page. Load or reload `dist/extension`, sign in from Translator settings, then click **Test connection** to check a real translation using your allowance. Use regular Chrome for this check: [Google may reject sign-in in an automated browser](https://support.google.com/accounts/answer/7675428). `node scripts/check-native.mjs` separately checks Chrome's real local translator and may download a language pack.
 
 ## 中文
 
@@ -118,17 +118,17 @@ Browser checks use synthetic API responses and a fresh browser profile. They che
 
 Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP 或运行配套程序。浏览器翻译不需要账号或 key；首次由 Chrome 在视频页面内准备语言包，会占用本地磁盘，不用去别处下载或安装。是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
 
-拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 30,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
+拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 1,000,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
 
 [Chrome 内置翻译](https://developer.chrome.com/docs/ai/translator-api)使用本地模型，与 Google Cloud 是不同服务，效果需要按实际影片判断。Google Cloud 很快，在这次小样本测试中也正确处理了常见俚语；它没有收到 LLM 那样的附近上下文。LLM 的表达通常更自然，但更慢，也可能出现跨行重复或译名不统一。目前不支持 Netflix、YouTube、手机浏览器和直播。
 
 ### 云端翻译和本地模型
 
-打开 **Translator settings**。支持 Google Cloud、OpenAI API、DeepSeek、Claude API、Qwen，以及提供 OpenAI Chat Completions 兼容接口的其他服务或本地模型。
+打开 **Translator settings → API / local model**，点击要用的服务。支持 Google Cloud、OpenAI API、DeepSeek、Claude API、Qwen，以及提供 OpenAI Chat Completions 兼容接口的其他服务或本地模型。
 
 填写自己的 key 和模型名称，点击 **Save and use**。Qwen 还需要填对应区域的工作区 API base URL；本地模型填写 `http://localhost:端口/v1`，并先启动自己的模型服务。云端连接使用 HTTPS，选定服务后才请求对应权限。API 费用由服务商收取，与聊天产品订阅通常分开。
 
-**Test with “Hello.”** 会发送一次简短测试请求，可能使用付费额度。key 只留在 Chrome 当前会话的内存中，不传给视频网页。重启 Chrome 或重新加载扩展后需要重新填 key，服务器地址和模型会保留。**Remove key** 删除凭据；更换服务器也需要重新填 key。
+**Test connection** 会发送一次简短测试请求，可能使用付费额度。key 只留在 Chrome 当前会话的内存中，不传给视频网页。重启 Chrome 或重新加载扩展后需要重新填 key，服务器地址和模型会保留。**Remove key** 删除凭据；更换服务器也需要重新填 key。
 
 ### 实测对比
 
@@ -183,7 +183,7 @@ Subtítulos bilingües para Hulu y Disney+, incluido el contenido de Hulu en Dis
 
 En Windows, macOS y Linux solo necesitas la extensión de Chrome para escritorio. No hay un programa adicional que descargar o ejecutar. La traducción del navegador no necesita cuenta ni clave; Chrome prepara el paquete de idioma en la página del video la primera vez. Ocupa espacio local, pero no requiere un instalador aparte. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
 
-Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 30.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
+Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 1.000.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
 
 La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/translator-api) usa un modelo local distinto de Google Cloud. Google Cloud fue rápido y resolvió bien los modismos de nuestra pequeña prueba. Los LLM reciben diálogo cercano y suelen sonar más naturales, pero tardan más y pueden repetir contenido entre subtítulos o variar los nombres. No se admiten Netflix, YouTube, navegadores móviles ni emisiones en directo.
 
@@ -191,7 +191,7 @@ La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/transl
 
 En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Introduce tu clave y modelo y pulsa **Save and use**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
 
-Las claves permanecen en memoria durante esta sesión de Chrome y no se envían al sitio del video. Tras reiniciar Chrome o recargar la extensión, introduce la clave de nuevo; la dirección del servidor y el modelo se conservan. **Remove key** elimina la clave. Cambiar de servidor también requiere introducirla de nuevo. **Test with “Hello.”** envía una petición pequeña que puede consumir cuota de pago. La facturación API es independiente de las suscripciones de chat.
+Las claves permanecen en memoria durante esta sesión de Chrome y no se envían al sitio del video. Tras reiniciar Chrome o recargar la extensión, introduce la clave de nuevo; la dirección del servidor y el modelo se conservan. **Remove key** elimina la clave. Cambiar de servidor también requiere introducirla de nuevo. **Test connection** envía una petición pequeña que puede consumir cuota de pago. La facturación API es independiente de las suscripciones de chat.
 
 ### Comparación medida
 

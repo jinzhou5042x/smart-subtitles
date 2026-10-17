@@ -62,8 +62,8 @@ button:disabled{opacity:.55;cursor:default}
 .row{display:flex;align-items:center;flex-wrap:wrap;gap:0 14px;min-height:44px;padding:6px 0}
 .row+.row{border-top:1px solid var(--line)}
 .row label,.row .label{flex:none;color:var(--fg)}
-select{flex:1;min-width:0;font:inherit;color:var(--muted);border:0;border-radius:6px;padding:6px 18px 6px 4px;cursor:pointer;appearance:none;text-align:right;text-align-last:right;
-  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%238b928d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 2px center;
+select{flex:1;min-width:0;font:inherit;color:var(--muted);border:0;border-radius:6px;padding:6px 4px;cursor:pointer;appearance:auto;text-align:right;text-align-last:right;
+  background:transparent;
   text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 select:hover{color:var(--fg)}
 select option{background:var(--surface);color:var(--fg);text-align:left}

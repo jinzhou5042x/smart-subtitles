@@ -156,3 +156,12 @@ test('SSE survives UTF-8 and CRLF splits and requires a completed response', asy
   await assert.rejects(readResponsesStream(stream([{ type: 'response.output_text.delta', delta: output }]), request.cues), /interrupted/);
   await assert.rejects(readResponsesStream(stream([{ type: 'response.output_text.delta', delta: output }, { type: 'response.failed', response: { error: { code: 'subscription_sharing_usage_limit_exceeded' } } }]), request.cues), /usage limit/);
 });
+
+test('connection errors identify the failing step without disclosing request secrets', async () => {
+  const client = new ChatGPTClient({ fetcher: async () => { throw new TypeError('private-code-and-token'); } });
+  await assert.rejects(client.checkConnection(), error => error.code === 'openai_network_error' && /Verify OpenAI identity/.test(error.message) && !error.message.includes('private-code'));
+  await assert.rejects(client.json(`${AUTH_ORIGIN}/api/accounts/oauth/token`), /Exchange sign-in credentials.*auth.openai.com/);
+  await assert.rejects(client.json(`${API_ORIGIN}/v1/models`), /Load ChatGPT models.*api.openai.com/);
+  const controller = new AbortController(); controller.abort(new DOMException('expired', 'TimeoutError'));
+  await assert.rejects(client.json(`${AUTH_ORIGIN}/.well-known/jwks.json`, { signal: controller.signal }), error => error.code === 'openai_timeout' && /timed out/.test(error.message));
+});
