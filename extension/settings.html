@@ -3,7 +3,7 @@
 <body><main><header><img class="logo" src="icon.svg" alt=""><h1>Translator settings</h1></header>
 <p class="intro">Browser translation works without an account. Connect a cloud provider if you want a different translator.</p>
 <div class="group"><div class="row"><label for="provider">Translator</label><select id="provider"></select></div></div>
-<section id="builtin"><p>Uses Chrome's built-in translation. On a supported video, click <strong>Start subtitles</strong> if a language pack needs downloading. Your subtitles stay on this computer. Slang and idioms can translate literally; try a cloud provider for dialogue quality.</p><p>Requires a supported desktop browser and language. If your browser or organization disables this feature, choose a cloud translator.</p><button id="useBuiltin" class="primary">Use browser translation</button></section>
+<section id="builtin"><p>Uses Chrome's built-in translation. On a supported video, click <strong>Start subtitles</strong> if prompted. Chrome prepares the language pack on that page; no separate download or installer is needed. Your subtitles stay on this computer. Slang and idioms can translate literally; try a cloud provider for dialogue quality.</p><p>Requires a supported desktop browser and language. If your browser or organization disables this feature, choose a cloud translator.</p><button id="useBuiltin" class="primary">Use browser translation</button></section>
 <form id="cloud" hidden>
 <label for="baseUrl">API base URL</label><input id="baseUrl" type="url" placeholder="https://your-provider.example/v1" autocomplete="off">
 <p class="note" id="endpointHelp">Use the address from your provider. For local models, use http://localhost:PORT/v1.</p>

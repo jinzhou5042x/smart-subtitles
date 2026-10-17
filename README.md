@@ -10,11 +10,11 @@ Bilingual subtitles for Hulu and Disney+, including Hulu content on Disney+. Eng
 
 ### Start watching
 
-1. Install the extension in desktop Chrome.
+1. [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno) in desktop Chrome.
 2. Open a video with English subtitles. Choose your language in the extension.
 3. Leave **Browser translation** selected. If a **Start subtitles** button appears on the video, click it and wait for Chrome to prepare the language pack.
 
-The extension runs on desktop Chrome on Windows, macOS and Linux. There is no companion app to download or run. Browser translation needs no account or key; Chrome downloads a language pack on first use. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
+The extension runs on desktop Chrome on Windows, macOS and Linux. There is no companion app to download or run. Browser translation needs no account or key; Chrome prepares the language pack on the video page on first use, without a separate installer. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
 
 Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 30,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
 
@@ -112,11 +112,11 @@ Browser checks use synthetic API responses and a fresh browser profile. They che
 
 ### 开始使用
 
-1. 在桌面版 Chrome 安装扩展。
+1. 用桌面版 Chrome [从应用商店安装扩展](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno)。
 2. 打开有英文字幕的视频，在扩展中选择目标语言。
 3. 保持 **Browser translation**。如果视频上出现 **Start subtitles**，点击后等待 Chrome 准备语言包。
 
-Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP 或运行配套程序。浏览器翻译不需要账号或 key；首次会下载语言包并占用本地磁盘。是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
+Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP 或运行配套程序。浏览器翻译不需要账号或 key；首次由 Chrome 在视频页面内准备语言包，会占用本地磁盘，不用去别处下载或安装。是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
 
 拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 30,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
 
@@ -177,11 +177,11 @@ Subtítulos bilingües para Hulu y Disney+, incluido el contenido de Hulu en Dis
 
 ### Empezar
 
-1. Instala la extensión en Chrome para escritorio.
+1. [Instala la extensión desde Chrome Web Store](https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno) en Chrome para escritorio.
 2. Abre un video con subtítulos en inglés y elige tu idioma en la extensión.
 3. Mantén **Browser translation**. Si aparece **Start subtitles** sobre el video, púlsalo y espera a que Chrome prepare el paquete de idioma.
 
-En Windows, macOS y Linux solo necesitas la extensión de Chrome para escritorio. No hay un programa adicional que descargar o ejecutar. La traducción del navegador no necesita cuenta ni clave; el paquete de idioma se descarga la primera vez y ocupa espacio local. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
+En Windows, macOS y Linux solo necesitas la extensión de Chrome para escritorio. No hay un programa adicional que descargar o ejecutar. La traducción del navegador no necesita cuenta ni clave; Chrome prepara el paquete de idioma en la página del video la primera vez. Ocupa espacio local, pero no requiere un instalador aparte. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
 
 Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 30.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
 
