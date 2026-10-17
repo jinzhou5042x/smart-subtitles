@@ -23,7 +23,7 @@ export function validateWindow(input) {
   const valid = (c) => c && typeof c.id === 'string' && c.id.length <= 120 && typeof c.text === 'string' && c.text.trim() && c.text.length <= 2000 && Number.isFinite(c.start) && Number.isFinite(c.end) && c.start >= 0 && c.end > c.start;
   if (!Array.isArray(input.cues) || !input.cues.length || input.cues.length > 16 || !input.cues.every(valid) || new Set(input.cues.map(c => c.id)).size !== input.cues.length) throw new Error('Invalid subtitle window');
   const cues = input.cues.map(({ id, text, start, end }) => ({ id, text, start, end }));
-  const context = Array.isArray(input.context) ? input.context.slice(0, 24).filter(valid).map(({ text, start, end }) => ({ text, start, end })) : [];
+  const context = Array.isArray(input.context) ? input.context.slice(0, 24).filter(valid).map(({ text, start, end, translation }) => ({ text, start, end, ...(typeof translation === 'string' ? { translation: translation.slice(0, 6000) } : {}) })) : [];
   return { session: input.session, epoch: input.epoch, title: String(input.title || '').slice(0, 200), cues, context };
 }
 export function validateSegments(segments, cues) {

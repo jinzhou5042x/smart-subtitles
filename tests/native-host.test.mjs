@@ -52,4 +52,3 @@ test('the host program answers one framed message on standard output and refuses
   assert.equal(bytes.readUInt32LE(0), bytes.length - 4, 'nothing but the answer was printed');
   assert.deepEqual(JSON.parse(bytes.subarray(4).toString('utf8')), { ok: false, error: 'This extension may not use the companion' });
 });
-

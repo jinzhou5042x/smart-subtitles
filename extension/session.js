@@ -35,7 +35,7 @@
       const window = nextWindow(this.cues, this.lines, time, paused);
       if (!window.length) { this.episode = { ...this.episode, status: 'ready' }; return; }
       const first = this.cues.indexOf(window[0]), last = this.cues.indexOf(window.at(-1));
-      const context = this.cues.slice(Math.max(0, first - 12), Math.min(this.cues.length, last + 13)).filter(c => !window.includes(c)).slice(0, 24);
+      const context = this.cues.slice(Math.max(0, first - 12), Math.min(this.cues.length, last + 13)).filter(c => !window.includes(c)).slice(0, 24).map(c => ({ ...c, ...(this.lines.has(c.id) ? { translation: this.lines.get(c.id).text } : {}) }));
       const epoch = this.epoch, selection = { ...this.selection }, stale = () => epoch !== this.epoch;
       const request = { session, title, epoch, cues: window, context };
       const controller = new AbortController(); this.controller = controller; this.busy = true; this.episode = { status: 'running' };

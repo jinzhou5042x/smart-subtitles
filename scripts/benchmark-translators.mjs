@@ -7,6 +7,7 @@ import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { loadConfig } from '../service/config.mjs';
 import { CodexTranslator } from '../service/codex.mjs';
+import { validateRequest } from '../service/translation.mjs';
 import { translateRemote } from '../extension/translation.js';
 const key = process.env.GOOGLE_TRANSLATE_API_KEY;
 if (!key) throw new Error('Set GOOGLE_TRANSLATE_API_KEY before running this paid, opt-in benchmark.');
@@ -28,10 +29,10 @@ try {
   const host = page.locator('body > div[style*="2147483647"]'); await host.waitFor(); const prepare = performance.now(); await host.click();
   for (let n = 0; !await evaluate('globalThis.prepared'); n++) { if (n > 120) throw new Error('Browser language pack preparation timed out'); await page.waitForTimeout(1000); }
   report.browserPreparationMs = Math.round(performance.now() - prepare);
-  const providers = ['builtin', 'google', 'codex'];
+  const providers = ['builtin', 'google', 'codex'], accepted = new Map();
   for (let round = 0; round < report.rounds; round++) for (let start = 0; start < fixture.cues.length; start += report.windowSize) {
     const cues = fixture.cues.slice(start, start + report.windowSize).map(({ category, ...c }) => c);
-    const context = fixture.cues.slice(Math.max(0, start - 12), Math.min(fixture.cues.length, start + cues.length + 12)).filter(c => !cues.some(x => x.id === c.id)).slice(0, 24);
+    const context = fixture.cues.slice(Math.max(0, start - 12), Math.min(fixture.cues.length, start + cues.length + 12)).filter(c => !cues.some(x => x.id === c.id)).slice(0, 24).map(({ id, text, start, end }) => ({ id, text, start, end }));
     const request = { session: 'translation-review', client: 'benchmark', epoch: `${round}-${start}`, target: fixture.target, title: 'Friends at home and work', cues, context };
     for (const provider of [...providers.slice(round), ...providers.slice(0, round)]) {
       const started = performance.now(); let result, usage, durationMs;
@@ -40,9 +41,12 @@ try {
       } else if (provider === 'google') {
         const r = await translateRemote({ provider, target: fixture.target }, { key }, request, AbortSignal.timeout(25000)); result = r.segments; usage = r.usage;
       } else {
-        result = await codex.translate(request, AbortSignal.timeout(95000), p => { if (p.usage) usage = p.usage; });
+        if (start === 0) accepted.clear();
+        const codexRequest = { ...request, provider: 'codex', context: request.context.map(c => ({ ...c, translation: accepted.get(c.id) || '' })) };
+        result = await codex.translate(validateRequest(codexRequest, 16), AbortSignal.timeout(95000), p => { if (p.usage) usage = p.usage; });
       }
       durationMs = Math.round(durationMs ?? performance.now() - started);
+      if (provider === 'codex') for (const segment of result) accepted.set(segment.sourceIds[0], segment.text);
       report.runs.push({ provider, round: round + 1, window: start / report.windowSize + 1, cues: cues.length, durationMs, usage, segments: result });
       console.log(`${provider}: round ${round + 1}, window ${start / report.windowSize + 1}, ${durationMs} ms`);
     }

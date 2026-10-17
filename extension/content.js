@@ -160,7 +160,7 @@
     if (m.type === 'settingsChanged') {
       const changed = settings?.target !== m.settings.target || settings?.provider !== m.settings.provider; settings = m.settings; session.configure(settings);
       // Another language or translator has its own record; a finished setup can try again.
-      if (m.resetTranslations || changed || ((session.error || session.awaiting) && m.retryProvider === settings.provider)) session.reset();
+      if (m.resetTranslations || changed) session.reset();
       render(); respond({ ok: true });
     } else if (m.type === 'diagnostics') {
       const info = progressInfo();

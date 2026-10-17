@@ -9,6 +9,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14, macos-15-intel, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

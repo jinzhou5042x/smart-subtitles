@@ -37,7 +37,13 @@ Open **Translator settings** from the popup. Switching to a paid provider is alw
 
 Click **Save and use**, then optionally **Test with “Hello.”** The test sends one small request and may use paid quota. Keys stay in the extension's local storage, are not synced, and are not sent to the video website. Clear a key with **Remove key**. Changing API servers requires entering the key again.
 
-Google Cloud is usually fast, but can miss slang and context. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
+Google Cloud is fast and handled common idioms well in our small test. It does not receive the nearby context sent to LLMs. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
+
+### Translation comparison
+
+We tested the same 36 English cues in Simplified Chinese, three times, without cache. Median time per window of 6–10 cues: **browser 0.098 s**, **Google 0.156 s**, **Codex 3.765 s**. Browser translation made several literal idiom errors. Google handled the selected idioms well. Codex sounded more natural but moved or repeated content between cues. Passing earlier translations as context kept the tested names consistent in the final runs. These are provider timings from one Windows machine, not general accuracy scores or full-player latency.
+
+[Full comparison, exact outputs and limitations](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html).
 
 ### Get a Google API key
 
@@ -100,7 +106,7 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 
 拖动字幕可以调整位置，**Size** 调整字号。优先翻译当前播放位置并预先准备后面一小段，跳转后优先处理新位置。缓存保存在浏览器中，最多 30,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
 
-[Chrome 内置翻译](https://developer.chrome.com/docs/ai/translator-api)使用本地模型，与 Google Cloud 是不同服务，效果需要按实际影片判断。Google Cloud 通常很快，但英文俚语和上下文容易处理不好；LLM 会结合附近对白，通常更适合对话，但可能更慢，分段也可能损失较远的上下文。目前不支持 Netflix、YouTube、手机浏览器和直播。
+[Chrome 内置翻译](https://developer.chrome.com/docs/ai/translator-api)使用本地模型，与 Google Cloud 是不同服务，效果需要按实际影片判断。Google Cloud 很快，在这次小样本测试中也正确处理了常见俚语；它没有收到 LLM 那样的附近上下文。LLM 的表达通常更自然，但更慢，也可能出现跨行重复或译名不统一。目前不支持 Netflix、YouTube、手机浏览器和直播。
 
 ### 云端翻译和本地模型
 
@@ -109,6 +115,12 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 填写自己的 key 和模型名称，点击 **Save and use**。Qwen 还需要填对应区域的工作区 API base URL；本地模型填写 `http://localhost:端口/v1`，并先启动自己的模型服务。云端连接使用 HTTPS，选定服务后才请求对应权限。API 费用由服务商收取，与聊天产品订阅通常分开。
 
 **Test with “Hello.”** 会发送一次简短测试请求，可能使用付费额度。key 只存在扩展的本地存储，不同步、不传给视频网页。**Remove key** 删除凭据；更换服务器需要重新填 key。
+
+### 实测对比
+
+同一组 36 条英文字幕翻成简体中文，重复 3 次、不用缓存。每窗口 6–10 条字幕的中位耗时：**内置 0.098 秒、Google 0.156 秒、Codex 3.765 秒**。内置有多处俚语直译；Google 在这组样本里表现稳定；Codex 更自然，但有跨行重复或调序；补上已译上下文后，本次人名保持一致。这是单台 Windows 机器的翻译引擎耗时，不是完整播放器延迟或通用准确率。
+
+[完整译例、原始数据和限制](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html)。
 
 ### Google API key 怎么申请
 
@@ -154,13 +166,19 @@ La traducción del navegador no necesita ZIP, Node, clave API ni programa adicio
 
 Arrastra los subtítulos para moverlos y ajusta **Size**. Se traduce primero la posición actual y un tramo por delante. Al saltar, se prioriza la nueva posición. Se guardan hasta 30.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
 
-La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/translator-api) usa un modelo local distinto de Google Cloud. Google Cloud suele ser rápido, pero puede fallar con jerga y contexto. Los LLM reciben diálogo cercano y pueden mejorar las conversaciones, aunque tardan más y las ventanas cortas pueden perder contexto lejano. No se admiten Netflix, YouTube, navegadores móviles ni emisiones en directo.
+La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/translator-api) usa un modelo local distinto de Google Cloud. Google Cloud fue rápido y resolvió bien los modismos de nuestra pequeña prueba. Los LLM reciben diálogo cercano y suelen sonar más naturales, pero tardan más y pueden repetir contenido entre subtítulos o variar los nombres. No se admiten Netflix, YouTube, navegadores móviles ni emisiones en directo.
 
 ### Proveedores
 
 En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Introduce tu clave y modelo y pulsa **Save and use**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
 
 Las claves se guardan únicamente en este perfil del navegador, sin sincronizarse ni enviarse al sitio del video. **Remove key** las elimina. Cambiar de servidor requiere introducir la clave de nuevo. **Test with “Hello.”** envía una petición pequeña que puede consumir cuota de pago. La facturación API es independiente de las suscripciones de chat.
+
+### Comparación medida
+
+Tradujimos las mismas 36 líneas del inglés al chino simplificado, tres veces y sin caché. Mediana por ventana de 6–10 líneas: **navegador 0,098 s**, **Google 0,156 s**, **Codex 3,765 s**. El navegador cometió errores literales con modismos; Google funcionó bien en esta muestra; Codex sonó más natural, pero repitió o desplazó contenido entre líneas. El contexto con traducciones anteriores mantuvo los nombres de la prueba consistentes en la versión final. Son tiempos del motor en un solo equipo Windows, no una puntuación general de precisión ni la latencia completa del reproductor.
+
+[Resultados, traducciones originales y limitaciones](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html).
 
 ### Conseguir una clave de Google
 

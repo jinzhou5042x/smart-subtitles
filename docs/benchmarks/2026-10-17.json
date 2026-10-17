@@ -1,0 +1,3368 @@
+{
+  "at": "2026-10-17T02:33:19.174Z",
+  "target": "zh-CN",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "rounds": 3,
+  "windowSize": 10,
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v22.23.1",
+    "browser": "154.0.8037.58"
+  },
+  "fixture": {
+    "description": "Original synthetic dialogue; deliberately includes context, slang, sarcasm, numbers and split sentences. Not a representative corpus of all films.",
+    "target": "zh-CN",
+    "cues": [
+      {
+        "id": "1",
+        "start": 0,
+        "end": 2.8,
+        "text": "- Are you coming to dinner?\n- I’ll be there in ten minutes.",
+        "category": "everyday"
+      },
+      {
+        "id": "2",
+        "start": 3,
+        "end": 5.8,
+        "text": "Don’t wait for me. Go ahead and eat.",
+        "category": "everyday"
+      },
+      {
+        "id": "3",
+        "start": 6,
+        "end": 8.8,
+        "text": "I haven’t eaten since noon.",
+        "category": "everyday"
+      },
+      {
+        "id": "4",
+        "start": 9,
+        "end": 11.8,
+        "text": "There’s some soup in the fridge.",
+        "category": "everyday"
+      },
+      {
+        "id": "5",
+        "start": 12,
+        "end": 14.8,
+        "text": "Heat it for ninety seconds, not nine minutes.",
+        "category": "numbers"
+      },
+      {
+        "id": "6",
+        "start": 15,
+        "end": 17.8,
+        "text": "[doorbell rings]",
+        "category": "sound"
+      },
+      {
+        "id": "7",
+        "start": 18,
+        "end": 20.8,
+        "text": "You told Maya the party was a surprise, right?",
+        "category": "idioms"
+      },
+      {
+        "id": "8",
+        "start": 21,
+        "end": 23.8,
+        "text": "No. Leo spilled the beans before I could stop him.",
+        "category": "idioms"
+      },
+      {
+        "id": "9",
+        "start": 24,
+        "end": 26.8,
+        "text": "Great. So much for keeping it under wraps.",
+        "category": "idioms"
+      },
+      {
+        "id": "10",
+        "start": 27,
+        "end": 29.8,
+        "text": "Don’t throw him under the bus. I let it slip first.",
+        "category": "idioms"
+      },
+      {
+        "id": "11",
+        "start": 30,
+        "end": 32.8,
+        "text": "Then we’re both in hot water.",
+        "category": "idioms"
+      },
+      {
+        "id": "12",
+        "start": 33,
+        "end": 35.8,
+        "text": "Let’s call it a day and sort this out tomorrow.",
+        "category": "idioms"
+      },
+      {
+        "id": "13",
+        "start": 36,
+        "end": 38.8,
+        "text": "[Rain pours through a hole in the roof.]",
+        "category": "sarcasm"
+      },
+      {
+        "id": "14",
+        "start": 39,
+        "end": 41.8,
+        "text": "Oh, perfect. An indoor swimming pool.",
+        "category": "sarcasm"
+      },
+      {
+        "id": "15",
+        "start": 42,
+        "end": 44.8,
+        "text": "- Should I call a plumber?\n- No, invite the neighbors over for a swim.",
+        "category": "sarcasm"
+      },
+      {
+        "id": "16",
+        "start": 45,
+        "end": 47.8,
+        "text": "I’m kidding. Get a bucket.",
+        "category": "sarcasm"
+      },
+      {
+        "id": "17",
+        "start": 48,
+        "end": 50.8,
+        "text": "And don’t tell the landlord we’re having a pool party.",
+        "category": "sarcasm"
+      },
+      {
+        "id": "18",
+        "start": 51,
+        "end": 53.8,
+        "text": "He’d probably charge us extra.",
+        "category": "sarcasm"
+      },
+      {
+        "id": "19",
+        "start": 54,
+        "end": 56.8,
+        "text": "Maya handed Leo the keys because he was driving.",
+        "category": "reference"
+      },
+      {
+        "id": "20",
+        "start": 57,
+        "end": 59.8,
+        "text": "She stayed behind to lock the office.",
+        "category": "reference"
+      },
+      {
+        "id": "21",
+        "start": 60,
+        "end": 62.8,
+        "text": "The bank called about the loan.",
+        "category": "polysemy"
+      },
+      {
+        "id": "22",
+        "start": 63,
+        "end": 65.8,
+        "text": "We’ll meet by the river bank after lunch.",
+        "category": "polysemy"
+      },
+      {
+        "id": "23",
+        "start": 66,
+        "end": 68.8,
+        "text": "Can you give me a hand with this box?",
+        "category": "idioms"
+      },
+      {
+        "id": "24",
+        "start": 69,
+        "end": 71.8,
+        "text": "Sure. Just don’t drop it on my foot again.",
+        "category": "reference"
+      },
+      {
+        "id": "25",
+        "start": 72,
+        "end": 74.8,
+        "text": "I didn’t say",
+        "category": "split-negation"
+      },
+      {
+        "id": "26",
+        "start": 75,
+        "end": 77.8,
+        "text": "you stole the money.",
+        "category": "split-negation"
+      },
+      {
+        "id": "27",
+        "start": 78,
+        "end": 80.8,
+        "text": "I said the money was missing.",
+        "category": "split-negation"
+      },
+      {
+        "id": "28",
+        "start": 81,
+        "end": 83.8,
+        "text": "You can’t rule her out",
+        "category": "split-context"
+      },
+      {
+        "id": "29",
+        "start": 84,
+        "end": 86.8,
+        "text": "just because she’s your sister.",
+        "category": "split-context"
+      },
+      {
+        "id": "30",
+        "start": 87,
+        "end": 89.8,
+        "text": "I never said she was innocent.",
+        "category": "split-context"
+      },
+      {
+        "id": "31",
+        "start": 90,
+        "end": 92.8,
+        "text": "That meeting was a train wreck.",
+        "category": "slang"
+      },
+      {
+        "id": "32",
+        "start": 93,
+        "end": 95.8,
+        "text": "The client ghosted us right after.",
+        "category": "slang"
+      },
+      {
+        "id": "33",
+        "start": 96,
+        "end": 98.8,
+        "text": "- So the deal is dead?\n- Not yet. We still have a shot.",
+        "category": "slang"
+      },
+      {
+        "id": "34",
+        "start": 99,
+        "end": 101.8,
+        "text": "I’m down, as long as we don’t cut corners.",
+        "category": "slang"
+      },
+      {
+        "id": "35",
+        "start": 102,
+        "end": 104.8,
+        "text": "Keep me posted. And break a leg tomorrow.",
+        "category": "idioms"
+      },
+      {
+        "id": "36",
+        "start": 105,
+        "end": 107.8,
+        "text": "If they offer less than fifteen thousand, walk away.",
+        "category": "numbers"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "provider": "builtin",
+      "round": 1,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 108,
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃饭了吗？ - 我会在十分钟后到那里。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "不要等我。 继续吃饭。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午开始就没有吃过东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里有一些汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "加热九十秒，而不是九分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃环]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你告诉玛雅聚会是一个惊喜，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "不，在我阻止他之前，利奥把豆子洒了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "太好了。 把它保密就这么多。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "不要把他扔到公共汽车下。 我让它先滑。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 1,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 233,
+      "usage": {
+        "characters": 404
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃晚饭吗？ - 我十分钟后到。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "不用等我了，你先吃吧。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午到现在都没吃东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里还有一些汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "加热90秒，而不是9分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃响了]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你跟玛雅说过派对是个惊喜，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "不，在我阻止他之前，Leo已经把事情说漏嘴了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "太好了。看来保密工作根本就做不成了。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "别把他出卖了。是我先说漏嘴的。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 5830,
+      "usage": {
+        "input": 6430,
+        "cachedInput": 4096,
+        "output": 332,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃晚饭吗？\n- 我十分钟后到。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "别等我了，你们先吃。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午到现在还没吃东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里有汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "热九十秒，别热九分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃响]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你跟玛雅说派对是个惊喜了，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "没有。我还没来得及拦，利奥就把秘密说出去了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "真好，保密计划就这么泡汤了。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "别把责任都推给他，是我先说漏嘴的。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 1,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 108,
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "然后我们都在热水中。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "让我们收工，明天解决这个问题。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "[雨水从屋顶上的一个洞倾泻而下。]",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，完美。 室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 我应该打电话给水管工吗？ - 不，请邻居过来游泳。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我在开玩笑。 得到一个桶。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "不要告诉房东我们要举办泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他可能会向我们收取额外费用。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙递给了里奥，因为他在开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁上办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 1,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 232,
+      "usage": {
+        "characters": 418
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "那我们俩就都麻烦了。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "今天就到此为止吧，明天再处理这件事。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "雨水从屋顶的破洞里倾泻而下。",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，太好了。一个室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 我应该打电话叫水管工吗？ - 不用，邀请邻居们过来游泳吧。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我开玩笑的。拿个桶来。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "别告诉房东我们要开泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他可能会额外收费。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙递给了利奥，因为是他开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 3814,
+      "usage": {
+        "input": 6677,
+        "cachedInput": 0,
+        "output": 343,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "那咱俩都惹上麻烦了。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "今天就到这儿吧，明天再解决。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "[雨水从屋顶的破洞里倾泻而下。]",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，太好了，室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 要不要叫水管工？\n- 不用，叫邻居来游泳吧。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "开玩笑的，拿个桶来。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "还有，别告诉房东我们在办泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他多半会多收我们钱。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙交给了利奥，因为是他开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁办公室的门。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 1,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 85,
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行打电话询问贷款。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们会在河岸边见面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我拿这个盒子吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "当然。 只是不要再把它放在我的脚上。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没有说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "只是因为她是你的妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我从来没有说过她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 1,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 112,
+      "usage": {
+        "characters": 295
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行来电询问贷款事宜。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们在河边见面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我把这个盒子拿一下吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "当然。只是别再掉到我脚上了。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她的可能性。",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "仅仅因为她是你的妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我从没说过她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 2928,
+      "usage": {
+        "input": 6657,
+        "cachedInput": 4096,
+        "output": 268,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行打电话来谈贷款的事。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们在河岸边见。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我搬一下这个箱子吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "行。别再把它砸我脚上就好。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说的是钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "不能因为她是你妹妹",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "就排除她的嫌疑。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我可没说她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 1,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 66,
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那次会议是火车残骸。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户紧随其后。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "- 所以交易已经死了？ - 还没有。 我们还有一枪。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "我很沮丧，只要我们不偷工减料。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "让我知道。 明天打断一条腿。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们提供少于一万五千，就走开。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 1,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 131,
+      "usage": {
+        "characters": 255
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那次会议简直是一场灾难。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户之后就杳无音信了。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "——所以这笔交易彻底告吹了？——还没。我们还有机会。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "只要我们不偷工减料，我就没问题。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "随时告诉我最新情况。祝你明天一切顺利。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们出价低于一万五千，就放弃。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 1,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 3178,
+      "usage": {
+        "input": 6435,
+        "cachedInput": 0,
+        "output": 216,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那场会议简直一团糟。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "之后客户就再也没回音了。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "- 所以这笔生意黄了？\n- 还没，我们还有机会。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "我没意见，只要咱们不偷工减料。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "有消息随时告诉我。祝你明天好运。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们出价不到一万五，就别谈了。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 2,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 125,
+      "usage": {
+        "characters": 404
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃晚饭吗？ - 我十分钟后到。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "不用等我了，你先吃吧。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午到现在都没吃东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里还有一些汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "加热90秒，而不是9分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃响了]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你跟玛雅说过派对是个惊喜，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "不，在我阻止他之前，Leo已经把事情说漏嘴了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "太好了。看来保密工作根本就做不成了。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "别把他出卖了。是我先说漏嘴的。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 5061,
+      "usage": {
+        "input": 6430,
+        "cachedInput": 0,
+        "output": 332,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃晚饭吗？\n- 我十分钟后到。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "别等我了，你们先吃吧。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午到现在还没吃东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里有汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "热九十秒，别热九分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃响]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你告诉玛雅派对是个惊喜了，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "没有。我还没来得及拦，利奥就把秘密说漏了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "好极了。这下秘密是保不住了。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "别把责任都推给他，是我先说漏嘴的。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 2,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 127,
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃饭了吗？ - 我会在十分钟后到那里。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "不要等我。 继续吃饭。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午开始就没有吃过东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里有一些汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "加热九十秒，而不是九分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃环]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你告诉玛雅聚会是一个惊喜，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "不，在我阻止他之前，利奥把豆子洒了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "太好了。 把它保密就这么多。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "不要把他扔到公共汽车下。 我让它先滑。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 2,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 176,
+      "usage": {
+        "characters": 418
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "那我们俩就都麻烦了。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "今天就到此为止吧，明天再处理这件事。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "雨水从屋顶的破洞里倾泻而下。",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，太好了。一个室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 我应该打电话叫水管工吗？ - 不用，邀请邻居们过来游泳吧。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我开玩笑的。拿个桶来。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "别告诉房东我们要开泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他可能会额外收费。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙递给了利奥，因为是他开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 3716,
+      "usage": {
+        "input": 6677,
+        "cachedInput": 4096,
+        "output": 345,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "那我们俩都摊上麻烦了。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "今天就到这儿，明天再解决这事吧。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "[雨水从屋顶的洞里哗哗漏下来。]",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，太棒了。室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 要不要叫水管工？\n- 不用，叫邻居来游泳吧。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我开玩笑的。拿个桶来。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "还有，别告诉房东我们办泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他八成会多收我们钱。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙交给了利奥，因为是他开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁办公室的门。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 2,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 111,
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "然后我们都在热水中。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "让我们收工，明天解决这个问题。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "[雨水从屋顶上的一个洞倾泻而下。]",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，完美。 室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 我应该打电话给水管工吗？ - 不，请邻居过来游泳。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我在开玩笑。 得到一个桶。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "不要告诉房东我们要举办泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他可能会向我们收取额外费用。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙递给了里奥，因为他在开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁上办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 2,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 117,
+      "usage": {
+        "characters": 295
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行来电询问贷款事宜。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们在河边见面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我把这个盒子拿一下吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "当然。只是别再掉到我脚上了。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她的可能性。",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "仅仅因为她是你的妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我从没说过她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 10607,
+      "usage": {
+        "input": 6659,
+        "cachedInput": 4096,
+        "output": 275,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行打电话来问贷款的事。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们在河岸边碰面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我搬一下这个箱子吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "好啊。可别再把箱子砸我脚上了。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "是你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说的是钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她的嫌疑",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "不能因为她是你妹妹就这样。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我可没说她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 2,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 91,
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行打电话询问贷款。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们会在河岸边见面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我拿这个盒子吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "当然。 只是不要再把它放在我的脚上。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没有说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "只是因为她是你的妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我从来没有说过她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 2,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 174,
+      "usage": {
+        "characters": 255
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那次会议简直是一场灾难。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户之后就杳无音信了。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "——所以这笔交易彻底告吹了？——还没。我们还有机会。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "只要我们不偷工减料，我就没问题。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "随时告诉我最新情况。祝你明天一切顺利。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们出价低于一万五千，就放弃。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 2,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 10625,
+      "usage": {
+        "input": 6442,
+        "cachedInput": 4096,
+        "output": 217,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那场会议简直一团糟。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户之后就再也没消息了。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "- 所以这笔生意黄了？\n- 还没有，我们还有机会。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "我没问题，只要咱们不偷工减料。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "有进展随时告诉我。祝你明天好运。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们出价低于一万五，就别谈了。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 2,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 81,
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那次会议是火车残骸。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户紧随其后。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "- 所以交易已经死了？ - 还没有。 我们还有一枪。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "我很沮丧，只要我们不偷工减料。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "让我知道。 明天打断一条腿。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们提供少于一万五千，就走开。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 3,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 7119,
+      "usage": {
+        "input": 6430,
+        "cachedInput": 4096,
+        "output": 335,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃晚饭吗？\n- 我十分钟后到。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "别等我了，你们先吃吧。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午到现在还没吃东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里有汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "热九十秒，别热九分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃响]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你告诉玛雅这是个惊喜派对了，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "没有。我还没来得及拦住，利奥就把秘密说漏了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "好极了，保密这事算是泡汤了。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "别把责任都推给他，是我先说漏嘴的。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 3,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 105,
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃饭了吗？ - 我会在十分钟后到那里。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "不要等我。 继续吃饭。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午开始就没有吃过东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里有一些汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "加热九十秒，而不是九分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃环]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你告诉玛雅聚会是一个惊喜，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "不，在我阻止他之前，利奥把豆子洒了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "太好了。 把它保密就这么多。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "不要把他扔到公共汽车下。 我让它先滑。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 3,
+      "window": 1,
+      "cues": 10,
+      "durationMs": 179,
+      "usage": {
+        "characters": 404
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "1"
+          ],
+          "text": "- 你来吃晚饭吗？ - 我十分钟后到。",
+          "start": 0,
+          "end": 2.8
+        },
+        {
+          "sourceIds": [
+            "2"
+          ],
+          "text": "不用等我了，你先吃吧。",
+          "start": 3,
+          "end": 5.8
+        },
+        {
+          "sourceIds": [
+            "3"
+          ],
+          "text": "我从中午到现在都没吃东西。",
+          "start": 6,
+          "end": 8.8
+        },
+        {
+          "sourceIds": [
+            "4"
+          ],
+          "text": "冰箱里还有一些汤。",
+          "start": 9,
+          "end": 11.8
+        },
+        {
+          "sourceIds": [
+            "5"
+          ],
+          "text": "加热90秒，而不是9分钟。",
+          "start": 12,
+          "end": 14.8
+        },
+        {
+          "sourceIds": [
+            "6"
+          ],
+          "text": "[门铃响了]",
+          "start": 15,
+          "end": 17.8
+        },
+        {
+          "sourceIds": [
+            "7"
+          ],
+          "text": "你跟玛雅说过派对是个惊喜，对吧？",
+          "start": 18,
+          "end": 20.8
+        },
+        {
+          "sourceIds": [
+            "8"
+          ],
+          "text": "不，在我阻止他之前，Leo已经把事情说漏嘴了。",
+          "start": 21,
+          "end": 23.8
+        },
+        {
+          "sourceIds": [
+            "9"
+          ],
+          "text": "太好了。看来保密工作根本就做不成了。",
+          "start": 24,
+          "end": 26.8
+        },
+        {
+          "sourceIds": [
+            "10"
+          ],
+          "text": "别把他出卖了。是我先说漏嘴的。",
+          "start": 27,
+          "end": 29.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 3,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 3535,
+      "usage": {
+        "input": 6680,
+        "cachedInput": 4096,
+        "output": 340,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "那我们俩都要惹上麻烦了。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "今天就到这儿吧，明天再解决。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "[雨水从屋顶的洞里倾泻而下。]",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，太棒了，室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 要叫水管工吗？\n- 不如请邻居来游泳吧。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "开玩笑的，拿个桶来。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "还有，别告诉房东我们要办泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他多半会加收房租。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙交给了利奥，因为是他开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 3,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 105,
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "然后我们都在热水中。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "让我们收工，明天解决这个问题。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "[雨水从屋顶上的一个洞倾泻而下。]",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，完美。 室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 我应该打电话给水管工吗？ - 不，请邻居过来游泳。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我在开玩笑。 得到一个桶。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "不要告诉房东我们要举办泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他可能会向我们收取额外费用。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙递给了里奥，因为他在开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁上办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 3,
+      "window": 2,
+      "cues": 10,
+      "durationMs": 138,
+      "usage": {
+        "characters": 418
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "11"
+          ],
+          "text": "那我们俩就都麻烦了。",
+          "start": 30,
+          "end": 32.8
+        },
+        {
+          "sourceIds": [
+            "12"
+          ],
+          "text": "今天就到此为止吧，明天再处理这件事。",
+          "start": 33,
+          "end": 35.8
+        },
+        {
+          "sourceIds": [
+            "13"
+          ],
+          "text": "雨水从屋顶的破洞里倾泻而下。",
+          "start": 36,
+          "end": 38.8
+        },
+        {
+          "sourceIds": [
+            "14"
+          ],
+          "text": "哦，太好了。一个室内游泳池。",
+          "start": 39,
+          "end": 41.8
+        },
+        {
+          "sourceIds": [
+            "15"
+          ],
+          "text": "- 我应该打电话叫水管工吗？ - 不用，邀请邻居们过来游泳吧。",
+          "start": 42,
+          "end": 44.8
+        },
+        {
+          "sourceIds": [
+            "16"
+          ],
+          "text": "我开玩笑的。拿个桶来。",
+          "start": 45,
+          "end": 47.8
+        },
+        {
+          "sourceIds": [
+            "17"
+          ],
+          "text": "别告诉房东我们要开泳池派对。",
+          "start": 48,
+          "end": 50.8
+        },
+        {
+          "sourceIds": [
+            "18"
+          ],
+          "text": "他可能会额外收费。",
+          "start": 51,
+          "end": 53.8
+        },
+        {
+          "sourceIds": [
+            "19"
+          ],
+          "text": "玛雅把钥匙递给了里奥，因为是他开车。",
+          "start": 54,
+          "end": 56.8
+        },
+        {
+          "sourceIds": [
+            "20"
+          ],
+          "text": "她留下来锁办公室。",
+          "start": 57,
+          "end": 59.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 3,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 2845,
+      "usage": {
+        "input": 6656,
+        "cachedInput": 0,
+        "output": 271,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行打电话来谈贷款的事。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们在河岸边碰面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我搬一下这个箱子吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "行啊，别再把它砸我脚上就好。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "是你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说的是钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她的嫌疑",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "就因为她是你妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我可没说她是清白的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 3,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 84,
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行打电话询问贷款。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们会在河岸边见面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我拿这个盒子吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "当然。 只是不要再把它放在我的脚上。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没有说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "只是因为她是你的妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我从来没有说过她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 3,
+      "window": 3,
+      "cues": 10,
+      "durationMs": 85,
+      "usage": {
+        "characters": 295
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "21"
+          ],
+          "text": "银行来电询问贷款事宜。",
+          "start": 60,
+          "end": 62.8
+        },
+        {
+          "sourceIds": [
+            "22"
+          ],
+          "text": "午饭后我们在河边见面。",
+          "start": 63,
+          "end": 65.8
+        },
+        {
+          "sourceIds": [
+            "23"
+          ],
+          "text": "你能帮我把这个盒子拿一下吗？",
+          "start": 66,
+          "end": 68.8
+        },
+        {
+          "sourceIds": [
+            "24"
+          ],
+          "text": "当然。只是别再掉到我脚上了。",
+          "start": 69,
+          "end": 71.8
+        },
+        {
+          "sourceIds": [
+            "25"
+          ],
+          "text": "我没说",
+          "start": 72,
+          "end": 74.8
+        },
+        {
+          "sourceIds": [
+            "26"
+          ],
+          "text": "你偷了钱。",
+          "start": 75,
+          "end": 77.8
+        },
+        {
+          "sourceIds": [
+            "27"
+          ],
+          "text": "我说钱不见了。",
+          "start": 78,
+          "end": 80.8
+        },
+        {
+          "sourceIds": [
+            "28"
+          ],
+          "text": "你不能排除她的可能性。",
+          "start": 81,
+          "end": 83.8
+        },
+        {
+          "sourceIds": [
+            "29"
+          ],
+          "text": "仅仅因为她是你的妹妹。",
+          "start": 84,
+          "end": 86.8
+        },
+        {
+          "sourceIds": [
+            "30"
+          ],
+          "text": "我从没说过她是无辜的。",
+          "start": 87,
+          "end": 89.8
+        }
+      ]
+    },
+    {
+      "provider": "codex",
+      "round": 3,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 3050,
+      "usage": {
+        "input": 6436,
+        "cachedInput": 4096,
+        "output": 213,
+        "reasoning": 0
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那场会议简直一团糟。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "之后客户就不回我们消息了。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "- 那这笔交易黄了？\n- 还没，我们还有机会。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "我没问题，只要咱们别偷工减料。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "随时告诉我进展。祝你明天好运。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们出价不到一万五，就别谈了。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "builtin",
+      "round": 3,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 66,
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那次会议是火车残骸。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户紧随其后。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "- 所以交易已经死了？ - 还没有。 我们还有一枪。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "我很沮丧，只要我们不偷工减料。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "让我知道。 明天打断一条腿。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们提供少于一万五千，就走开。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "round": 3,
+      "window": 4,
+      "cues": 6,
+      "durationMs": 182,
+      "usage": {
+        "characters": 255
+      },
+      "segments": [
+        {
+          "sourceIds": [
+            "31"
+          ],
+          "text": "那次会议简直是一场灾难。",
+          "start": 90,
+          "end": 92.8
+        },
+        {
+          "sourceIds": [
+            "32"
+          ],
+          "text": "客户之后就杳无音信了。",
+          "start": 93,
+          "end": 95.8
+        },
+        {
+          "sourceIds": [
+            "33"
+          ],
+          "text": "——所以这笔交易彻底告吹了？——还没。我们还有机会。",
+          "start": 96,
+          "end": 98.8
+        },
+        {
+          "sourceIds": [
+            "34"
+          ],
+          "text": "只要我们不偷工减料，我就没问题。",
+          "start": 99,
+          "end": 101.8
+        },
+        {
+          "sourceIds": [
+            "35"
+          ],
+          "text": "随时告诉我最新情况。祝你明天一切顺利。",
+          "start": 102,
+          "end": 104.8
+        },
+        {
+          "sourceIds": [
+            "36"
+          ],
+          "text": "如果他们出价低于一万五千，就放弃。",
+          "start": 105,
+          "end": 107.8
+        }
+      ]
+    }
+  ],
+  "browserPreparationMs": 5120,
+  "method": {
+    "scope": "Provider-engine timing, not an end-to-end streaming-player benchmark. Browser: production adapter in isolated document world of installed Chrome. Google: production direct HTTP adapter in Node. Codex: official app-server adapter in Node, one resident process. No extension cache. Companion polling, player capture and rendering are excluded.",
+    "sample": "36 original synthetic English subtitle cues, deliberately rich in idioms and context; target Simplified Chinese. Three repeats, four windows per repeat (10/10/10/6 cues). Provider order rotates between repeats. LLM receives up to 24 nearby context-only cues. Accepted translations from earlier windows are included in nearby context, matching the final extension. Fixture category annotations are never sent to providers.",
+    "review": "Qualitative review by the coding assistant, not a blinded study or independent human evaluation. No population-level accuracy percentage is claimed. Prompts were not tuned to these sentences. An exploratory review revealed name drift; accepted-translation context was added and this final version was rerun. This is not an independent held-out evaluation.",
+    "browserPreparation": "Measured in a fresh temporary browser profile with automated polling. Download time depends on existing components, network and browser policies. Playwright component-download suppression was disabled."
+  },
+  "review": {
+    "builtin_clear_literal_or_wrong_meaning_cues": [
+      "6",
+      "8",
+      "10",
+      "11",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35"
+    ],
+    "codex_boundary_cues": [
+      "28",
+      "29"
+    ],
+    "codex_name_consistency": "Maya and Leo remained consistent across all three final runs after accepted translations were supplied as context. Not a guarantee for other episodes.",
+    "google": "No clear meaning error found in the selected idiom, negation and number checks; names can still vary (Leo vs transliteration). This is not proof of perfect translation."
+  },
+  "summary": [
+    {
+      "provider": "builtin",
+      "count": 12,
+      "medianMs": 98.0,
+      "minMs": 66,
+      "maxMs": 127,
+      "firstWindowMs": 108,
+      "subsequentMedianMs": 91,
+      "roundTotalsMs": [
+        367,
+        410,
+        360
+      ]
+    },
+    {
+      "provider": "google",
+      "count": 12,
+      "medianMs": 156.0,
+      "minMs": 85,
+      "maxMs": 233,
+      "firstWindowMs": 233,
+      "subsequentMedianMs": 138,
+      "roundTotalsMs": [
+        708,
+        592,
+        584
+      ]
+    },
+    {
+      "provider": "codex",
+      "count": 12,
+      "medianMs": 3765.0,
+      "minMs": 2845,
+      "maxMs": 10625,
+      "firstWindowMs": 5830,
+      "subsequentMedianMs": 3716,
+      "roundTotalsMs": [
+        15750,
+        30009,
+        16549
+      ]
+    }
+  ]
+}

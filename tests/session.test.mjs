@@ -44,3 +44,12 @@ test('built-in results are cached through the extension', async () => {
  session.use(cues); await session.run(where);
  assert.ok(session.lines.size > 0); assert.ok(messages.some(m => m.type === 'saveBuiltin'));
 });
+test('later windows include accepted translations as context without translating them again', async () => {
+ const { session, asked } = setup(m => ({ segments: segments(m.request.cues) }));
+ await session.run(where); session.retry(); await session.run(where);
+ const requests = asked.filter(m => m.type === 'translateWindow').map(m => m.request);
+ assert.equal(requests.length, 2);
+ assert.equal(requests[1].context.find(c => c.id === 'c0').translation, 'Translated Line 0');
+ assert.ok(!requests[1].cues.some(c => c.id === 'c0'));
+ assert.ok(requests[1].context.some(c => !c.translation));
+});

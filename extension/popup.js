@@ -8,7 +8,7 @@ for (const language of globalThis.SubtitleLanguages.list) $('target').append(new
 for (const [id, p] of Object.entries(PROVIDERS)) $('provider').append(new Option(p.name, id));
 let current;
 function note() {
-  $('providerNote').textContent = current.provider === 'builtin' ? 'Runs in your browser. A Start subtitles button appears on the video if a language pack is needed.' : current.provider === 'codex' ? 'Optional companion required for Codex subscription login.' : 'Connect your own API account in Translator settings. No companion app.';
+  $('providerNote').textContent = current.provider === 'builtin' ? 'Fast and local; slang may translate literally. Click Start subtitles on the video if prompted.' : current.provider === 'codex' ? 'Optional companion required for Codex subscription login.' : 'Connect your own API account in Translator settings. No companion app.';
 }
 async function refresh() {
   try {

@@ -36,3 +36,8 @@ test('cloud adapters parse provider output with exact IDs and reject missing or 
 test('API error messages do not expose provider responses or credentials', async () => {
   await assert.rejects(translateRemote({ provider: 'google', target: 'es' }, { key: 'secret-key' }, request, undefined, async () => new Response('secret-key', { status: 401 })), error => !error.message.includes('secret-key') && error.needsUser);
 });
+test('validated context retains bounded accepted translations and drops unrelated fields', () => {
+ const r = validateWindow({ ...request, context: [{ ...cues[0], translation: '译文', credential: 'never-send' }, { ...cues[1], translation: 'x'.repeat(7000) }] });
+ assert.equal(r.context[0].translation, '译文'); assert.equal(r.context[1].translation.length, 6000);
+ assert.equal(r.context[0].credential, undefined);
+});

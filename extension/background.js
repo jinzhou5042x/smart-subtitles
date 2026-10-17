@@ -19,7 +19,7 @@ async function broadcast(resetTranslations = false) {
   if (resetTranslations) cancelAll();
   const next = await settings();
   const tabs = await chrome.tabs.query({ url: globalThis.SubtitleSites.matches });
-  await Promise.allSettled(tabs.map(tab => chrome.tabs.sendMessage(tab.id, { type: 'settingsChanged', settings: next, resetTranslations, retryProvider: next.provider })));
+  await Promise.allSettled(tabs.map(tab => chrome.tabs.sendMessage(tab.id, { type: 'settingsChanged', settings: next, resetTranslations })));
   return next;
 }
 async function companion(route, method = 'GET', body, signal) {
