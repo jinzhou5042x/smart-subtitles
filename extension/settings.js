@@ -3,9 +3,12 @@ import { CHATGPT_PERMISSIONS } from './chatgpt-permissions.js';
 import { withDeadline } from './async.js';
 const $ = id => document.getElementById(id);
 const call = async m => { const r = await chrome.runtime.sendMessage(m); if (!r?.ok) throw Object.assign(new Error(r?.error || 'Request failed'), { code: r?.code }); return r.data; };
-let profiles = {}, lastAPI = 'google';
-const modeOf = id => ['builtin', 'chatgpt'].includes(id) ? id : 'api';
-const activeProvider = id => { $('currentProvider').textContent = `Using ${PROVIDERS[id].name}`; };
+let profiles = {};
+const providerButtons = [...$('providerNavigation').querySelectorAll('[data-provider]')];
+const activeProvider = id => {
+  $('currentProvider').textContent = PROVIDERS[id].name;
+  for (const button of providerButtons) button.dataset.active = String(button.dataset.provider === id);
+};
 function choices(container, items, selected, pick, className = 'choice-button') {
   const signature = JSON.stringify(items);
   if (container.dataset.items !== signature) {
@@ -18,14 +21,14 @@ function choices(container, items, selected, pick, className = 'choice-button') 
   for (const button of container.children) button.setAttribute('aria-pressed', String(button.dataset.value === selected));
 }
 function selectProvider(id) { $('provider').value = id; history.replaceState(null, '', '#' + id); show(); }
-for (const button of $('translationModes').children) button.onclick = () => selectProvider(button.dataset.mode === 'api' ? lastAPI : button.dataset.mode);
+for (const button of providerButtons) button.onclick = () => selectProvider(button.dataset.provider);
 $('version').textContent = 'v' + chrome.runtime.getManifest().version;
 function show() {
   const id = $('provider').value, preset = PROVIDERS[id], p = profiles[id] || {};
-  if (modeOf(id) === 'api') lastAPI = id;
-  for (const button of $('translationModes').children) button.setAttribute('aria-pressed', String(button.dataset.mode === modeOf(id)));
-  choices($('apiProviders'), Object.entries(PROVIDERS).filter(([key]) => modeOf(key) === 'api').map(([key, provider]) => ({ id: key, label: provider.name })), id, selectProvider, 'provider-chip');
+  for (const button of providerButtons) button.setAttribute('aria-pressed', String(button.dataset.provider === id));
   $('builtin').hidden = id !== 'builtin'; $('chatgpt').hidden = id !== 'chatgpt'; $('cloud').hidden = ['builtin', 'chatgpt'].includes(id);
+  $('cloudHeading').textContent = preset.name;
+  $('cloudDescription').textContent = id === 'google' ? 'Fast translations with your Google Cloud API key.' : id === 'custom' ? 'Connect an OpenAI-compatible API or a model running on this computer.' : `Connect ${preset.name} with your own API key and model.`;
   $('baseUrl').value = p.baseUrl || preset.baseUrl || ''; $('baseUrl').readOnly = !!preset.baseUrl;
   $('endpointField').hidden = !!preset.baseUrl; $('modelField').hidden = id === 'google';
   $('model').value = p.model || preset.model || ''; $('model').disabled = id === 'google';

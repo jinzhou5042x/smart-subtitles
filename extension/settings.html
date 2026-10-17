@@ -1,57 +1,72 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Translator settings · Smart Subtitles</title><link rel="stylesheet" href="settings.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Settings · Smart Subtitles</title><link rel="stylesheet" href="settings.css"></head>
 <body>
 <main class="settings-shell">
-  <header class="site-header"><a class="brand" href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener"><img src="icon.svg" alt="" width="25" height="25"><span>Smart Subtitles</span></a><span id="version" class="version"></span></header>
-  <div class="page-heading"><div><h1>Translator settings</h1><p>Choose how your subtitles are translated.</p></div><span id="currentProvider" class="active-label"></span></div>
-
-  <div id="translationModes" class="mode-grid" role="group" aria-label="Translation method">
-    <button type="button" class="mode-card" data-mode="builtin" aria-pressed="false"><span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M8 21h8m-4-4v4M7 9h10m-10 4h6"/></svg></span><strong>Browser</strong><span>Free. Private. No account.</span><span class="selection-mark" aria-hidden="true"></span></button>
-    <button type="button" class="mode-card" data-mode="chatgpt" aria-pressed="false"><span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 9.6 9.6 3 12l6.6 2.4L12 21l2.4-6.6L21 12l-6.6-2.4L12 3Z"/></svg></span><strong>ChatGPT</strong><span>Use your ChatGPT plan.</span><span class="selection-mark" aria-hidden="true"></span></button>
-    <button type="button" class="mode-card" data-mode="api" aria-pressed="false"><span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="9" r="5"/><path d="m12 13 8 8m-3-3 3-3m-6 0 3-3"/></svg></span><strong>API / local model</strong><span>Connect your own provider.</span><span class="selection-mark" aria-hidden="true"></span></button>
-  </div>
-  <input id="provider" type="hidden">
-  <div class="configuration">
-    <section id="builtin" aria-labelledby="builtinHeading">
-      <div class="section-heading"><div><span class="eyebrow">ON THIS DEVICE</span><h2 id="builtinHeading">Browser translation</h2></div><span class="badge">No key needed</span></div>
-      <p class="description">Open Hulu or Disney+ with English subtitles. Choose your language in the extension and start watching.</p>
-      <div class="inline-note"><span class="note-icon" aria-hidden="true">i</span><p>First time? Click <strong>Start subtitles</strong> on the video if prompted. Chrome prepares the language pack for you.</p></div>
-      <button id="useBuiltin" class="primary">Use browser translation</button>
-      <details class="help"><summary>About browser translation</summary><p>Subtitles stay on this computer. Requires a supported desktop Chrome and language. Slang may translate literally. If Chrome or your organization disables the feature, choose another translator.</p></details>
-    </section>
-
-    <form id="cloud" hidden>
-      <div class="section-heading"><div><span class="eyebrow">YOUR CONNECTION</span><h2>Choose a provider</h2></div><a id="guide" target="_blank" rel="noopener">Setup guide ↗</a></div>
-      <div id="apiProviders" class="provider-chips" role="group" aria-label="API provider"></div>
-      <div class="field" id="keyField"><div class="label-row"><label for="key">API key</label><span id="keyState"></span></div><input id="key" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste your API key"></div>
-      <div class="field" id="modelField"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
-      <div class="field" id="endpointField"><label for="baseUrl">API base URL</label><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><p class="field-note" id="endpointHelp"></p></div>
-      <p class="session-note">Keys stay in memory for this Chrome session. Enter yours again after restarting Chrome.</p>
-      <div class="actions"><button class="primary" type="submit">Save and use</button><button id="test" type="button" class="secondary">Test connection</button><button id="remove" type="button" class="text-button" hidden>Remove key</button></div>
-      <details class="help"><summary>Billing &amp; key storage</summary><p>Usage is billed by your provider, separately from a chat subscription. Test connection sends “Hello.” and may use a small amount of paid quota. Keys stay in memory and are cleared when Chrome closes or this extension reloads. Server addresses and models are remembered.</p></details>
-    </form>
-
-    <section id="chatgpt" hidden aria-labelledby="chatgptHeading">
-      <div class="section-heading"><div><span class="eyebrow">YOUR CHATGPT PLAN</span><h2 id="chatgptHeading">ChatGPT subscription</h2></div><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage ↗</a></div>
-      <p class="description">Translate dialogue with the surrounding conversation. No API key needed.</p>
-      <div id="accountPicker" class="field" hidden><span class="field-label">Account</span><div id="accountChoices" class="account-choices" role="group" aria-label="ChatGPT account"></div></div><input id="account" type="hidden">
-      <div id="loginPanel" class="login-panel" data-state="idle" aria-live="polite" aria-atomic="true">
-        <div class="login-heading"><span class="login-indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></div>
-        <p id="loginDetail">Sign in on OpenAI’s page, then return here automatically.</p>
-        <div class="actions"><button id="signin" class="primary">Continue with ChatGPT</button><button id="returnLogin" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" class="text-button" hidden>Cancel</button><button id="signout" class="text-button" hidden>Sign out</button></div>
+  <header class="site-header"><a class="brand" href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener"><img src="icon.svg" alt="" width="24" height="24"><span>Smart Subtitles</span></a><a class="header-help" href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener">User guide <span aria-hidden="true">↗</span></a></header>
+  <div class="page-heading"><h1>Settings</h1><span id="version" class="version"></span></div>
+  <div class="settings-workspace">
+    <aside class="sidebar" aria-label="Translator selection">
+      <p class="nav-label" id="translatorsLabel">Translators</p>
+      <div id="providerNavigation" class="provider-navigation" role="group" aria-labelledby="translatorsLabel">
+        <button type="button" data-provider="builtin" data-mode="builtin" aria-pressed="false"><span>Browser translation</span><span class="current-dot" aria-hidden="true"></span></button>
+        <button type="button" data-provider="chatgpt" data-mode="chatgpt" aria-pressed="false"><span>ChatGPT</span><span class="current-dot" aria-hidden="true"></span></button>
+        <div class="nav-divider" aria-hidden="true"></div>
+        <button type="button" data-provider="google" aria-pressed="false"><span>Google Cloud</span><span class="current-dot" aria-hidden="true"></span></button>
+        <button type="button" data-provider="openai" aria-pressed="false"><span>OpenAI API</span><span class="current-dot" aria-hidden="true"></span></button>
+        <button type="button" data-provider="deepseek" aria-pressed="false"><span>DeepSeek</span><span class="current-dot" aria-hidden="true"></span></button>
+        <button type="button" data-provider="claude" aria-pressed="false"><span>Claude API</span><span class="current-dot" aria-hidden="true"></span></button>
+        <button type="button" data-provider="qwen" aria-pressed="false"><span>Qwen</span><span class="current-dot" aria-hidden="true"></span></button>
+        <button type="button" data-provider="custom" aria-pressed="false"><span>Other / local model</span><span class="current-dot" aria-hidden="true"></span></button>
       </div>
-      <div id="chatgptModelSettings" class="model-settings" hidden><div class="label-row"><span class="field-label">Model</span><button id="refreshModels" class="text-button">Refresh list</button></div><div id="modelChoices" class="model-choices" role="group" aria-label="ChatGPT model"></div><input id="chatgptModel" type="hidden"><p id="modelHelp" class="field-note">Default: gpt-6-luna · low reasoning effort.</p><div class="actions"><button id="useChatgpt" class="primary">Use this account and model</button><button id="testChatgpt" class="secondary">Test connection</button></div></div>
-      <p class="session-note">Sign-in lasts for this Chrome session. Sign in again after restarting Chrome.</p>
-      <details class="help"><summary>Plan usage &amp; privacy</summary><p>Translation and connection tests use the ChatGPT allowance you authorize. Available models and limits depend on your account and workspace. Credentials stay in memory and are cleared when Chrome closes or the extension reloads. Signing out here affects only this extension.</p><a href="https://developers.openai.com/siwc/token-sharing-open-source" target="_blank" rel="noopener">How ChatGPT plan usage works ↗</a></details>
-    </section>
-    <p id="result" class="feedback" role="status" aria-live="polite"></p><p id="usageLimit" hidden><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage ChatGPT usage ↗</a></p>
+      <div class="current-translator"><span>Currently using</span><strong id="currentProvider"></strong></div>
+    </aside>
+    <div class="settings-content">
+      <input id="provider" type="hidden">
+      <div class="configuration">
+        <section id="builtin" aria-labelledby="builtinHeading">
+          <div class="section-heading"><h2 id="builtinHeading">Browser translation</h2><span class="badge">On device</span></div>
+          <p class="description">Translate locally in Chrome. No account or API key.</p>
+          <ol class="setup-steps"><li>Open Hulu or Disney+ with English subtitles.</li><li>Choose your language in the extension.</li><li>Click <strong>Start subtitles</strong> on the video if prompted.</li></ol>
+          <button id="useBuiltin" class="primary">Use browser translation</button>
+          <details class="help"><summary>Language packs &amp; availability</summary><p>Chrome prepares the language pack on first use. Subtitle text stays on this computer. Requires a supported desktop Chrome and language. Slang may translate literally. If your browser or organization disables this feature, choose another translator.</p></details>
+        </section>
+        <form id="cloud" hidden>
+          <div class="section-heading"><h2 id="cloudHeading">Google Cloud</h2><a id="guide" target="_blank" rel="noopener">Setup guide <span aria-hidden="true">↗</span></a></div>
+          <p id="cloudDescription" class="description">Connect with your own API key.</p>
+          <div class="field" id="keyField"><div class="label-row"><label for="key">API key</label><span id="keyState"></span></div><input id="key" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste your API key"></div>
+          <div class="field" id="modelField"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
+          <div class="field" id="endpointField"><label for="baseUrl">Base URL</label><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><p class="field-note" id="endpointHelp"></p></div>
+          <p class="session-note">Keys stay in memory. Enter yours again after restarting Chrome.</p>
+          <div class="actions"><button class="primary" type="submit">Save and use</button><button id="test" type="button" class="secondary">Test connection</button><button id="remove" type="button" class="text-button" hidden>Remove key</button></div>
+          <details class="help"><summary>Billing &amp; key storage</summary><p>Usage is billed by your provider, separately from a chat subscription. Test connection sends “Hello.” and may use a small amount of paid quota. Keys are cleared when Chrome closes or this extension reloads. Server addresses and models are remembered.</p></details>
+        </form>
+        <section id="chatgpt" hidden aria-labelledby="chatgptHeading">
+          <div class="section-heading"><h2 id="chatgptHeading">ChatGPT</h2><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage <span aria-hidden="true">↗</span></a></div>
+          <p class="description">Use your ChatGPT plan for translations with dialogue context.</p>
+          <div id="accountPicker" class="field" hidden><span class="field-label">Account</span><div id="accountChoices" class="account-choices" role="group" aria-label="ChatGPT account"></div></div><input id="account" type="hidden">
+          <div id="loginPanel" class="login-panel" data-state="idle" aria-live="polite" aria-atomic="true">
+            <div class="login-heading"><span class="login-indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></div>
+            <p id="loginDetail">Sign in on OpenAI’s page, then return here automatically.</p>
+            <div class="actions"><button id="signin" class="primary">Continue with ChatGPT</button><button id="returnLogin" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" class="text-button" hidden>Cancel</button><button id="signout" class="text-button" hidden>Sign out</button></div>
+          </div>
+          <div id="chatgptModelSettings" class="model-settings" hidden><div class="label-row"><span class="field-label">Model</span><button id="refreshModels" class="text-button">Refresh list</button></div><div id="modelChoices" class="model-choices" role="group" aria-label="ChatGPT model"></div><input id="chatgptModel" type="hidden"><p id="modelHelp" class="field-note">Default: gpt-6-luna · low reasoning effort.</p><div class="actions"><button id="useChatgpt" class="primary">Use this account and model</button><button id="testChatgpt" class="secondary">Test connection</button></div></div>
+          <p class="session-note">Sign in again after restarting Chrome.</p>
+          <details class="help"><summary>Plan usage &amp; privacy</summary><p>Translation and connection tests use the ChatGPT allowance you authorize. Available models and limits depend on your account and workspace. Credentials stay in memory and are cleared when Chrome closes or the extension reloads. Signing out here affects only this extension.</p><a href="https://developers.openai.com/siwc/token-sharing-open-source" target="_blank" rel="noopener">How ChatGPT plan usage works ↗</a></details>
+        </section>
+        <p id="result" class="feedback" role="status" aria-live="polite"></p><p id="usageLimit" hidden><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage ChatGPT usage ↗</a></p>
+      </div>
+      <section class="storage-section" aria-labelledby="storageHeading">
+        <div class="storage-heading"><h2 id="storageHeading">Saved translations</h2><button id="clear" class="text-button" aria-haspopup="dialog">Clear saved translations</button></div>
+        <div class="storage-stats"><span><strong id="cacheCount">—</strong> lines</span><span id="cacheBytes">Checking storage…</span></div>
+        <div class="storage-track" aria-hidden="true"><div id="cacheProgress"></div></div>
+        <details class="help storage-help"><summary>1 million lines of storage</summary><p>Translations are reused when you return to a video. The oldest entries are removed when full. Browser storage limits still apply. Clearing translations keeps your accounts and keys.</p></details>
+      </section>
+    </div>
   </div>
-
-  <section class="storage-section" aria-labelledby="storageHeading"><div class="storage-main"><div><h2 id="storageHeading">Saved translations</h2><p>Pick up where you left off, without translating again.</p></div><button id="clear" class="text-button danger">Clear saved translations</button></div><div class="storage-stats"><strong id="cacheCount">—</strong><span>lines saved</span><span class="stat-divider"></span><span id="cacheBytes">Checking storage…</span><span class="capacity">Up to 1 million lines</span></div><div class="storage-track" aria-hidden="true"><div id="cacheProgress"></div></div><p class="field-note">Older entries are removed when full. Browser storage limits still apply. Clearing translations keeps your accounts and keys.</p></section>
-  <footer><span>Runs in Chrome.</span><nav><a href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener">User guide</a><a href="legal.html" target="_blank">Privacy</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues" target="_blank" rel="noopener">Feedback</a></nav></footer>
+  <footer><span>Smart Subtitles</span><nav><a href="legal.html" target="_blank">Privacy</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues" target="_blank" rel="noopener">Feedback</a></nav></footer>
 </main>
-<dialog id="planWelcome"><span class="eyebrow">CONNECTED</span><h2>You're using your ChatGPT plan</h2><p>Subtitle translation will use the allowance you authorized for Smart Subtitles. You can review usage and limits in <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">ChatGPT settings</a>.</p><button id="welcomeDone" class="primary">Got it</button></dialog>
+<dialog id="planWelcome"><span class="eyebrow">Connected</span><h2>You're using your ChatGPT plan</h2><p>Subtitle translation will use the allowance you authorized for Smart Subtitles. You can review usage and limits in <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">ChatGPT settings</a>.</p><button id="welcomeDone" class="primary">Got it</button></dialog>
 <dialog id="clearDialog"><h2>Clear saved translations?</h2><p>Saved subtitles will need to be translated again. Your accounts and API keys stay connected.</p><div class="actions"><button id="cancelClear" class="secondary">Keep translations</button><button id="confirmClear" class="primary destructive">Clear translations</button></div></dialog>
 <script type="module" src="settings.js"></script>
 </body></html>
