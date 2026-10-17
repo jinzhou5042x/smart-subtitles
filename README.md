@@ -16,7 +16,7 @@ Bilingual subtitles for Hulu and Disney+, including Hulu content on Disney+. Eng
 
 No ZIP, Node.js, API key or companion app is needed for browser translation. Language packs need an initial download and use local disk space. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
 
-Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts near the playhead and prepares a short section ahead; jumping ahead prioritizes the new position. Completed lines are saved in this browser, up to 30,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
+Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 30,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
 
 Chrome's [built-in Translator API](https://developer.chrome.com/docs/ai/translator-api) is a local translation model, separate from Google Cloud Translation. Translation quality varies; cloud LLMs can use nearby dialogue to handle context and slang. LLMs may take longer, and short windows can lose some long-range context. Netflix, YouTube, mobile browsers and live TV are not supported.
 
@@ -88,7 +88,7 @@ npm run package
 
 Load `dist/extension` at `chrome://extensions` with developer mode enabled. `npm start` serves the local video fixture at `http://127.0.0.1:43128/demo`. The store ZIP is in `dist/store`. `npm run release -- win-x64` builds the optional Codex companion; build Mac targets on a Mac. `npm run start:companion` starts the optional service during development.
 
-The extension owns translation windows and IndexedDB caching. `extension/translation.js` implements cloud adapters; `extension/builtin.js` uses the document-only browser Translator API. `extension/session.js` prioritizes the playhead. `extension/sites.js` registers players; run `npm run manifest` after changing it. Browser checks use a local model test double and a fresh browser profile; they do not prove provider account access or every streaming player works. `node scripts/check-native.mjs` separately checks the actual browser translator in installed desktop Chrome and may download a language pack.
+The extension owns translation windows and IndexedDB caching. `extension/translation.js` implements cloud adapters; `extension/builtin.js` uses the document-only browser Translator API. `extension/session.js` processes the track in order, independently of playback position. `extension/sites.js` registers players; run `npm run manifest` after changing it. Browser checks use a local model test double and a fresh browser profile; they do not prove provider account access or every streaming player works. `node scripts/check-native.mjs` separately checks the actual browser translator in installed desktop Chrome and may download a language pack.
 
 ## 中文
 
@@ -104,7 +104,7 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 
 浏览器翻译不需要下载 ZIP、安装 Node、申请 API key 或运行配套程序。首次需要下载语言包并占用本地磁盘；是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
 
-拖动字幕可以调整位置，**Size** 调整字号。优先翻译当前播放位置并预先准备后面一小段，跳转后优先处理新位置。缓存保存在浏览器中，最多 30,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
+拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 30,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
 
 [Chrome 内置翻译](https://developer.chrome.com/docs/ai/translator-api)使用本地模型，与 Google Cloud 是不同服务，效果需要按实际影片判断。Google Cloud 很快，在这次小样本测试中也正确处理了常见俚语；它没有收到 LLM 那样的附近上下文。LLM 的表达通常更自然，但更慢，也可能出现跨行重复或译名不统一。目前不支持 Netflix、YouTube、手机浏览器和直播。
 
@@ -164,7 +164,7 @@ Subtítulos bilingües para Hulu y Disney+, incluido el contenido de Hulu en Dis
 
 La traducción del navegador no necesita ZIP, Node, clave API ni programa adicional. La primera descarga del idioma ocupa espacio local. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
 
-Arrastra los subtítulos para moverlos y ajusta **Size**. Se traduce primero la posición actual y un tramo por delante. Al saltar, se prioriza la nueva posición. Se guardan hasta 30.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
+Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 30.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
 
 La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/translator-api) usa un modelo local distinto de Google Cloud. Google Cloud fue rápido y resolvió bien los modismos de nuestra pequeña prueba. Los LLM reciben diálogo cercano y suelen sonar más naturales, pero tardan más y pueden repetir contenido entre subtítulos o variar los nombres. No se admiten Netflix, YouTube, navegadores móviles ni emisiones en directo.
 

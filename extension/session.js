@@ -1,8 +1,7 @@
-// Playback-driven windows. Completed lines survive seeks; old requests never reach a new epoch.
+// Translate the track in order, one batch at a time. Playback never changes the queue.
 (function (scope) {
-  function nextWindow(cues, lines, time, paused = false) {
-    const end = time + (paused ? 20 : 90);
-    const candidates = cues.filter(c => c.end >= Math.max(0, time - 1) && c.start <= end && !lines.has(c.id));
+  function nextWindow(cues, lines) {
+    const candidates = cues.filter(c => !lines.has(c.id));
     if (!candidates.length) return [];
     const start = candidates[0].start;
     return candidates.filter(c => c.start < start + 30).slice(0, 12);
@@ -13,7 +12,7 @@
       this.builtin = builtin || (scope.SubtitleBuiltin ? new scope.SubtitleBuiltin.BuiltinTranslator() : null);
       this.cues = []; this.lines = new Map(); this.epoch = id(); this.selection = { provider: 'builtin', target: 'zh-CN' }; this.clear();
     }
-    clear() { this.lines.clear(); this.episode = null; this.busy = false; this.complete = false; this.retryAt = 0; this.error = ''; this.awaiting = ''; this.redo = ''; this.stopped = ''; this.interrupted = ''; this.attempts = 0; this.lastTime = null; }
+    clear() { this.lines.clear(); this.episode = null; this.busy = false; this.complete = false; this.retryAt = 0; this.error = ''; this.awaiting = ''; this.redo = ''; this.stopped = ''; this.interrupted = ''; this.attempts = 0; }
     configure(settings) {
       const changed = settings.provider !== this.selection.provider || settings.target !== this.selection.target;
       if (changed || !settings.enabled) this.reset();
@@ -27,12 +26,9 @@
     get working() { return this.busy; }
     get translated() { return this.lines.size; }
     apply(segments) { for (const segment of segments || []) for (const id of segment.sourceIds) this.lines.set(id, segment); this.complete = this.lines.size === this.cues.length; }
-    async run({ session, title, time = 0, paused = false }) {
-      if (!Number.isFinite(time) || time < 0) return;
-      if (this.lastTime !== null && Math.abs(time - this.lastTime) > 4) { this.cancel(); this.retry(); }
-      this.lastTime = time;
+    async run({ session, title }) {
       if (!this.cues.length || this.busy || this.error || this.now() < this.retryAt) return;
-      const window = nextWindow(this.cues, this.lines, time, paused);
+      const window = nextWindow(this.cues, this.lines);
       if (!window.length) { this.episode = { ...this.episode, status: 'ready' }; return; }
       const first = this.cues.indexOf(window[0]), last = this.cues.indexOf(window.at(-1));
       const context = this.cues.slice(Math.max(0, first - 12), Math.min(this.cues.length, last + 13)).filter(c => !window.includes(c)).slice(0, 24).map(c => ({ ...c, ...(this.lines.has(c.id) ? { translation: this.lines.get(c.id).text } : {}) }));

@@ -5,21 +5,30 @@ const { TranslationSession, nextWindow } = globalThis.SubtitleSession;
 const cues = Array.from({ length: 600 }, (_, i) => ({ id: `c${i}`, text: `Line ${i}`, start: i * 3, end: i * 3 + 2.9 }));
 const segments = cues => cues.map(c => ({ sourceIds: [c.id], text: `Translated ${c.text}`, start: c.start, end: c.end }));
 const where = { session: 'video-one', title: 'Test', time: 0 };
-function setup(handler) { const asked = []; let serial = 0; const session = new TranslationSession({ id: () => String(++serial), now: () => 0, send: async m => { asked.push(m); if (['cancel', 'ping'].includes(m.type)) return {}; return handler(m); } }); session.use(cues); session.configure({ provider: 'google', target: 'zh-CN', enabled: true }); return { session, asked }; }
-test('seeking to 15 minutes requests nearby dialogue, never the earlier backlog', async () => {
+function setup(handler) { const asked = []; let serial = 0, clock = 0; const session = new TranslationSession({ id: () => String(++serial), now: () => clock, send: async m => { asked.push(m); if (['cancel', 'ping'].includes(m.type)) return {}; return handler(m); } }); session.use(cues); session.configure({ provider: 'google', target: 'zh-CN', enabled: true }); return { session, asked, advance: () => { clock += 1000; } }; }
+test('opening a video at 15 minutes still starts translation at the first cue', async () => {
  const { session, asked } = setup(m => ({ segments: segments(m.request.cues) }));
  await session.run({ ...where, time: 900 });
  const window = asked.find(m => m.type === 'translateWindow').request;
- assert.ok(window.cues[0].start >= 897); assert.ok(window.cues.length <= 12);
- assert.ok(window.context.some(c => c.start < 900)); assert.equal(session.lines.size, window.cues.length);
+ assert.equal(window.cues[0].id, 'c0'); assert.ok(window.cues.length <= 12);
+ assert.equal(session.lines.size, window.cues.length);
 });
-test('a seek cancels a running window and discards its late result', async () => {
+test('seeking in either direction keeps the active request and continues the same queue', async () => {
  let finish;
- const { session, asked } = setup(m => m.request.cues[0].id === 'c0' ? new Promise(resolve => { finish = () => resolve({ segments: segments(m.request.cues) }); }) : { segments: segments(m.request.cues) });
+ const { session, asked, advance } = setup(m => m.request.cues[0].id === 'c0' ? new Promise(resolve => { finish = () => resolve({ segments: segments(m.request.cues) }); }) : { segments: segments(m.request.cues) });
+ asked.length = 0;
  const pending = session.run(where); await Promise.resolve();
- await session.run({ ...where, time: 900 }); finish(); await pending;
- assert.equal(session.lines.has('c0'), false); assert.equal(session.lines.has('c300'), true);
- assert.ok(asked.some(m => m.type === 'cancel'));
+ const epoch = session.epoch;
+ await session.run({ ...where, time: 900 }); await session.run({ ...where, time: 5 });
+ assert.equal(asked.filter(m => m.type === 'translateWindow').length, 1);
+ assert.equal(session.epoch, epoch); assert.equal(session.controller.signal.aborted, false);
+ finish(); await pending;
+ assert.equal(session.lines.has('c0'), true); assert.equal(session.lines.has('c300'), false);
+ advance(); await session.run({ ...where, time: 1500 });
+ const requests = asked.filter(m => m.type === 'translateWindow').map(m => m.request);
+ assert.equal(requests[1].cues[0].id, `c${requests[0].cues.length}`);
+ assert.equal(requests[1].context.find(c => c.id === 'c0').translation, 'Translated Line 0');
+ assert.ok(!asked.some(m => m.type === 'cancel'));
 });
 test('a language change discards an old response', async () => {
  let finish; const { session } = setup(m => new Promise(resolve => { finish = () => resolve({ segments: segments(m.request.cues) }); }));
@@ -28,15 +37,26 @@ test('a language change discards an old response', async () => {
 });
 test('quota errors and timeouts pause instead of making unbounded paid retries', async () => {
  const { session, asked } = setup(() => { throw new Error('Quota exceeded'); });
- await session.run(where); await session.run(where);
+ await session.run(where); await session.run({ ...where, time: 900 }); await session.run({ ...where, time: 0 });
  assert.equal(asked.filter(m => m.type === 'translateWindow').length, 1); assert.match(session.error, /Quota/);
  session.retry(); await session.run(where); assert.equal(asked.filter(m => m.type === 'translateWindow').length, 2);
 });
-test('prefetch is bounded; pause fetches less; cached lines are skipped', () => {
- const held = new Map(cues.slice(0, 10).map(c => [c.id, {}]));
- assert.equal(nextWindow(cues, held, 0, true).length, 0);
- assert.equal(nextWindow(cues, held, 0)[0].id, 'c10');
- assert.ok(nextWindow(cues, new Map(), 0).every(c => c.start < 30));
+test('batches are bounded and resume at the earliest untranslated cue, including cache gaps', () => {
+ const held = new Map([...cues.slice(0, 10), ...cues.slice(20, 40)].map(c => [c.id, {}]));
+ assert.equal(nextWindow(cues, held)[0].id, 'c10');
+ const window = nextWindow(cues, new Map());
+ assert.ok(window.length <= 12); assert.ok(window.every(c => c.start < 30));
+ assert.deepEqual(nextWindow(cues, new Map(cues.map(c => [c.id, {}]))), []);
+});
+
+test('a paused video can finish the entire track in order without translating any cue twice', async () => {
+ const { session, asked, advance } = setup(m => ({ segments: segments(m.request.cues) }));
+ for (let i = 0; i < cues.length && !session.complete; i++) {
+   await session.run({ ...where, time: 900, paused: true }); advance();
+ }
+ assert.equal(session.complete, true);
+ assert.deepEqual(asked.filter(m => m.type === 'translateWindow').flatMap(m => m.request.cues.map(c => c.id)), cues.map(c => c.id));
+ const count = asked.length; await session.run({ ...where, time: 0 }); assert.equal(asked.length, count);
 });
 test('built-in results are cached through the extension', async () => {
  const messages = [];
@@ -45,8 +65,8 @@ test('built-in results are cached through the extension', async () => {
  assert.ok(session.lines.size > 0); assert.ok(messages.some(m => m.type === 'saveBuiltin'));
 });
 test('later windows include accepted translations as context without translating them again', async () => {
- const { session, asked } = setup(m => ({ segments: segments(m.request.cues) }));
- await session.run(where); session.retry(); await session.run(where);
+ const { session, asked, advance } = setup(m => ({ segments: segments(m.request.cues) }));
+ await session.run(where); advance(); await session.run(where);
  const requests = asked.filter(m => m.type === 'translateWindow').map(m => m.request);
  assert.equal(requests.length, 2);
  assert.equal(requests[1].context.find(c => c.id === 'c0').translation, 'Translated Line 0');

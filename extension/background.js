@@ -121,7 +121,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       case 'saveBuiltin': {
         if (!isPage(sender)) throw new Error('Player only');
         const request = validateWindow(message.request), client = clientOf(sender);
-        // Register before the first await so a seek can cancel cache lookups as well as fetches.
+        // Register before the first await so a reset can cancel cache lookups as well as fetches.
         active.get(client)?.abort();
         const controller = new AbortController(); controller.epoch = request.epoch; active.set(client, controller);
         try {

@@ -30,7 +30,7 @@
     if (session.error) return { status: session.awaiting ? 'Prepare browser translation' : 'Translation paused', detail: session.error, retry: !session.awaiting };
     if (!video) return { status: `Waiting for a ${site.name} video`, detail: '' };
     if (selected) {
-      return { status: session.busy ? 'Translating near the playhead…' : 'Subtitles ready near the playhead', detail: session.busy ? 'You can keep watching or jump ahead.' : 'The next section translates as you watch.' };
+      return { status: 'Translating subtitles…', detail: `${session.translated.toLocaleString()} / ${cues.length.toLocaleString()} lines · In order from the beginning. Seeking ahead may require a wait.` };
     }
     // Pre-roll ads: the title's subtitles are only requested once it starts.
     if (site.adBreak()) return { status: 'Waiting for the ads to finish', detail: 'Subtitles load when the episode starts' };
@@ -140,7 +140,7 @@
       if (video && !contentStarted && !site.adBreak() && !video.paused && video.currentTime > 0.5) contentStarted = Date.now();
     }
     render();
-    if (settings.enabled && video && selected && !site.adBreak() && !video.seeking) void session.run({ session: location.origin + page, title: document.title, time: site.subtitleTime(video, selected?.timeOrigin || 0), paused: video.paused });
+    if (settings.enabled && video && selected && !site.adBreak()) void session.run({ session: location.origin + page, title: document.title });
   }
 
   // ---- What the page and its clock currently are, for a report. No subtitle text, no addresses. ----
