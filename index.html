@@ -10,18 +10,19 @@ a{color:#13a865}
 </style></head><body><main>
 <h1>Smart Subtitles</h1>
 <nav aria-label="Project links"><a href="https://github.com/jinzhou5042x/smart-subtitles#readme">User guide</a> · <a href="https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno">Chrome Web Store</a> · <a href="https://github.com/jinzhou5042x/smart-subtitles/releases">Downloads</a></nav>
-<p>Download the companion: <a href="https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip">Windows x64</a> · <a href="https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip">Mac Apple Silicon</a> · <a href="https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip">Mac Intel</a>. Extract the ZIP and run <strong>Start Subtitles</strong> once.</p>
+<p><strong>Optional Codex companion:</strong> <a href="https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip">Windows x64</a> · <a href="https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip">Mac Apple Silicon</a> · <a href="https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip">Mac Intel</a>. Only needed for the Codex subscription option. Extract it, run <strong>Set Up Codex</strong>, then connect in Translator settings.</p>
+<p>Install the extension, open a supported video with English subtitles, and choose your language. Browser translation needs no account or extra program. Chrome may ask you to download a language pack. See the <a href="https://github.com/jinzhou5042x/smart-subtitles#readme">user guide</a> for cloud translators and setup.</p>
 <p class="note">Terms of Use and Privacy Policy · Effective October 16, 2026</p>
 
 <div class="box"><strong>Independent and unofficial.</strong> Smart Subtitles is not affiliated with, endorsed by, sponsored by or approved by any streaming service, including Hulu, LLC and The Walt Disney Company, or any of their affiliates. The names of streaming services are trademarks of their owners and are used here only to say which websites this tool works with.</div>
 
-<div class="box"><strong>No server of ours.</strong> Smart Subtitles has no account, no backend and no cloud service. It runs in your browser and in a small program on your own computer, and what it stores stays on that computer. Translation requests go directly to the provider you choose and include the subtitle content and related information described below. The project does not operate a translation server or collect usage analytics.</div>
+<div class="box"><strong>No server of ours.</strong> Smart Subtitles has no account, no backend and no cloud service. Browser translation runs locally in Chrome. Cloud translation goes directly from the extension to your chosen API. Only the optional Codex subscription mode uses a local companion. Settings and cached translations stay on your computer. Cloud requests go to the provider you choose and include the subtitle content and related information described below. The project does not operate a translation server or collect usage analytics.</div>
 
 <h2>Terms of Use</h2>
-<p>By installing or using Smart Subtitles (the browser extension and the translation program that runs on your computer, together "the Software"), you agree to these terms. If you do not agree, do not use the Software.</p>
+<p>By installing or using Smart Subtitles (the browser extension and its optional Codex companion, together "the Software"), you agree to these terms. If you do not agree, do not use the Software.</p>
 
 <h3>1. What the Software does</h3>
-<p>The Software works on the streaming websites listed in its description (the "supported services"; at this version Hulu and Disney+, and more may be added). It reads the English subtitles that a supported service's web player already provides to your browser, translates them with the translator you choose (<a href="https://github.com/openai/codex">Codex</a> or <a href="https://cloud.google.com/translate">Google Cloud Translation</a>), and shows the translation over the video. It does not download, record, copy or redistribute video, and it does not circumvent any copy protection.</p>
+<p>The Software works on the streaming websites listed in its description (the "supported services"; at this version Hulu and Disney+, and more may be added). It reads the English subtitles that a supported service's web player already provides to your browser, translates them with the translator you choose (Chrome's built-in translator, a cloud API, your local model, or the optional <a href="https://github.com/openai/codex">Codex</a> companion), and shows the translation over the video. It does not download, record, copy or redistribute video, and it does not circumvent any copy protection.</p>
 
 <h3>2. Personal, non-commercial use</h3>
 <p>The Software is intended for your personal, non-commercial use only, to help you understand content you are already entitled to watch.</p>
@@ -49,28 +50,29 @@ a{color:#13a865}
 <p>These terms may be updated with new versions of the Software. Continuing to use the Software after an update means you accept the updated terms.</p>
 
 <h2>Privacy Policy</h2>
-<p>The developers operate no translation server, user account system or analytics service for Smart Subtitles. The extension does not automatically send subtitles, translations or usage reports to the developers. The Software has no advertising or tracking. Its own database and settings are stored on your computer; translation providers process the requests sent to them under their own policies. Information you choose to send in a support request is described below.</p>
-<p>Translation requests go directly from your computer to your chosen provider using your account or key. When you select a Google API key file, the program saves its path in local configuration and reads the key to authenticate requests to Google; it does not upload the file itself. Codex manages its own sign-in credentials. Logging out through the extension signs Codex out on this computer and can affect other applications using the same login.</p>
+<p>The developers operate no translation server, user account system or analytics service for Smart Subtitles. Subtitles, translations and usage reports are not automatically sent to the developers. The extension has no advertising or tracking.</p>
 
 <h3>Data the Software uses</h3>
 <ul>
-<li><strong>Subtitle text and timing, and the video title when available</strong>, obtained from the supported service to prepare and translate subtitles.</li>
-<li><strong>Your settings</strong> (on/off, target language, translator, subtitle size and position), stored in browser extension storage, and local program configuration such as the selected key-file path.</li>
-<li><strong>A local access token</strong>, created on your computer, that lets the extension talk to the translation program on the same computer. The browser hands it to the extension; it is never sent anywhere else.</li>
+<li><strong>English subtitle text and timing, and the video title when available</strong>, read from supported players to translate and display captions.</li>
+<li><strong>Your settings and API credentials</strong>, kept in this browser profile's extension storage. They are not synced to other browsers. API keys are accessible to the extension's own settings page and background worker, not to video-page scripts or content scripts.</li>
+<li><strong>Cached translations</strong>, stored in the extension's IndexedDB, with subtitle identifiers and timing. Cache identifiers are hashes of the video session, source cue, target language and translator settings.</li>
+<li><strong>An optional local access token</strong>, created by the Codex companion and shared with the extension through Chrome native messaging. It authenticates communication with the program on 127.0.0.1.</li>
 </ul>
-<p>The extension does not read your streaming account password or payment details, or collect general browser history. It processes supported video pages to provide subtitles. The local subtitle cache contains content from videos you translated and can therefore reveal what you watched. That cache is not uploaded to the developers.</p>
+<p>The extension does not read streaming account passwords or payment details, or collect general browser history. It processes supported video pages. Cached subtitle content can reveal what you watched.</p>
 
 <h3>Where the data goes</h3>
 <ul>
-<li>The extension sends subtitles only to the translation program running on your own computer (address 127.0.0.1), protected by the local access token.</li>
-<li><strong>Codex:</strong> requests to OpenAI include subtitle text and timestamps, the target language, the video title when available, translation instructions, any configured glossary, and previously accepted translations used as context when resuming. They use your signed-in Codex account and its allowance. See <a href="https://openai.com/policies/privacy-policy/">OpenAI's Privacy Policy</a>.</li>
-<li><strong>Google:</strong> subtitle text, source and target languages are sent to Cloud Translation. Your API key authenticates the requests, and usage is billed to your Google Cloud account. See <a href="https://docs.cloud.google.com/translate/data-usage">Cloud Translation data usage</a> and <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</li>
-<li>The providers also receive the connection and authentication information needed to serve requests, such as your IP address. Downloads, sign-in pages and links you open connect to the respective third-party services. No project-operated server relays translation requests.</li>
+<li><strong>Browser translation:</strong> Chrome translates subtitle text locally. Chrome downloads the required translation components and language packs from its own services. The extension does not send the dialogue to a cloud translator in this mode. See <a href="https://developer.chrome.com/docs/ai/translator-api">Chrome's Translator API documentation</a>.</li>
+<li><strong>Google Cloud:</strong> the extension sends subtitle text and source/target languages directly to Cloud Translation Basic v2, authenticated with your key. Usage is billed to your Google Cloud account. See <a href="https://docs.cloud.google.com/translate/data-usage">Cloud Translation data usage</a>.</li>
+<li><strong>OpenAI, DeepSeek, Claude, Qwen, or a custom API:</strong> requests go directly to the API server you configure. They include the requested dialogue, nearby dialogue as context, the target language, the video title when available and translation instructions. An API key is sent to that server to authenticate requests. A local model uses the local server you provide. Cloud providers process requests under their own account terms and privacy policies.</li>
+<li><strong>Codex subscription:</strong> short subtitle windows, nearby context, title and target language pass through the optional local companion to OpenAI using your Codex login. A configured glossary is also included. Codex manages its credentials separately. Logging out through the extension signs Codex out on this computer and may affect other tools using the same login. See <a href="https://openai.com/policies/privacy-policy/">OpenAI's Privacy Policy</a>.</li>
+<li>External providers receive connection and authentication information, including your IP address. Links, downloads and sign-in pages connect to the respective third parties. No project-operated server relays translation requests. The extension does not automatically switch to a paid provider.</li>
 </ul>
 
-<h3>What is stored, and where</h3>
-<p>The local database stores source subtitles, translations, saved progress and usage counters, including completed portions of unfinished translations. Logs are also stored locally. To remove cached subtitles and logs, first stop the program, then delete its <code>data</code> and <code>logs</code> folders. Uninstalling the extension removes its browser settings, but does not delete the program's files.</p>
-<p>Program settings and the local access token are stored separately in <code>config/local.json</code>. Your selected Google key file and Codex-managed sign-in credentials are also separate from the subtitle cache. Use <strong>Unlink</strong> to remove the key-file association, delete the key file yourself if no longer needed, and use <strong>Log out</strong> to sign out of Codex. Deleting local files does not delete data retained by translation providers.</p>
+<h3>What is stored, and how to remove it</h3>
+<p>Completed translations are cached in the browser, with a limit of 30,000 subtitle lines. <strong>Translator settings → Clear saved translations</strong> removes this cache. <strong>Remove key</strong> removes the selected provider profile and its key. Settings and keys use local browser storage, not a separate encrypted vault. Uninstalling the extension removes its browser storage.</p>
+<p>The optional Codex companion keeps its own configuration and local access token in <code>config/local.json</code> and startup logs in <code>logs</code>. It does not maintain a persistent subtitle database. Codex itself manages its login and operational data under its own settings. Stop the companion before deleting its folder, and use <strong>Log out</strong> to sign out of Codex. Removing local data does not delete data retained by providers or Chrome's shared language packs.</p>
 
 <h3>Sale and sharing</h3>
 <p>The developers do not sell or rent your subtitle data. The Software sends translation requests to your selected provider as described above. You can also choose to share information through support requests.</p>
@@ -89,7 +91,7 @@ a{color:#13a865}
 <ul>
 <li><a href="https://github.com/openai/codex">Codex</a> is third-party software. Setup uses an existing installation or downloads the official CLI separately. Its license and notices apply to that installation.</li>
 <li><a href="https://cloud.google.com/translate">Google Cloud Translation</a> is an external service used with your own API key.</li>
-<li>Translation-program release packages bundle <a href="https://nodejs.org/">Node.js</a>. Its license and third-party notices are included with the runtime.</li>
+<li>Optional Codex companion packages bundle <a href="https://nodejs.org/">Node.js</a>. Its license and third-party notices are included with the runtime.</li>
 </ul>
 <p class="note">Hulu and Disney+ are trademarks of their owners. All other trademarks belong to their respective owners.</p>
 </main></body></html>

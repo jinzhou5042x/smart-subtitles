@@ -1,8 +1,10 @@
 (() => {
-  if (location.hostname === '127.0.0.1' && location.pathname !== '/demo') return;
+  if (!globalThis.SubtitleSites.identify(location.href)) return;
   // MAIN-world hooks survive an extension reload. Reuse their replay buffer.
-  if (globalThis.__huluSubtitleCaptureInstalled) return;
-  globalThis.__huluSubtitleCaptureInstalled = true;
+  if (globalThis.__smartSubtitlesCaptureInstalled) return;
+  globalThis.__smartSubtitlesCaptureInstalled = true;
+  // The title on screen, as the registry names it (the path, unless the service says otherwise).
+  const here = () => globalThis.SubtitleSites.pageKey(location.href);
   const buffer = [], requested = new Set();
   const discovered = new Map(), manifestCopies = new Map(), failures = new Map();
   function remember(map, key, value) {
@@ -15,28 +17,30 @@
   const fetchOriginal = window.fetch, openOriginal = XMLHttpRequest.prototype.open;
   const requests = new WeakMap();
   const fresh = page => ({ page, metadata: 0, manifests: 0, found: 0, pending: 0, received: 0 });
-  let progress = fresh(location.pathname);
+  let progress = fresh(here());
   function report(page, changes = {}) {
-    if (page !== location.pathname) return;
+    if (page !== here()) return;
     if (progress.page !== page) progress = fresh(page);
     for (const [key, amount] of Object.entries(changes)) progress[key] += amount;
-    emit({ type: 'hulu-context-progress', ...progress });
+    emit({ type: 'smart-subtitles-progress', ...progress });
   }
-  const subtitleURL = url => /\.(webvtt|vtt|ttml|dfxp|srt|smi)(?:[?#]|$)/i.test(url) || /(?:caption|subtitle)[^?#]*\.xml/i.test(url);
+  // What the service's registry entry adds to the general rules below.
+  const hints = globalThis.SubtitleSites.service(location.href)?.capture || {};
+  const subtitleURL = url => /\.(webvtt|vtt|ttml|dfxp|srt|smi)(?:[?#]|$)/i.test(url) || /(?:caption|subtitle)[^?#]*\.xml/i.test(url) || !!hints.subtitle?.test(url);
   const subtitleType = mime => /text\/vtt|application\/(?:ttml|dfxp)\+xml/i.test(mime);
-  const metadataURL = url => /(?:playback|playlist|manifest|asset|\/media\/|\/scenarios\/)/i.test(url) && !/\.(mp4|m4s|ts|mpd|m3u8)(?:[?#]|$)/i.test(url);
+  const metadataURL = url => (/(?:playback|playlist|manifest|asset|\/media\/|\/scenarios\/)/i.test(url) || !!hints.metadata?.test(url)) &&!/\.(mp4|m4s|ts|mpd|m3u8)(?:[?#]|$)/i.test(url);
   // Stream manifests: HLS (subtitles as EXT-X-MEDIA TYPE=SUBTITLES playlists of WebVTT segments) and DASH.
   const hlsURL = url => /\.m3u8(?:[?#]|$)/i.test(url), dashURL = url => /\.mpd(?:[?#]|$)/i.test(url);
   const hlsType = mime => /mpegurl/i.test(mime), dashType = mime => /dash\+xml/i.test(mime);
   // Keys under which playback metadata lists subtitle files whose URLs do not end in a subtitle extension.
   const subtitleKey = key => /caption|subtitle|transcript|timedtext|texttrack/i.test(key);
   const otherFile = url => /\.(woff2?|ttf|otf|png|jpe?g|gif|webp|svg|css|js|json|mp4|m4s|m4a|ts|aac|mp3)(?:[?#]|$)/i.test(url);
-  function emit(data) { if (!stopped && data.page === location.pathname) window.postMessage(data, location.origin); }
+  function emit(data) { if (!stopped && data.page === here()) window.postMessage(data, location.origin); }
   // `declared`: the player's own data named this file as a subtitle track.
   function publish(url, text, page, language = '', duration = 0, timeOrigin = 0, declared = false) {
-    if (typeof text !== 'string' || text.length > 5_000_000 || page !== location.pathname) return;
+    if (typeof text !== 'string' || text.length > 5_000_000 || page !== here()) return;
     let name; try { name = new URL(url, location.href).pathname.split('/').at(-1); } catch { name = 'captions'; }
-    const data = { type: 'hulu-context-captured', page, name, text, language, duration, timeOrigin, declared };
+    const data = { type: 'smart-subtitles-captured', page, name, text, language, duration, timeOrigin, declared };
     buffer.push(data); if (buffer.length > 12) buffer.shift(); emit(data);
     report(page, { received: 1 });
   }
@@ -50,19 +54,19 @@
   function extensionResource(url, signal) {
     return new Promise((resolve, reject) => {
       if (signal?.aborted || stopped || resourceRequests.size >= 12) return reject(new Error('Subtitle request cancelled or busy'));
-      const id = crypto.randomUUID(), page = location.pathname;
+      const id = crypto.randomUUID(), page = here();
       const finish = (error, data) => { clearTimeout(timer); resourceRequests.delete(id); signal?.removeEventListener('abort', abort); error ? reject(error) : resolve(new Response(data.text, { headers: { 'content-type': data.mime || 'text/plain' } })); };
       const abort = () => finish(new Error('Subtitle request cancelled'));
       const timer = setTimeout(() => finish(new Error('Subtitle request timed out')), 18000);
       resourceRequests.set(id, { page, finish }); signal?.addEventListener('abort', abort, { once: true });
-      window.postMessage({ type: 'hulu-context-resource-request', id, page, url }, location.origin);
+      window.postMessage({ type: 'smart-subtitles-resource-request', id, page, url }, location.origin);
     });
   }
   async function get(url, signal) {
     const parsed = remote(url); if (!parsed) throw new Error('Unsupported subtitle URL');
     try { return await Reflect.apply(fetchOriginal, window, [parsed.href, { credentials: 'same-origin', signal }]); }
     catch (error) {
-      if (signal?.aborted || globalThis.SubtitleSites.identify(location.href) !== 'disney' || !globalThis.SubtitleSites.subtitleResource(parsed.href)) throw error;
+      if (signal?.aborted || !globalThis.SubtitleSites.subtitleResource(parsed.href, location.href)) throw error;
       return extensionResource(parsed.href, signal);
     }
   }
@@ -86,7 +90,7 @@
     } catch {
       const count = (failures.get(key)?.count || 0) + 1;
       remember(failures, key, { count, after: Date.now() + Math.min(60000, 2000 * 2 ** Math.min(count - 1, 5)) });
-      requested.delete(key); emit({ type: 'hulu-context-capture-error', page, error: 'The complete subtitle file cannot be read right now' }); }
+      requested.delete(key); emit({ type: 'smart-subtitles-capture-error', page, error: 'The complete subtitle file cannot be read right now' }); }
     finally { downloads.delete(controller); report(page, { pending: -1 }); }
   }
   // An HLS subtitle playlist lists WebVTT segments; they are downloaded in order and joined into one
@@ -173,7 +177,7 @@
   // A key counts as a language only if the browser knows it as one (so not url, src, type...).
   const languageNames = new Intl.DisplayNames(['en'], { type: 'language', fallback: 'none' });
   const languageCode = key => { try { return /^[a-z]{2,3}(?:[-_][a-z]{2,4})?$/i.test(key) && !/^(id|url|src|uri)$/i.test(key) && !!languageNames.of(key.replace('_', '-')); } catch { return false; } };
-  // Only inspect playback metadata already returned to Hulu, and only follow explicit subtitle URLs.
+  // Only inspect playback metadata already returned to the player, and only follow explicit subtitle URLs.
   function metadata(data, page) {
     report(page, { metadata: 1 });
     let count = 0;
@@ -194,7 +198,7 @@
     visit(data);
   }
   window.fetch = function (...args) {
-    const page = location.pathname, result = Reflect.apply(fetchOriginal, this, args);
+    const page = here(), result = Reflect.apply(fetchOriginal, this, args);
     result.then(response => {
       if (!response.ok || Number(response.headers.get('content-length') || 0) > 5_000_000) return;
       const mime = response.headers.get('content-type') || '';
@@ -204,7 +208,7 @@
     }).catch(() => {}); return result;
   };
   XMLHttpRequest.prototype.open = function (...args) {
-    requests.set(this, { url: String(args[1]), page: location.pathname });
+    requests.set(this, { url: String(args[1]), page: here() });
     this.addEventListener('load', () => {
       const request = requests.get(this); if (!request || this.status < 200 || this.status >= 300) return;
       const url = this.responseURL || request.url, mime = this.getResponseHeader('content-type') || '';
@@ -218,36 +222,36 @@
           if (this.responseType === 'json') metadata(this.response, request.page);
           else if (!this.responseType || this.responseType === 'text') metadata(JSON.parse(this.responseText), request.page);
         }
-      } catch { /* Non-subtitle payloads must never interfere with Hulu playback. */ }
+      } catch { /* Non-subtitle payloads must never interfere with playback. */ }
     }, { once: true });
     return Reflect.apply(openOriginal, this, args);
   };
   // A <track src> can be loaded directly without touching its enabled/disabled mode.
-  function scanTracks() { for (const t of document.querySelectorAll('video track[src]')) void fetchSubtitle(t.src, location.pathname, t.srclang || '', false, true); }
+  function scanTracks() { for (const t of document.querySelectorAll('video track[src]')) void fetchSubtitle(t.src, here(), t.srclang || '', false, true); }
   function retryDiscovered() {
     for (const item of [...discovered.values()]) {
-      if (item.page === location.pathname) void fetchSubtitle(item.url, item.page, item.language, item.listed, item.declared);
+      if (item.page === here()) void fetchSubtitle(item.url, item.page, item.language, item.listed, item.declared);
     }
   }
   let lastReplay = 0;
   window.addEventListener('message', e => {
     if (e.source === window && e.origin === location.origin) {
-      if (e.data?.type === 'hulu-context-resource-result') {
+      if (e.data?.type === 'smart-subtitles-resource-result') {
         const pending = resourceRequests.get(e.data.id);
-        if (pending && pending.page === e.data.page && e.data.page === location.pathname && (e.data.error || (typeof e.data.text === 'string' && e.data.text.length <= 5_000_000))) pending.finish(e.data.error ? new Error(e.data.error) : null, e.data);
+        if (pending && pending.page === e.data.page && e.data.page === here() && (e.data.error || (typeof e.data.text === 'string' && e.data.text.length <= 5_000_000))) pending.finish(e.data.error ? new Error(e.data.error) : null, e.data);
         return;
       }
-      if (e.data?.type === 'hulu-context-stop') { stop(); return; }
-      if (e.data?.type === 'hulu-context-resume') { stopped = false; for (const data of buffer) emit(data); retryDiscovered(); scanTracks(); return; }
+      if (e.data?.type === 'smart-subtitles-stop') { stop(); return; }
+      if (e.data?.type === 'smart-subtitles-resume') { stopped = false; for (const data of buffer) emit(data); retryDiscovered(); scanTracks(); return; }
     }
-    if (e.source !== window || e.origin !== location.origin || e.data?.type !== 'hulu-context-replay' || Date.now() - lastReplay < 1000) return;
+    if (e.source !== window || e.origin !== location.origin || e.data?.type !== 'smart-subtitles-replay' || Date.now() - lastReplay < 1000) return;
     lastReplay = Date.now();
     if (e.data.retry) {
       stopped = false; failures.clear();
-      for (const item of [...manifestCopies.values()]) if (item.page === location.pathname) inspect(item.url, item.text, item.page, item.mime);
+      for (const item of [...manifestCopies.values()]) if (item.page === here()) inspect(item.url, item.text, item.page, item.mime);
       retryDiscovered();
     }
-    for (const data of buffer) emit(data); scanTracks(); report(location.pathname);
+    for (const data of buffer) emit(data); scanTracks(); report(here());
   });
   setInterval(() => { if (!stopped) { scanTracks(); retryDiscovered(); } }, 2000);
 })();

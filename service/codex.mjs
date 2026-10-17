@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { root } from './config.mjs';
 import { instructions, outputSchema, buildPrompt, alignByIndex, alignCue, segmentStream, validateTranslation } from './translation.mjs';
-import { addUsage } from './database.mjs';
+const addUsage = (a, b) => (a || b) && Object.fromEntries(['input', 'cachedInput', 'output', 'reasoning'].map(k => [k, (a?.[k] || 0) + (b?.[k] || 0)]));
 import { keyedOutput, keyedInstructions } from './keyed.mjs';
 
 // thread/tokenUsage/updated reports a thread's running total; inputTokens includes cachedInputTokens
@@ -51,7 +51,7 @@ export class CodexTranslator extends EventEmitter {
         m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result);
       } else this.emit('notification', m);
     });
-    await this.rpc('initialize', { clientInfo: { name: 'hulu_context_subtitles', version: '0.1.0', title: 'Hulu Context Subtitles' }, capabilities: { experimentalApi: true } });
+    await this.rpc('initialize', { clientInfo: { name: 'smart_subtitles', version: '0.1.0', title: 'Smart Subtitles' }, capabilities: { experimentalApi: true } });
     this.send({ method: 'initialized' });
   }
   send(message) { this.child?.stdin.write(JSON.stringify(message) + '\n'); }
@@ -64,7 +64,7 @@ export class CodexTranslator extends EventEmitter {
   }
   fail(error) { for (const p of this.pending.values()) { clearTimeout(p.timer); p.reject(error); } this.pending.clear(); this.emit('failure', error); }
   close() { const child = this.child; this.child = null; this.ready = null; this.fail(new Error('Codex stopped')); child?.kill(); }
-  // One resident app-server and one thread/turn per episode, with fixed output slots.
+  // One resident app-server and one thread/turn per subtitle window, with fixed output slots.
   async translateEpisode(request, signal, onProgress = () => {}) {
     const codec = keyedOutput(request, partialSegments => onProgress({ partialSegments }));
     const { input, schema } = codec;
@@ -103,7 +103,7 @@ export class CodexTranslator extends EventEmitter {
           if (message.method === 'error' && !p.willRetry) finish(new Error(p.error?.message || 'Translation failed'));
           if (message.method === 'turn/completed') finish(p.turn.status === 'completed' ? null : new Error(p.turn.error?.message || 'Translation failed'));
         };
-        const timer = setTimeout(() => { interrupt(); finish(new Error('Translation timed out')); }, this.config.episodeTranslationTimeoutMs || 1800000);
+        const timer = setTimeout(() => { interrupt(); finish(new Error('Translation timed out')); }, this.config.translationTimeoutMs || 85000);
         this.on('notification', receive); this.on('failure', failure); signal?.addEventListener('abort', abort, { once: true });
         if (signal?.aborted) return abort();
         this.rpc('turn/start', { threadId: thread.id, environments: [], input: [{ type: 'text', text: JSON.stringify(input) }], effort: this.config.effort || 'low', outputSchema: schema })
@@ -111,7 +111,7 @@ export class CodexTranslator extends EventEmitter {
       });
     } finally { await this.rpc('thread/unsubscribe', { threadId: thread.id }, 3000).catch(() => {}); }
   }
-  // Translates a whole episode. Translations that have been accepted (streamed in sequence and
+  // Translates one bounded subtitle window. Translations that have been accepted (streamed in sequence and
   // validated) are never sent again: an attempt that fails after progress is continued from the
   // first missing subtitle, and request.accepted lets a later retry resume the same way.
   async translate(request, signal, onProgress = () => {}) {
@@ -189,7 +189,7 @@ export class CodexTranslator extends EventEmitter {
             } catch (e) { finish(e); }
           }
         };
-        const timer = setTimeout(() => { interrupt(); finish(new Error('Episode translation timed out; please retry')); }, this.config.episodeTranslationTimeoutMs || 1800000);
+        const timer = setTimeout(() => { interrupt(); finish(new Error('Subtitle window timed out; please retry')); }, this.config.translationTimeoutMs || 85000);
         this.on('notification', onMessage); this.on('failure', onFailure); signal?.addEventListener('abort', abort, { once: true });
         if (signal?.aborted) return abort();
         this.rpc('turn/start', { threadId: thread.id, environments: [], input: [{ type: 'text', text: buildPrompt(part, this.config.glossary) }], effort: this.config.effort, outputSchema }).then(r => { turnId = r.turn.id; if (settled) interrupt(); }).catch(e => finish(e));

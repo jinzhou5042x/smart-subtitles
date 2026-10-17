@@ -1,4 +1,4 @@
-name: Companion release
+name: Release
 on:
   push:
     tags: ['companion-v*']
@@ -31,6 +31,12 @@ jobs:
           mkdir -p dist/downloads
           cp "dist/release/SmartSubtitles-Service-${RELEASE_VERSION}-${{ matrix.target }}.zip" 'dist/downloads/SmartSubtitles-Service-${{ matrix.target }}.zip'
           node --input-type=module -e "import {readFileSync,writeFileSync} from 'node:fs'; import {createHash} from 'node:crypto'; const n='SmartSubtitles-Service-${{ matrix.target }}.zip'; writeFileSync('dist/downloads/'+n+'.sha256.txt', createHash('sha256').update(readFileSync('dist/downloads/'+n)).digest('hex')+'  '+n+'\n');"
+      - name: Package extension for store upload
+        if: matrix.target == 'win-x64'
+        shell: bash
+        run: |
+          node scripts/package.mjs
+          cp dist/store/smart-subtitles-*.zip dist/downloads/
       - uses: actions/upload-artifact@v4
         with:
           name: companion-${{ matrix.target }}
@@ -52,8 +58,8 @@ jobs:
           script: |
             const fs = require('fs');
             const tag = context.ref.replace('refs/tags/', '');
-            const body = `Download the ZIP for your computer below (not the source-code archives).\n\n- Windows: win-x64\n- Mac with Apple Silicon: darwin-arm64\n- Mac with Intel: darwin-x64\n\nExtract the ZIP into a permanent folder. Run **Start Subtitles** once to connect the extension. For Codex, run **Set Up Codex** and sign in. Google users can skip Codex setup and select their key file in the extension. Node.js is included.\n\nOn macOS, if the launcher is blocked, review the download and allow it in **System Settings → Privacy & Security**.\n\n[User guide](https://github.com/jinzhou5042x/smart-subtitles#readme)`;
-            const {data: release} = await github.rest.repos.createRelease({...context.repo, tag_name: tag, name: `Smart Subtitles companion ${tag.replace('companion-v', '')}`, body, draft: true});
+            const body = `Smart Subtitles now runs as a standalone Chrome extension. Browser translation needs no key or companion. Google Cloud, OpenAI, DeepSeek, Claude, Qwen and compatible/local APIs connect directly from the extension. Translation follows the playhead, with a browser cache.\n\nThe **SmartSubtitles-Service** downloads are optional and only for **Codex subscription**:\n- Windows: win-x64\n- Mac with Apple Silicon: darwin-arm64\n- Mac with Intel: darwin-x64\n\nExtract into a permanent folder, run **Set Up Codex** once, then choose **Codex subscription → Connect Codex** in Translator settings. Node.js is bundled. macOS may require allowing the launcher in **System Settings → Privacy & Security**.\n\nThe **smart-subtitles-${tag.replace('companion-v', '')}.zip** file is the extension package for store upload or manual developer-mode installation. This GitHub release does not update the Chrome Web Store listing.\n\n[User guide](https://github.com/jinzhou5042x/smart-subtitles#readme)`;
+            const {data: release} = await github.rest.repos.createRelease({...context.repo, tag_name: tag, name: `Smart Subtitles ${tag.replace('companion-v', '')}`, body, draft: true});
             for (const name of fs.readdirSync('downloads')) {
               await github.rest.repos.uploadReleaseAsset({...context.repo, release_id: release.id, name, data: fs.readFileSync(`downloads/${name}`)});
             }

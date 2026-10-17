@@ -27,10 +27,10 @@ await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true }); await mkdir(cache, { recursive: true });
 
 const FILES = [
-  'service/codex.mjs', 'service/codex-account.mjs', 'service/config.mjs', 'service/database.mjs', 'service/episodes.mjs', 'service/jobs.mjs', 'service/server.mjs', 'service/translation.mjs',
-  'service/checkpoints.mjs', 'service/keyed.mjs', 'service/google.mjs', 'service/google-settings.mjs', 'service/google-picker.mjs', 'service/key-picker.cs', 'service/native-key-picker.mjs',
+  'service/codex.mjs', 'service/codex-account.mjs', 'service/config.mjs', 'service/jobs.mjs', 'service/server.mjs', 'service/translation.mjs',
+  'service/keyed.mjs',
   'shared/languages.js', 'config/default.json',
-  'service/key-picker.swift', 'service/launch.mjs', 'service/native-host.mjs', 'scripts/native-host.mjs', 'scripts/register-host.mjs',
+  'service/launch.mjs', 'service/native-host.mjs', 'scripts/native-host.mjs', 'scripts/register-host.mjs',
   'scripts/companion.mjs', 'scripts/macos.sh',
   'scripts/start.ps1', 'scripts/stop.ps1', 'scripts/setup-codex.ps1', 'scripts/configure-codex.mjs', 'scripts/doctor.mjs'
 ];
@@ -45,22 +45,23 @@ await writeFile(path.join(out, 'Start Subtitles.cmd'), launcher('powershell.exe 
 await writeFile(path.join(out, 'Stop Subtitles.cmd'), launcher('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\\stop.ps1"'));
 await writeFile(path.join(out, 'Set Up Codex.cmd'), launcher('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\\setup-codex.ps1"'));
 await writeFile(path.join(out, 'Check Environment.cmd'), launcher('"%~dp0node\\node.exe" scripts\\doctor.mjs'));
-await writeFile(path.join(out, 'README.txt'), `Smart Subtitles - companion service ${pkg.version} (Windows)
+await writeFile(path.join(out, 'README.txt'), `Smart Subtitles - optional Codex companion ${pkg.version} (Windows)
 =====================================================================
 
 The Chrome extension shows bilingual subtitles on streaming video sites (Hulu and Disney+ at this
 version). There is no Smart Subtitles server: this program runs on your own computer,
-translates the subtitles with Codex using your own ChatGPT sign-in, and keeps finished
-translations in a local database. It only listens on 127.0.0.1 and answers only your own copy of the extension.
+translates the subtitles with Codex using your own ChatGPT sign-in, for short subtitle windows. The extension saves translations in the browser. It only listens on 127.0.0.1 and answers only your own copy of the extension.
 
 Install
   1. Unzip this folder somewhere permanent, for example Documents.
   2. Double-click "Set Up Codex.cmd" (once). It uses Codex if it is already installed, otherwise
      installs the official Codex CLI into this folder (about 430 MB download), and opens the ChatGPT
      sign-in in your browser. You need a ChatGPT account with Codex access.
-  3. Install the Smart Subtitles extension in Chrome. It finds this program and starts it by
-     itself from now on. (If you skipped step 2, double-click "Start Subtitles.cmd" once first.)
-  4. Open a video that has English subtitles and choose your language in the extension.
+  3. In the Chrome extension, open Translator settings, choose Codex subscription, then
+     click Connect Codex and grant the requested permissions. Chrome starts it when needed.
+  4. Open a video with English subtitles and choose your target language.
+
+Browser translation and cloud API translators do not need this program.
 
 Every day
   Just watch: Chrome starts the service when it is needed.
@@ -68,7 +69,7 @@ Every day
 
 Notes
   - Translation uses your ChatGPT/Codex quota. Subtitles are sent to OpenAI through your Codex
-    account and to no one else; finished translations stay in the "data" folder.
+    account and to no one else; completed translations are saved by the extension, not this companion.
   - config\\local.json holds this computer's private access code, readable only by your Windows
     user. Do not share it. If you move this folder, run "Start Subtitles.cmd" once again.
   - To uninstall, run "Stop Subtitles.cmd" and delete this folder.
@@ -81,9 +82,7 @@ if (mac) {
     await writeFile(path.join(out, file), (await readFile(path.join(root, file), 'utf8')).replace(/\r\n/g, '\n'));
     await chmod(path.join(out, file), 0o755);
   }
-  await mkdir(path.join(out, 'runtime/key-picker'), { recursive: true });
-  execFileSync('/usr/bin/swiftc', [path.join(root, 'service/key-picker.swift'), '-target', target.endsWith('arm64') ? 'arm64-apple-macosx13.0' : 'x86_64-apple-macosx13.0', '-o', path.join(out, 'runtime/key-picker/picker')]);
-  await writeFile(path.join(out, 'README.txt'), `macOS Chrome companion ${pkg.version}\nUnzip into a permanent folder. Double-click Set Up Codex.command once (or Start Subtitles.command if you only use Google), then install the Chrome extension: it finds this program and starts it by itself from now on. Google users can skip Codex setup and link their key file from the extension. Stop with Stop Subtitles.command. macOS 13 or later. If macOS blocks a launcher, use Finder's Open action or Privacy & Security to allow this downloaded tool after reviewing its source.\n`);
+  await writeFile(path.join(out, 'README.txt'), `macOS Chrome companion ${pkg.version}\nUnzip into a permanent folder. Double-click Set Up Codex.command once. Chrome starts this optional companion when requested after you connect it. Browser translation and cloud APIs do not need this companion. In the extension, choose Codex subscription and Connect Codex. Stop with Stop Subtitles.command. macOS 13 or later. If macOS blocks a launcher, use Finder's Open action or Privacy & Security to allow this downloaded tool after reviewing its source.\n`);
 }
 
 // Official portable Node.js, the same version the service is developed and tested with.
@@ -104,7 +103,7 @@ const own = JSON.parse(await readFile(path.join(root, 'config/local.json'), 'utf
 const secrets = [own.pairingToken, own.googleApiKey].filter(Boolean);
 const patterns = [/AIza[0-9A-Za-z_-]{35}/, /\b[a-f0-9]{48}\b/, /sk-[A-Za-z0-9]{20,}/];
 for (const file of await readdir(out, { recursive: true })) {
-  if (file === 'runtime/key-picker/picker' || file.startsWith('node' + path.sep)) continue; // official, checksum-verified Node.js files
+  if (file.startsWith('node' + path.sep)) continue; // official, checksum-verified Node.js files
   if (/local\.json$|\.sqlite$|local-connection\.json$/.test(file)) throw new Error(`Private file in the release: ${file}`);
   const full = path.join(out, file); if ((await stat(full)).isDirectory()) continue;
   const text = await readFile(full, 'utf8');

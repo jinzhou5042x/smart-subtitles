@@ -74,8 +74,8 @@ async function captureFixture({ playlist, page = '/play/example', cors = false, 
     addEventListener(type, cb) { const list = listeners.get(type) || []; list.push(cb); listeners.set(type, list); },
     postMessage(data) {
       messages.push(data);
-      if (data.type === 'hulu-context-resource-request') queueMicrotask(() => {
-        for (const cb of listeners.get('message') || []) cb({ source: window, origin, data: { type: 'hulu-context-resource-result', id: data.id, page: data.page, text: files[data.url], mime: 'text/vtt' } });
+      if (data.type === 'smart-subtitles-resource-request') queueMicrotask(() => {
+        for (const cb of listeners.get('message') || []) cb({ source: window, origin, data: { type: 'smart-subtitles-resource-result', id: data.id, page: data.page, text: files[data.url], mime: 'text/vtt' } });
       });
     },
     fetch: async url => {
@@ -90,13 +90,13 @@ async function captureFixture({ playlist, page = '/play/example', cors = false, 
   const context = vm.createContext({ window, location: new URL(origin + page), XMLHttpRequest: XHR, URL, Response, TextDecoder, AbortController, Intl, crypto: globalThis.crypto, setTimeout, clearTimeout, setInterval(fn) { intervals.push(fn); }, SubtitleSites: sites, document: { querySelectorAll: () => [] } });
   vm.runInContext(captureCode, context);
   await window.fetch('https://disney.playback.edge.bamgrid.com/media/example/scenarios/browser');
-  for (let i = 0; i < 100 && !messages.some(m => m.type === 'hulu-context-captured' || m.type === 'hulu-context-capture-error'); i++) await new Promise(r => setTimeout(r, 5));
+  for (let i = 0; i < 100 && !messages.some(m => m.type === 'smart-subtitles-captured' || m.type === 'smart-subtitles-capture-error'); i++) await new Promise(r => setTimeout(r, 5));
   return { requests, messages, window, context, listeners, intervals };
 }
 
 test('Disney media metadata discovers full English HLS subtitles, resolves relative segments and deduplicates boundaries', async () => {
   const { requests, messages } = await captureFixture();
-  const result = messages.find(m => m.type === 'hulu-context-captured');
+  const result = messages.find(m => m.type === 'smart-subtitles-captured');
   assert.ok(result);
   assert.equal(result.language, 'en-US');
   assert.equal(result.duration, 10);
@@ -109,16 +109,16 @@ test('Disney media metadata discovers full English HLS subtitles, resolves relat
 test('live, encrypted and media-segment playlists are never treated as complete subtitles', async () => {
   for (const playlist of ['#EXTM3U\n#EXTINF:5,\n1.vtt', '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="key"\n1.vtt\n#EXT-X-ENDLIST', '#EXTM3U\n1.mp4\n#EXT-X-ENDLIST']) {
     const { messages, requests } = await captureFixture({ playlist });
-    assert.ok(messages.some(m => m.type === 'hulu-context-capture-error'));
-    assert.equal(messages.some(m => m.type === 'hulu-context-captured'), false);
+    assert.ok(messages.some(m => m.type === 'smart-subtitles-capture-error'));
+    assert.equal(messages.some(m => m.type === 'smart-subtitles-captured'), false);
     assert.equal(requests.some(u => /\.mp4|\/key$/.test(u)), false);
   }
 });
 
 test('page CORS failures use the extension bridge and still produce the complete episode', async () => {
   const { messages } = await captureFixture({ cors: true });
-  assert.equal(messages.filter(m => m.type === 'hulu-context-resource-request').length, 2);
-  const result = messages.find(m => m.type === 'hulu-context-captured');
+  assert.equal(messages.filter(m => m.type === 'smart-subtitles-resource-request').length, 2);
+  const result = messages.find(m => m.type === 'smart-subtitles-captured');
   assert.match(result.text, /Hello there/);
   assert.match(result.text, /Goodbye/);
 });
@@ -242,22 +242,22 @@ test('reattaching capture reuses its hooks and replay listener', async () => {
 
 test('Retry fetches a failed discovered subtitle playlist without replaying playback metadata', async () => {
   const { requests, messages, window, listeners } = await captureFixture({ failSubtitleOnce: true });
-  assert.ok(messages.some(m => m.type === 'hulu-context-capture-error'));
-  assert.equal(messages.some(m => m.type === 'hulu-context-captured'), false);
-  for (const listener of listeners.get('message')) listener({ source: window, origin: 'https://www.disneyplus.com', data: { type: 'hulu-context-replay', retry: true } });
-  for (let i = 0; i < 100 && !messages.some(m => m.type === 'hulu-context-captured'); i++) await new Promise(r => setTimeout(r, 5));
-  assert.ok(messages.some(m => m.type === 'hulu-context-captured'));
+  assert.ok(messages.some(m => m.type === 'smart-subtitles-capture-error'));
+  assert.equal(messages.some(m => m.type === 'smart-subtitles-captured'), false);
+  for (const listener of listeners.get('message')) listener({ source: window, origin: 'https://www.disneyplus.com', data: { type: 'smart-subtitles-replay', retry: true } });
+  for (let i = 0; i < 100 && !messages.some(m => m.type === 'smart-subtitles-captured'); i++) await new Promise(r => setTimeout(r, 5));
+  assert.ok(messages.some(m => m.type === 'smart-subtitles-captured'));
   assert.equal(requests.filter(u => u.endsWith('/en/main.m3u8')).length, 2);
   assert.equal(requests.filter(u => u.includes('/media/')).length, 1);
 });
 
 test('resume replays buffered subtitles after capture was stopped', async () => {
   const { messages, window, listeners } = await captureFixture();
-  const count = messages.filter(m => m.type === 'hulu-context-captured').length;
-  for (const type of ['hulu-context-stop', 'hulu-context-resume']) {
+  const count = messages.filter(m => m.type === 'smart-subtitles-captured').length;
+  for (const type of ['smart-subtitles-stop', 'smart-subtitles-resume']) {
     for (const listener of listeners.get('message')) listener({ source: window, origin: 'https://www.disneyplus.com', data: { type } });
   }
-  assert.equal(messages.filter(m => m.type === 'hulu-context-captured').length, count + 1);
+  assert.equal(messages.filter(m => m.type === 'smart-subtitles-captured').length, count + 1);
 });
 
 
@@ -267,8 +267,8 @@ test('failed subtitle fetch retries automatically with backoff, without a click 
   assert.equal(requests.filter(u => u.endsWith('/en/main.m3u8')).length, 1);
   context.Date = { now: () => Date.now() + 3000 };
   for (const tick of intervals) tick();
-  for (let i = 0; i < 100 && !messages.some(m => m.type === 'hulu-context-captured'); i++) await new Promise(r => setTimeout(r, 5));
-  assert.ok(messages.some(m => m.type === 'hulu-context-captured'));
+  for (let i = 0; i < 100 && !messages.some(m => m.type === 'smart-subtitles-captured'); i++) await new Promise(r => setTimeout(r, 5));
+  assert.ok(messages.some(m => m.type === 'smart-subtitles-captured'));
   assert.equal(requests.filter(u => u.endsWith('/en/main.m3u8')).length, 2);
 });
 

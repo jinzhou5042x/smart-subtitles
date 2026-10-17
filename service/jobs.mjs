@@ -1,13 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { cacheKey } from './translation.mjs';
 
-// Runs whole-episode translations, up to config.maxAgents (default 16) at once, each in its own
-// Codex thread (e.g. several videos open in different tabs), and lets them be cancelled.
-// Complete results are stored by EpisodeManager in SQLite, not here.
+// Runs bounded subtitle windows. Completed translations are cached by the extension.
 export class JobQueue {
   constructor(translator, config) {
     this.translator = translator; this.config = config; this.jobs = new Map(); this.running = 0;
-    this.limit = Math.max(1, config.maxAgents || 16);
+    this.limit = Math.max(1, config.maxAgents || 2);
   }
   submit(request) {
     this.prune();

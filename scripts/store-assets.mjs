@@ -1,12 +1,15 @@
 // Renders the Chrome Web Store images into dist/store/assets with headless Chrome:
 // two 1280x800 screenshots and the 440x280 small promo tile. The video picture is an
-// illustration (no Hulu content or logos); the popup is the real popup with sample data.
+// illustration (no content or logos of any streaming service); the popup is the real popup with sample data.
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { root } from '../service/config.mjs';
+import '../extension/sites.js';
+// The services named on the promo tile: the ones the registry says work, most recent first.
+const sites = [...globalThis.SubtitleSites.names].reverse();
 
 const chrome = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'].find(p => p && existsSync(p));
 if (!chrome) throw new Error('Chrome not found; set CHROME_PATH');
@@ -19,8 +22,8 @@ const shot = (page, file, width, height, scale = 1) => execFileSync(chrome, ['--
 // The real popup, rendered with sample settings and status.
 // height: the popup's rendered height for this state, so the image ends where the popup does.
 async function popup(target, info, height) {
-  const stub = `globalThis.chrome = { runtime: { sendMessage: async m => m.type === 'settings' ? { ok: true, data: { enabled: true, target: '${target}', provider: 'codex', fontSize: 60 } } : { ok: true, data: {} } },
-    tabs: { query: async () => [{ id: 1 }], sendMessage: async () => (${JSON.stringify({ video: true, ...info })}), create() {} } };`;
+  const stub = `globalThis.chrome = { runtime: { sendMessage: async m => m.type === 'settings' ? { ok: true, data: { enabled: true, target: '${target}', provider: 'builtin', fontSize: 60 } } : { ok: true, data: {} } },
+    tabs: { query: async () => [{ id: 1, url: 'https://www.hulu.com/watch/sample' }], sendMessage: async () => (${JSON.stringify({ video: true, ...info })}), create() {} } };`;
   const html = (await readFile(path.join(root, 'extension/popup.html'), 'utf8'))
     .replace('href="popup.css"', `href="${ext('popup.css')}"`).replace('src="icon.svg"', `src="${ext('icon.svg')}"`)
     .replace('<script src="popup.js" type="module"></script>', `<style>*,*:before,*:after{transition:none!important}</style><script>${stub}</script><script src="${ext('popup.js')}" type="module"></script>`);
@@ -47,19 +50,20 @@ p{position:absolute;left:40px;top:612px;width:860px;margin:0;font-size:22px;line
 <div class="popup"><img src="${popupImage}"></div><p>${caption}</p></body></html>`;
 
 const screens = [
-  ['screenshot-1.png', 'Understand every line, <span class="mark">in your language</span>', 'Il m’a fait porter le chapeau.', 'He threw me under the bus.', await popup('fr', { tone: 'done', status: 'Episode subtitles ready', detail: 'Synced to the original timing', total: 2310, translated: 2310, elapsedMs: 452000, usage: { input: 61840, cachedInput: 38200, output: 70510, reasoning: 3120 } }, 278),
-    'The original English subtitles stay on screen, with a natural translation right above them. Slang, sarcasm and idioms are translated by meaning, not word for word.'],
-  ['screenshot-2.png', 'English to <span class="mark">55 languages</span>', 'Genial. Justo lo que me faltaba.', 'Oh, great. Just what I needed.', await popup('es', { tone: 'working', status: 'Receiving the Codex translation', total: 2310, translated: 412, elapsedMs: 92000, usage: { input: 30920, cachedInput: 0, output: 12580, reasoning: 640 } }, 296),
-    'Pick a language and a translator. Subtitles appear within seconds and follow the original timing; drag them up or down, and set the size you like.']
+  ['screenshot-1.png', 'Understand every line, <span class="mark">in your language</span>', 'Il m’a fait porter le chapeau.', 'He threw me under the bus.', await popup('fr', { tone: 'done', status: 'Subtitles ready near this position', detail: '', total: 2310, translated: 2310, elapsedMs: 452000, usage: { input: 61840, cachedInput: 38200, output: 70510, reasoning: 3120 } }, 295),
+    'The original English subtitles stay on screen, with a natural translation right above them. Use browser translation or connect your own cloud translator.'],
+  ['screenshot-2.png', 'Choose <span class="mark">your translator</span>', 'Genial. Justo lo que me faltaba.', 'Oh, great. Just what I needed.', await popup('es', { tone: 'working', status: 'Translating near this position', total: 2310, translated: 412, elapsedMs: 92000, usage: { input: 30920, cachedInput: 0, output: 12580, reasoning: 640 } }, 341),
+    'Pick a language and a translator. Translation follows the playhead; drag them up or down, and set the size you like.']
 ];
 for (const [file, title, translation, original, popupImage, caption] of screens) {
   const page = path.join(work, file.replace('.png', '.html'));
   await writeFile(page, scene(title, translation, original, popupImage, caption));
   shot(page, file, 1280, 800);
 }
-// Use the approved artwork stored with the public source.
+// Keep the approved promo artwork in the repository; do not regenerate its UI.
 for (const name of ['promo-440x280.png', 'promo-1280x800.png']) {
   await copyFile(path.join(root, 'docs/store/assets', name), path.join(out, name));
 }
-await writeFile(path.join(work, 'promo.html'), '<!doctype html><html><body style="margin:0"><img src="../promo-440x280.png" width="440" height="280" alt="Smart Subtitles"></body></html>');
+const tile = path.join(work, 'promo.html');
+await writeFile(tile, '<!doctype html><html><head><meta charset="utf-8"><title>Smart Subtitles promo</title><style>body{margin:0}img{display:block;width:440px;height:280px}</style></head><body><img src="../promo-440x280.png" alt="Smart Subtitles"></body></html>');
 console.log(`Store images written to ${out}`);

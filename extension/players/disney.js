@@ -158,8 +158,12 @@
   }
 
   P.register({
-    id: 'disney', name: 'Disney+', clockPolicy: 'disney-controls-v6',
-    isWatchPage: () => /^\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?(?:play|video)\/[^/]+\/?$/i.test(location.pathname),
+    id: 'disney', name: 'Disney+', clockPolicy: 'disney-controls-v6', lengthFrom: 'track',
+    // Disney's own captions stay about 1.1 s after a line's end when no other line follows, and
+    // change at the file's time when one does. Measured in live playback with the probe on
+    // 2026-10-10: 1.098, 1.124 and 1.129 s on the three lines followed by a pause (of 1.7 to 30 s),
+    // against -0.033 s (median) on the 23 lines followed by another line. One episode, one sitting.
+    captionLinger: 1.1,
     adBreak: () => watcher.observe(),
     // Only the length of the track's own complete playlist. The Hive element's duration is the
     // end of what it has buffered (133 s was seen on a 50-minute episode), and a single segment

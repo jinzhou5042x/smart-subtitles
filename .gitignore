@@ -2,7 +2,6 @@ config/local.json
 data/
 logs/
 dist/
-models/
 runtime/
 codex/
 node/

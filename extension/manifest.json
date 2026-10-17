@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Smart Subtitles",
-  "version": "0.9.4",
-  "description": "Bilingual AI subtitles for Hulu and Disney+ videos. Unofficial; not affiliated with Disney or Hulu.",
+  "version": "1.0.0",
+  "description": "Bilingual subtitles for Hulu and Disney+. Browser translation or your own cloud AI provider. No companion needed for everyday use.",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -16,9 +16,11 @@
     "scripting"
   ],
   "host_permissions": [
-    "http://127.0.0.1/*",
+    "https://*.hulu.com/*",
+    "https://hulu.com/*",
     "https://*.disneyplus.com/*",
     "https://disneyplus.com/*",
+    "http://127.0.0.1/*",
     "https://*.dssott.com/*",
     "https://*.dssedge.com/*"
   ],
@@ -39,9 +41,9 @@
       "matches": [
         "https://*.hulu.com/*",
         "https://hulu.com/*",
-        "http://127.0.0.1/*",
         "https://*.disneyplus.com/*",
-        "https://disneyplus.com/*"
+        "https://disneyplus.com/*",
+        "http://127.0.0.1/*"
       ],
       "js": [
         "sites.js",
@@ -55,9 +57,9 @@
       "matches": [
         "https://*.hulu.com/*",
         "https://hulu.com/*",
-        "http://127.0.0.1/*",
         "https://*.disneyplus.com/*",
-        "https://disneyplus.com/*"
+        "https://disneyplus.com/*",
+        "http://127.0.0.1/*"
       ],
       "js": [
         "sites.js",
@@ -67,12 +69,27 @@
         "players/hulu.js",
         "players/disney.js",
         "tracks.js",
+        "builtin.js",
         "session.js",
         "overlay.js",
+        "probe.js",
         "content.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
     }
-  ]
+  ],
+  "optional_permissions": [
+    "nativeMessaging"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "http://[::1]/*"
+  ],
+  "options_ui": {
+    "page": "settings.html",
+    "open_in_tab": true
+  }
 }

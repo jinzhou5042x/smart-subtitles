@@ -1,85 +1,66 @@
-// One title's translation: asks the local service for it, follows its progress and holds the
-// lines by subtitle id. No DOM; `send` reaches the extension's background worker.
-//
-// The only states are the ones the popup shows: nothing yet, working, complete, interrupted and
-// retrying by itself, paused on something only the viewer can clear, or waiting for a
-// translator's setup. Everything asynchronous belongs to an `epoch`:
-// anything that changes what is being translated (another track, another translator, another
-// title, a retry) starts a new epoch, and answers that arrive for an old one are dropped.
+// Playback-driven windows. Completed lines survive seeks; old requests never reach a new epoch.
 (function (scope) {
+  function nextWindow(cues, lines, time, paused = false) {
+    const end = time + (paused ? 20 : 90);
+    const candidates = cues.filter(c => c.end >= Math.max(0, time - 1) && c.start <= end && !lines.has(c.id));
+    if (!candidates.length) return [];
+    const start = candidates[0].start;
+    return candidates.filter(c => c.start < start + 30).slice(0, 12);
+  }
   class TranslationSession {
-    constructor({ send, wait = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now, id = () => crypto.randomUUID() }) {
-      Object.assign(this, { send, wait, now, id });
-      this.cues = []; this.lines = new Map(); this.epoch = id(); this.clear();
+    constructor({ send, now = Date.now, id = () => crypto.randomUUID(), builtin } = {}) {
+      Object.assign(this, { send, now, id });
+      this.builtin = builtin || (scope.SubtitleBuiltin ? new scope.SubtitleBuiltin.BuiltinTranslator() : null);
+      this.cues = []; this.lines = new Map(); this.epoch = id(); this.selection = { provider: 'builtin', target: 'zh-CN' }; this.clear();
     }
-    clear() { this.lines.clear(); this.episode = null; this.cursor = 0; this.busy = false; this.complete = false; this.retryAt = 0; this.error = ''; this.awaiting = ''; this.redo = ''; this.stopped = ''; this.interrupted = ''; this.attempts = 0; }
-    // Ends the current epoch and tells the service this page no longer needs its work.
-    cancel() { const old = this.epoch; this.epoch = this.id(); this.busy = false; Promise.resolve(this.send({ type: 'cancel', epoch: old })).catch(() => {}); }
-    reset() { this.cancel(); this.clear(); }
-    // Another track: everything known so far belonged to the old one.
+    clear() { this.lines.clear(); this.episode = null; this.busy = false; this.complete = false; this.retryAt = 0; this.error = ''; this.awaiting = ''; this.redo = ''; this.stopped = ''; this.interrupted = ''; this.attempts = 0; this.lastTime = null; }
+    configure(settings) {
+      const changed = settings.provider !== this.selection.provider || settings.target !== this.selection.target;
+      if (changed || !settings.enabled) this.reset();
+      this.selection = { provider: settings.provider, target: settings.target };
+    }
+    cancel() { const old = this.epoch; this.epoch = this.id(); this.busy = false; this.controller?.abort(); Promise.resolve(this.send({ type: 'cancel', epoch: old })).catch(() => {}); }
+    reset() { this.cancel(); this.clear(); this.builtin?.close(); }
     use(cues) { this.reset(); this.cues = cues; }
-    retry() { this.error = ''; this.interrupted = ''; this.attempts = 0; this.retryAt = 0; }
-    // Translates a finished title again. The screen starts empty and fills as the new lines
-    // arrive. The service keeps the old record until the new one is complete, so if this stops,
-    // the old lines are fetched back (see `run`) and `stopped` says why.
-    again() {
-      if (!this.complete || !this.cues.length) return false;
-      this.cancel(); this.clear(); this.redo = this.id();
-      return true;
-    }
-    get working() { return !!this.episode && ['queued', 'running'].includes(this.episode.status); }
+    retry() { this.error = ''; this.interrupted = ''; this.awaiting = ''; this.attempts = 0; this.retryAt = 0; }
+    again() { this.reset(); return !!this.cues.length; }
+    get working() { return this.busy; }
     get translated() { return this.lines.size; }
-    apply(result) {
-      if ((result.completedCues || 0) > (this.episode?.completedCues || 0)) this.attempts = 0;
-      this.episode = result; this.interrupted = '';
-      for (const segment of result.segments || []) for (const id of segment.sourceIds) this.lines.set(id, segment);
-      this.cursor = result.cursor;
-      this.complete = result.status === 'done' && this.cursor === result.segmentCount && this.lines.size === this.cues.length;
-      if (this.complete) this.redo = '';
-    }
-    // Called on every tick; does nothing unless there is something to ask for.
-    async run({ session, title }) {
-      if (!this.cues.length || this.busy || this.complete || this.now() < this.retryAt) return;
-      const epoch = this.epoch, stale = () => epoch !== this.epoch;
-      this.busy = true;
+    apply(segments) { for (const segment of segments || []) for (const id of segment.sourceIds) this.lines.set(id, segment); this.complete = this.lines.size === this.cues.length; }
+    async run({ session, title, time = 0, paused = false }) {
+      if (!Number.isFinite(time) || time < 0) return;
+      if (this.lastTime !== null && Math.abs(time - this.lastTime) > 4) { this.cancel(); this.retry(); }
+      this.lastTime = time;
+      if (!this.cues.length || this.busy || this.error || this.now() < this.retryAt) return;
+      const window = nextWindow(this.cues, this.lines, time, paused);
+      if (!window.length) { this.episode = { ...this.episode, status: 'ready' }; return; }
+      const first = this.cues.indexOf(window[0]), last = this.cues.indexOf(window.at(-1));
+      const context = this.cues.slice(Math.max(0, first - 12), Math.min(this.cues.length, last + 13)).filter(c => !window.includes(c)).slice(0, 24);
+      const epoch = this.epoch, selection = { ...this.selection }, stale = () => epoch !== this.epoch;
+      const request = { session, title, epoch, cues: window, context };
+      const controller = new AbortController(); this.controller = controller; this.busy = true; this.episode = { status: 'running' };
+      // Bounded to this active request, never a permanent background keep-alive.
+      const heartbeat = setInterval(() => { this.send({ type: 'ping' }).catch(() => {}); }, 10000);
       try {
-        const first = await this.send({ type: 'prepareEpisode', request: { session, epoch, title, cues: this.cues, context: [], ...(this.redo ? { redo: this.redo } : {}) } });
+        const result = await this.send({ type: 'translateWindow', request, ...selection });
         if (stale()) return;
-        // A translator that still needs setting up: no request was made; ask again shortly.
-        this.awaiting = first.status === 'awaiting-key' ? 'key' : '';
-        if (this.awaiting) { this.error = ''; this.retryAt = this.now() + 2000; return; }
-        this.apply(first); this.error = '';
-        while (!this.complete) {
-          if (['error', 'cancelled'].includes(this.episode.status)) throw Object.assign(new Error(this.episode.error || 'Episode translation cancelled'), { needsUser: !!this.episode.needsUser });
-          await this.wait(1000);
+        this.apply(result.segments);
+        if (selection.provider === 'builtin' && result.missing?.length) {
+          const segments = await this.builtin.translate(result.missing, selection.target, controller.signal);
           if (stale()) return;
-          let result = await this.send({ type: 'episodeProgress', id: this.episode.id, after: this.cursor });
-          if (stale()) return;
-          // The finished text may differ from the streamed lines: read all of it again.
-          if (result.status === 'done' && this.episode.status !== 'done' && this.cursor > 0) {
-            result = await this.send({ type: 'episodeProgress', id: this.episode.id, after: 0 });
-            if (stale()) return;
-            this.lines.clear();
-          }
-          this.apply(result);
+          await this.send({ type: 'saveBuiltin', request: { ...request, cues: result.missing }, segments, ...selection });
+          if (stale()) return; this.apply(segments);
         }
+        this.error = ''; this.awaiting = ''; this.interrupted = ''; this.attempts = 0;
+        this.episode = { status: this.complete ? 'done' : 'ready', cached: result.cached, usage: result.usage };
+        this.retryAt = this.now() + 250;
       } catch (e) {
-        if (stale()) return;
-        this.awaiting = '';
-        if (e.needsUser) {
-          // Only the viewer can clear this (an account, a quota, a key). It is shown with Retry,
-          // and asked again every two minutes in case it has cleared by itself. A second
-          // translation gives way to the first instead: the stored record is fetched back.
-          if (this.redo) { this.clear(); this.stopped = e.message; }
-          else { this.error = e.message; this.attempts = 0; this.retryAt = this.now() + 120000; }
-        } else {
-          // Everything else is retried without asking: after 5 s, 15 s, 45 s, then every 2 min.
-          // The service kept every validated minute, so each try starts where the last one ended.
-          this.interrupted = e.message; this.retryAt = this.now() + Math.min(120000, 5000 * 3 ** Math.min(this.attempts++, 5));
-        }
-      }
-      finally { if (!stale()) this.busy = false; }
+        if (stale() || controller.signal.aborted) return;
+        this.awaiting = e.awaiting || ''; this.episode = { status: 'error' };
+        // Do not repeatedly spend quota on timeouts, malformed output or invalid credentials.
+        this.error = e.message; this.attempts++;
+      } finally { clearInterval(heartbeat); if (!stale()) this.busy = false; }
     }
   }
-  scope.SubtitleSession = { TranslationSession };
+  scope.SubtitleSession = { TranslationSession, nextWindow };
 })(globalThis);

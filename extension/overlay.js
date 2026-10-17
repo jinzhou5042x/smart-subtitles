@@ -1,7 +1,7 @@
 // The two subtitle lines over the picture. Knows nothing about players, tracks or translation:
 // it is told where the picture is and what to show.
 (function (scope) {
-  const ID = 'hulu-context-subtitles';
+  const ID = 'smart-subtitles';
   // onMove(fraction): the viewer dragged the lines; the position is a fraction of the picture
   // height, so it follows resizing and full screen.
   function createOverlay({ onMove = () => {} } = {}) {
@@ -18,7 +18,7 @@
 .original{font-size:var(--original-size,18px);color:rgba(255,255,255,.88);margin-top:calc(var(--original-size,18px)*.3);font-weight:450;background:rgba(10,12,16,.42)}
 .line:empty{display:none}.line{pointer-events:auto;cursor:grab;user-select:none;touch-action:none}
 .dragging .line{cursor:grabbing;box-shadow:0 .08em .5em rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.06),0 0 0 2px rgba(47,194,125,.65)}
-.badge{position:absolute;top:16px;left:16px;color:#fff;background:#101820b5;padding:6px 10px;border-radius:6px;font:12px system-ui}.badge:empty{display:none}`;
+.badge{position:absolute;top:16px;left:16px;color:#fff;background:#101820b5;padding:6px 10px;border-radius:6px;font:12px system-ui;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.badge:empty{display:none}`;
     const wrap = document.createElement('div'); wrap.className = 'wrap';
     // dir=auto with unicode-bidi:plaintext lays out right-to-left translations (Arabic, Hebrew, Persian) correctly.
     const translatedLine = document.createElement('div'); translatedLine.className = 'line'; translatedLine.dir = 'auto';

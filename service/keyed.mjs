@@ -35,7 +35,7 @@ export function keyedOutput(request, onPrefix = () => {}) {
       return [k, indices.length === 1 ? entrySchema(indices) : { type: 'array', minItems: indices.length, maxItems: indices.length, items: entrySchema(indices) }];
     })) }
   } };
-  const input = { targetLanguage: languageName(request.target), title: request.title,
+  const input = { targetLanguage: languageName(request.target), title: request.title, contextOnly: request.context || [],
     cues: request.cues.map(c => ({ timestamp: timestampKey(c), source: c.text })),
     alreadySaved: accepted.map((s, i) => ({ timestamp: timestampKey(request.cues[i]), source: request.cues[i].text, translation: s.text })), outputKeys: keys };
   const space = pos => { while (pos < buffer.length && /\s/.test(buffer[pos])) pos++; return pos; };

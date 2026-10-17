@@ -29,6 +29,18 @@
     return [...new Map(result.map(c => [c.id, c])).values()].sort((a, b) => a.start - b.start);
   }
   function active(cues, time) { return cues.filter(c => c.start <= time && time < c.end); }
+  // What is on screen at `time`. Subtitles that follow one another are written a frame or two
+  // apart (0.033 s in 482 of 694 changes of one episode, 2026-10-10); taking that gap literally
+  // makes the lines blink off between them. The earlier subtitle is held through a gap of up to
+  // `bridge` seconds. `linger` is how long the player's own captions keep a line after its end
+  // when no other line follows (a fact of each player, measured; site.js): with it the lines leave
+  // the screen together with the player's. Without it a subtitle followed by silence ends when it ends.
+  function onScreen(cues, time, { bridge = 0.1, linger = 0 } = {}) {
+    const now = active(cues, time); if (now.length) return now;
+    let ended = -Infinity, next = Infinity;
+    for (const c of cues) { if (c.end <= time) ended = Math.max(ended, c.end); else if (c.start > time) next = Math.min(next, c.start); }
+    return next - ended <= bridge || time - ended < linger ? cues.filter(c => c.end === ended) : [];
+  }
   function batch(cues, time, translated, lookAhead = 60, limit = 10) {
     const missing = cues.filter(c => c.end > time && c.start <= time + lookAhead && !translated.has(c.id));
     if (!missing.length) return [];
@@ -99,5 +111,5 @@
     return 'unknown';
   }
   const isEnglish = cues => sourceLanguage(cues) === 'en';
-  scope.SubtitleCore = { hash, clean, cue, timestamp, ttmlTime, parseSubtitles, active, batch, mediaDuration, coversTitle, pictureRect, englishShare, sourceLanguage, isEnglish };
+  scope.SubtitleCore = { hash, clean, cue, timestamp, ttmlTime, parseSubtitles, active, onScreen, batch, mediaDuration, coversTitle, pictureRect, englishShare, sourceLanguage, isEnglish };
 })(globalThis);

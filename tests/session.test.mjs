@@ -1,100 +1,46 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../extension/session.js';
-const { TranslationSession } = globalThis.SubtitleSession;
-const cues = ['a', 'b', 'c'].map((id, i) => ({ id, start: i, end: i + 1, text: id }));
-const segment = (id, text) => ({ sourceIds: [id], text });
-// A service that answers from a script of replies and records what it was asked.
-function service(replies) {
-  const asked = []; let ids = 0;
-  const send = async message => { asked.push(message); if (message.type === 'cancel') return {}; const reply = replies.shift(); if (reply instanceof Error) throw reply; return typeof reply === 'function' ? reply(message) : reply; };
-  return { asked, session: new TranslationSession({ send, wait: async () => {}, now: () => 0, id: () => 'id' + ++ids }) };
-}
-const where = { session: 'https://example.test/watch/1', title: 'Title' };
-
-test('a translation is followed from the first answer to the complete text', async () => {
-  const { session, asked } = service([
-    { id: 'e'.repeat(64), status: 'running', segments: [segment('a', 'A1')], cursor: 1, segmentCount: 1, completedCues: 1, totalCues: 3 },
-    { id: 'e'.repeat(64), status: 'running', segments: [segment('b', 'B1')], cursor: 2, segmentCount: 2, completedCues: 2, totalCues: 3 },
-    { id: 'e'.repeat(64), status: 'done', segments: [], cursor: 2, segmentCount: 3, completedCues: 3, totalCues: 3 },
-    { id: 'e'.repeat(64), status: 'done', segments: [segment('a', 'A2'), segment('b', 'B2'), segment('c', 'C2')], cursor: 3, segmentCount: 3, completedCues: 3, totalCues: 3 },
-  ]);
-  session.use(cues); await session.run(where);
-  assert.equal(session.complete, true); assert.equal(session.busy, false); assert.equal(session.error, '');
-  assert.deepEqual([...session.lines.values()].map(s => s.text), ['A2', 'B2', 'C2'], 'the finished text replaces the streamed lines');
-  const requests = asked.filter(m => m.type !== 'cancel');
-  assert.equal(requests[0].request.session, where.session); assert.equal(requests[0].request.redo, undefined);
-  assert.deepEqual(requests.slice(1).map(m => m.after), [1, 2, 0]);
-  await session.run(where); assert.equal(asked.filter(m => m.type !== 'cancel').length, 4, 'a complete translation asks for nothing more');
+const { TranslationSession, nextWindow } = globalThis.SubtitleSession;
+const cues = Array.from({ length: 600 }, (_, i) => ({ id: `c${i}`, text: `Line ${i}`, start: i * 3, end: i * 3 + 2.9 }));
+const segments = cues => cues.map(c => ({ sourceIds: [c.id], text: `Translated ${c.text}`, start: c.start, end: c.end }));
+const where = { session: 'video-one', title: 'Test', time: 0 };
+function setup(handler) { const asked = []; let serial = 0; const session = new TranslationSession({ id: () => String(++serial), now: () => 0, send: async m => { asked.push(m); if (['cancel', 'ping'].includes(m.type)) return {}; return handler(m); } }); session.use(cues); session.configure({ provider: 'google', target: 'zh-CN', enabled: true }); return { session, asked }; }
+test('seeking to 15 minutes requests nearby dialogue, never the earlier backlog', async () => {
+ const { session, asked } = setup(m => ({ segments: segments(m.request.cues) }));
+ await session.run({ ...where, time: 900 });
+ const window = asked.find(m => m.type === 'translateWindow').request;
+ assert.ok(window.cues[0].start >= 897); assert.ok(window.cues.length <= 12);
+ assert.ok(window.context.some(c => c.start < 900)); assert.equal(session.lines.size, window.cues.length);
 });
-
-test('an answer for something that is no longer wanted is dropped', async () => {
-  let session;
-  const made = service([message => { session.use([cues[0]]); return { id: 'x', status: 'done', segments: cues.map(c => segment(c.id, 'old')), cursor: 3, segmentCount: 3 }; }]);
-  session = made.session; session.use(cues);
-  await session.run(where);
-  assert.equal(session.lines.size, 0, 'the old track\'s lines never reach the new one'); assert.equal(session.complete, false); assert.equal(session.cues.length, 1);
-  assert.equal(session.busy, false, 'and the new track is free to start');
-  assert.equal(made.asked.filter(m => m.type === 'cancel').length, 2);
+test('a seek cancels a running window and discards its late result', async () => {
+ let finish;
+ const { session, asked } = setup(m => m.request.cues[0].id === 'c0' ? new Promise(resolve => { finish = () => resolve({ segments: segments(m.request.cues) }); }) : { segments: segments(m.request.cues) });
+ const pending = session.run(where); await Promise.resolve();
+ await session.run({ ...where, time: 900 }); finish(); await pending;
+ assert.equal(session.lines.has('c0'), false); assert.equal(session.lines.has('c300'), true);
+ assert.ok(asked.some(m => m.type === 'cancel'));
 });
-
-test('only what the viewer must clear pauses with Retry; everything else is tried again without asking', async () => {
-  let clock = 0;
-  const replies = [new Error('Cannot connect to the subtitle service'), { id: 'e'.repeat(64), status: 'error', error: 'Codex exited (1)', segments: [], cursor: 0, segmentCount: 0 },
-    { id: 'e'.repeat(64), status: 'error', needsUser: true, error: 'usage limit reached', segments: [], cursor: 0, segmentCount: 0 },
-    { id: 'e'.repeat(64), status: 'done', segments: cues.map(c => segment(c.id, 'ok')), cursor: 3, segmentCount: 3, completedCues: 3, totalCues: 3 }];
-  const asked = [];
-  const session = new TranslationSession({ send: async m => { asked.push(m.type); if (m.type === 'cancel') return {}; const r = replies.shift(); if (r instanceof Error) throw r; return r; }, wait: async () => {}, now: () => clock, id: () => 'id' });
-  const requests = () => asked.filter(t => t === 'prepareEpisode').length;
-  session.use(cues); await session.run(where);
-  assert.equal(session.error, '', 'a lost connection is not the viewer\'s problem'); assert.equal(session.interrupted, 'Cannot connect to the subtitle service'); assert.equal(session.retryAt, 5000);
-  await session.run(where); assert.equal(requests(), 1, 'it waits its turn');
-  clock = 5000; await session.run(where);
-  assert.equal(session.interrupted, 'Codex exited (1)'); assert.equal(session.retryAt, 5000 + 15000, 'and waits longer each time');
-  clock = 20000; await session.run(where);
-  assert.equal(session.error, 'usage limit reached'); assert.equal(session.interrupted, ''); assert.equal(session.retryAt, 20000 + 120000, 'even this is asked again later, in case it cleared');
-  session.retry(); await session.run(where);
-  assert.equal(session.complete, true); assert.equal(session.error, ''); assert.equal(requests(), 4);
+test('a language change discards an old response', async () => {
+ let finish; const { session } = setup(m => new Promise(resolve => { finish = () => resolve({ segments: segments(m.request.cues) }); }));
+ const pending = session.run(where); await Promise.resolve(); session.configure({ provider: 'google', target: 'es', enabled: true }); finish(); await pending;
+ assert.equal(session.lines.size, 0); assert.equal(session.busy, false);
 });
-
-test('a translator that needs setting up is asked again by itself', async () => {
-  const { session } = service([{ status: 'awaiting-key' }]);
-  session.use(cues); await session.run(where);
-  assert.equal(session.awaiting, 'key'); assert.equal(session.error, ''); assert.equal(session.retryAt, 2000);
+test('quota errors and timeouts pause instead of making unbounded paid retries', async () => {
+ const { session, asked } = setup(() => { throw new Error('Quota exceeded'); });
+ await session.run(where); await session.run(where);
+ assert.equal(asked.filter(m => m.type === 'translateWindow').length, 1); assert.match(session.error, /Quota/);
+ session.retry(); await session.run(where); assert.equal(asked.filter(m => m.type === 'translateWindow').length, 2);
 });
-
-test('translating again clears the screen, fills it with the new lines and ends as one complete set', async () => {
-  const done = text => ({ id: 'f'.repeat(64), status: 'done', segments: cues.map(c => segment(c.id, text + c.id)), cursor: 3, segmentCount: 3, completedCues: 3, totalCues: 3 });
-  const { session, asked } = service([done('old-'),
-    { id: 'r'.repeat(64), status: 'running', segments: [segment('a', 'new-a')], cursor: 1, segmentCount: 1, completedCues: 1, totalCues: 3 },
-    { id: 'r'.repeat(64), status: 'done', segments: [], cursor: 1, segmentCount: 3, completedCues: 3, totalCues: 3 },
-    { ...done('new-'), id: 'r'.repeat(64) }]);
-  const fresh = new TranslationSession({ send: async () => ({}), id: () => 'x' });
-  assert.equal(fresh.again(), false, 'nothing to translate again before a translation exists');
-  session.use(cues); await session.run(where);
-  assert.equal(session.again(), true); assert.equal(session.complete, false);
-  assert.equal(session.lines.size, 0, 'the old lines leave the screen at once'); assert.equal(session.translated, 0);
-  await session.run(where);
-  const request = asked.filter(m => m.type === 'prepareEpisode')[1].request;
-  assert.match(request.redo, /^id\d+$/); assert.notEqual(request.epoch, asked.find(m => m.type === 'prepareEpisode').request.epoch);
-  assert.equal(session.complete, true); assert.equal(session.redo, ''); assert.equal(session.translated, 3);
-  assert.deepEqual([...session.lines.values()].map(s => s.text), ['new-a', 'new-b', 'new-c']);
+test('prefetch is bounded; pause fetches less; cached lines are skipped', () => {
+ const held = new Map(cues.slice(0, 10).map(c => [c.id, {}]));
+ assert.equal(nextWindow(cues, held, 0, true).length, 0);
+ assert.equal(nextWindow(cues, held, 0)[0].id, 'c10');
+ assert.ok(nextWindow(cues, new Map(), 0).every(c => c.start < 30));
 });
-
-test('a second translation that stops brings the previous subtitles back and says why', async () => {
-  const stored = { id: 'f'.repeat(64), status: 'done', cached: true, segments: cues.map(c => segment(c.id, 'old-' + c.id)), cursor: 3, segmentCount: 3, completedCues: 3, totalCues: 3 };
-  const { session, asked } = service([stored,
-    { id: 'r'.repeat(64), status: 'running', segments: [segment('a', 'new-a')], cursor: 1, segmentCount: 1, completedCues: 1, totalCues: 3 },
-    { id: 'r'.repeat(64), status: 'error', needsUser: true, error: 'usage limit', segments: [], cursor: 1, segmentCount: 1 },
-    stored]);
-  session.use(cues); await session.run(where);
-  session.again(); await session.run(where);
-  assert.equal(session.redo, ''); assert.equal(session.stopped, 'usage limit'); assert.equal(session.error, '', 'not a paused translation');
-  assert.equal(session.lines.size, 0); assert.equal(session.busy, false);
-  await session.run(where);
-  const last = asked.filter(m => m.type === 'prepareEpisode').at(-1).request;
-  assert.equal(last.redo, undefined, 'the stored record is asked for, not another attempt');
-  assert.equal(session.complete, true); assert.deepEqual([...session.lines.values()].map(s => s.text), ['old-a', 'old-b', 'old-c']);
-  assert.equal(session.stopped, 'usage limit', 'the reason stays until the next change');
-  assert.equal(session.again(), true); assert.equal(session.stopped, '');
+test('built-in results are cached through the extension', async () => {
+ const messages = [];
+ const session = new TranslationSession({ now: () => 0, builtin: { close() {}, translate: async list => segments(list) }, send: async m => { messages.push(m); return m.type === 'translateWindow' ? { segments: [], missing: m.request.cues } : {}; } });
+ session.use(cues); await session.run(where);
+ assert.ok(session.lines.size > 0); assert.ok(messages.some(m => m.type === 'saveBuiltin'));
 });

@@ -1,7 +1,8 @@
 // Builds the Chrome Web Store upload: dist/store/smart-subtitles-<version>.zip.
 // Unlike `npm run build`, it starts from extension/ (never dist/extension), so the developer's
-// local-connection.json pairing file cannot be included; users pair in the popup instead.
-// Content scripts run on Hulu only; 127.0.0.1 stays a host permission for the local service.
+// local-connection.json pairing file cannot be included; optional companion access is granted in settings.
+// Content scripts run on the registered services only (extension/sites.js), not on the local test
+// clip. API servers and native messaging are optional permissions.
 import { cp, mkdir, readFile, rm, writeFile, readdir, stat } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -19,6 +20,7 @@ await rm(path.join(staging, 'local-connection.json'), { force: true });
 const manifestFile = path.join(staging, 'manifest.json');
 const manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
 for (const script of manifest.content_scripts) script.matches = script.matches.filter(match => !match.startsWith('http://127.0.0.1'));
+manifest.host_permissions = manifest.host_permissions.filter(match => !match.startsWith('http://127.0.0.1'));
 await writeFile(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
 
 const zip = path.join(out, `smart-subtitles-${manifest.version}.zip`);

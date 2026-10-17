@@ -7,5 +7,5 @@
   "providers": [
     "codex"
   ],
-  "maxAgents": 16
+  "maxAgents": 2
 }

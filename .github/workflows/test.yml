@@ -14,7 +14,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
       - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check:extension
+      - run: npm run package
       - name: Check that the extension scripts parse
         shell: bash
         run: for f in extension/*.js; do node --check "$f" 2>/dev/null || node --input-type=module --check < "$f"; done

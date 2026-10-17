@@ -12,5 +12,9 @@ for (const file of ['package.json', 'extension/manifest.json']) {
   console.log(`${file}: ${data.version} -> ${next}`); data.version = next;
   await writeFile(full, JSON.stringify(data, null, 2) + '\n');
 }
-const readme = path.join(root, 'README-DEVELOPMENT.md');
-await writeFile(readme, (await readFile(readme, 'utf8')).replace(/Current version: \*\*[\d.]+\*\*/, `Current version: **${next}**`));
+const lock = path.join(root, 'package-lock.json');
+try {
+  const data = JSON.parse(await readFile(lock, 'utf8')); data.version = next;
+  if (data.packages?.['']) data.packages[''].version = next;
+  await writeFile(lock, JSON.stringify(data, null, 2) + '\n');
+} catch (e) { if (e.code !== 'ENOENT') throw e; }

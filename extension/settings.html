@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Translator settings · Smart Subtitles</title><link rel="stylesheet" href="popup.css"><link rel="stylesheet" href="settings.css"></head>
+<body><main><header><img class="logo" src="icon.svg" alt=""><h1>Translator settings</h1></header>
+<p class="intro">Browser translation works without an account. Connect a cloud provider if you want a different translator.</p>
+<div class="group"><div class="row"><label for="provider">Translator</label><select id="provider"></select></div></div>
+<section id="builtin"><p>Uses Chrome's built-in translation. On a supported video, click <strong>Start subtitles</strong> if a language pack needs downloading. Your subtitles stay on this computer.</p><p>Requires a supported desktop browser and language. If your browser or organization disables this feature, choose a cloud translator.</p><button id="useBuiltin" class="primary">Use browser translation</button></section>
+<form id="cloud" hidden>
+<label for="baseUrl">API base URL</label><input id="baseUrl" type="url" placeholder="https://your-provider.example/v1" autocomplete="off">
+<p class="note" id="endpointHelp">Use the address from your provider. For local models, use http://localhost:PORT/v1.</p>
+<label for="model">Model</label><input id="model" autocomplete="off" placeholder="Model name from your provider">
+<label for="key">API key</label><input id="key" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste your API key">
+<p class="note">Stored only in this browser profile; never synced or sent to the video website. API usage is billed by your provider. An API account is separate from a chat subscription.</p>
+<p><a id="guide" target="_blank" rel="noopener">Get an API key / setup guide</a></p>
+<div class="actions"><button class="primary" type="submit">Save and use</button><button id="test" type="button" class="quiet">Test with “Hello.”</button><button id="remove" type="button" class="quiet">Remove key</button></div><p class="note">The test sends one short translation request and may use paid quota.</p>
+</form>
+<section id="codex" hidden><p>Codex uses your ChatGPT subscription through the optional companion. Other translators do not need it.</p><p><a href="https://github.com/jinzhou5042x/smart-subtitles/releases" target="_blank" rel="noopener">Download the optional companion</a>. Run <strong>Set Up Codex</strong> once, then connect below.</p><div class="actions"><button id="connect" class="primary">Connect Codex</button><button id="signin" class="quiet">Log in</button><button id="signout" class="quiet">Log out</button></div><p class="note">Browser-only subscription login is not available in this release. Logging out also affects other tools using the same Codex login.</p></section>
+<p id="result" role="status" aria-live="polite"></p>
+<hr><p>Translations are saved in this browser, with a limit of 30,000 subtitle lines. Clearing them does not remove API keys.</p><button id="clear" class="quiet">Clear saved translations</button>
+<footer><a href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener">User guide</a> · <a href="legal.html" target="_blank">Terms &amp; Privacy</a></footer>
+</main><script type="module" src="settings.js"></script></body></html>

@@ -22,15 +22,15 @@ test('only enabled translators are offered and accepted; extension IDs can be re
   const allowed = 'a'.repeat(32), other = 'b'.repeat(32);
   const config = { port: 0, pairingToken: 'test-token', providers: ['codex'], allowedExtensionIds: [allowed] };
   const submitted = [];
-  const server = createServer(config, { jobs: new Map(), running: false }, { submit: async r => { submitted.push(r.provider); return { status: 'queued' }; } });
+  const server = createServer(config, { jobs: new Map(), running: false, submit: r => { submitted.push(r.provider); return { status: 'queued' }; } });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); config.port = server.address().port;
   const url = `http://127.0.0.1:${config.port}`, auth = { Authorization: 'Bearer test-token' };
-  const episode = provider => fetch(url + '/episodes', { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify({ provider, target: 'es', session: 's', client: 'c', epoch: '1', cues: [{ id: 'a', start: 0, end: 1, text: 'Hi' }] }) });
+  const episode = provider => fetch(url + '/jobs', { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify({ provider, target: 'es', session: 's', client: 'c', epoch: '1', cues: [{ id: 'a', start: 0, end: 1, text: 'Hi' }] }) });
   try {
     assert.deepEqual((await (await fetch(url + '/status', { headers: auth })).json()).providers, ['codex']);
     assert.equal((await episode('codex')).status, 202);
     const google = await episode('google');
-    assert.equal(google.status, 400); assert.match((await google.json()).error, /not enabled/);
+    assert.equal(google.status, 400); assert.match((await google.json()).error, /Only Codex/);
     assert.deepEqual(submitted, ['codex']);
     assert.equal((await fetch(url + '/status', { headers: { ...auth, Origin: 'chrome-extension://' + allowed } })).status, 200);
     assert.equal((await fetch(url + '/status', { headers: { ...auth, Origin: 'chrome-extension://' + other } })).status, 403);
@@ -50,7 +50,7 @@ test('status reports whether Codex can translate, re-asking often while it canno
   clock = 200000; account.get(); assert.equal(asked, 2);
   clock = 400000; account.get(); await account.pending; assert.equal(asked, 3);
   const config = { port: 0, pairingToken: 'test-token', providers: ['codex'] };
-  const server = createServer(config, { jobs: new Map(), running: false }, null, account);
+  const server = createServer(config, { jobs: new Map(), running: false }, account);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); config.port = server.address().port;
   try { assert.equal((await (await fetch(`http://127.0.0.1:${config.port}/status`, { headers: { Authorization: 'Bearer test-token' } })).json()).codex, 'ready'); }
   finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
@@ -71,7 +71,7 @@ test('a Codex login can always be opened again, cancelled, or left to end; loggi
   const account = new CodexAccount({}, async () => answer, Date.now, signIn, async () => { order.push('logout'); answer = 'signed-out'; });
   account.onAccountChange = () => order.push('drop');
   const config = { port: 0, pairingToken: 'test-token', providers: ['codex'] };
-  const server = createServer(config, { jobs: new Map(), running: false }, null, account);
+  const server = createServer(config, { jobs: new Map(), running: false }, account);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); config.port = server.address().port;
   const url = `http://127.0.0.1:${config.port}`, auth = { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' };
   const post = async (action, headers = auth) => { const r = await fetch(`${url}/settings/codex/${action}`, { method: 'POST', headers, body: '{"command":"rm"}' }); return r.status === 202 ? r.json() : r.status; };

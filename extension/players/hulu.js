@@ -8,9 +8,6 @@
   const P = scope.SubtitlePlayers, ads = P.adWatcher();
   P.register({
     id: 'hulu', name: 'Hulu', clockPolicy: 'hulu-media-v1',
-    // Episodes play on /watch/<id>. Autoplay of the next episode moves to a new path, so the path
-    // identifies the episode whose subtitles are on screen.
-    isWatchPage: () => location.pathname.startsWith('/watch/'),
     // During player replacement, do not mistake the intro or ad video for the content.
     contentVideo() { const content = document.querySelector('#content-video-player'); return content && P.shown(content) ? content : undefined; },
     // A pre-roll or mid-roll ad break. The episode stands still meanwhile and its subtitles stay

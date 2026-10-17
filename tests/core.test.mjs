@@ -33,6 +33,18 @@ test('SRT and VTT parsing preserves timing and strips markup', () => {
 test('playhead respects half-open intervals after forward/backward seeks', () => {
   const cues = [C.cue(0, 2, 'a'), C.cue(2, 4, 'b')];
   assert.equal(C.active(cues, 2)[0].text, 'b'); assert.equal(C.active(cues, 0)[0].text, 'a'); assert.deepEqual(C.active(cues, 4), []);
+  // Subtitles written one frame apart do not blink off between them; real pauses stay empty.
+  const timed = [{ id: 'a', start: 5.007, end: 6.34 }, { id: 'b', start: 6.373, end: 8.273 }, { id: 'c', start: 9, end: 10 }];
+  const at = time => C.onScreen(timed, time).map(c => c.id).join();
+  assert.equal(at(5.006), '', 'not before its time'); assert.equal(at(5.007), 'a'); assert.equal(at(6.339), 'a');
+  assert.equal(at(6.34), 'a', 'held through the one-frame gap'); assert.equal(at(6.372), 'a'); assert.equal(at(6.373), 'b', 'the next one starts on time');
+  assert.equal(at(8.273), '', 'followed by a pause: it ends when it ends'); assert.equal(at(8.9), ''); assert.equal(at(10), ''); assert.equal(at(0), '');
+  // A player whose own captions stay 1.1 s after a line when nothing follows: ours stay as long.
+  const linger = time => C.onScreen(timed, time, { linger: 1.1 }).map(c => c.id).join();
+  assert.equal(linger(8.273), 'b'); assert.equal(linger(8.9), 'b', 'nothing follows for 0.727 s: held'); assert.equal(linger(9), 'c', 'the next line still starts on time');
+  assert.equal(linger(10.9), 'c'); assert.equal(linger(11.1), 'c'); assert.equal(linger(11.11), '', 'gone 1.1 s after its end'); assert.equal(linger(4), '', 'never before the first line');
+  const overlapping = [{ id: 'x', start: 1, end: 3 }, { id: 'y', start: 2, end: 3 }, { id: 'z', start: 3.05, end: 4 }];
+  assert.deepEqual(C.onScreen(overlapping, 3.02).map(c => c.id), ['x', 'y'], 'everything that ended together is held together');
 });
 test('lookahead skips expired/cached cues and does not merge across scene gaps', () => {
   const cues = [C.cue(0, 2, 'old'), C.cue(3, 5, 'current'), C.cue(6, 8, 'next'), C.cue(30, 33, 'new scene')];

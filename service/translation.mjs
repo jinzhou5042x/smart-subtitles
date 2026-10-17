@@ -6,9 +6,7 @@ export const languages = globalThis.SubtitleLanguages;
 export const languageName = code => languages.get(code)?.name || code;
 
 export const PROMPT_VERSION = 6;
-export const LOCAL_MODEL = 'Hy-MT2-7B-Q8_0';
-export const LOCAL_PROMPT_VERSION = 6;
-// Shared by validation and the local grammar so the model can only propose merges that validate.
+// A line may cover two cues only when they are this close together.
 export const canMerge = (first, last) => last.end - first.start <= 7 && last.start - first.end <= 0.4;
 export const instructions = `You are a professional subtitle translator, not a coding agent.
 Translate dialogue into the requested language using natural spoken phrasing, coherent context, and faithful characterization.
@@ -36,19 +34,19 @@ export function validateRequest(input, maxCues = 20000) {
   const target = bounded(input.target, 80, 'target');
   if (!languages.get(target)) throw new Error(`Unsupported target language: ${target}`);
   const provider = input.provider || 'codex';
-  if (!['codex', 'google', 'local'].includes(provider)) throw new Error('Invalid translation provider');
-  const session = bounded(input.session, 500, 'session');
+  if (!['codex', 'google'].includes(provider)) throw new Error('Invalid translation provider');
+  const session = bounded(input.session, 1000, 'session');
   const client = bounded(input.client, 100, 'client');
   const epoch = bounded(input.epoch, 100, 'epoch');
   if (!Array.isArray(input.cues) || !input.cues.length || input.cues.length > maxCues) throw new Error(`Expected 1–${maxCues} cues`);
   const cues = input.cues.map(c => {
-    const id = bounded(c.id, 120, 'cue id'), text = bounded(c.text, 1600, 'cue text');
+    const id = bounded(c.id, 120, 'cue id'), text = bounded(c.text, 2000, 'cue text');
     if (!Number.isFinite(c.start) || !Number.isFinite(c.end) || c.start < 0 || c.end <= c.start || c.end - c.start > 120) throw new Error('Invalid cue timing');
     return { id, text, start: c.start, end: c.end };
   });
   if (new Set(cues.map(c => c.id)).size !== cues.length || cues.some((c, i) => i > 0 && c.start < cues[i - 1].start)) throw new Error('Cue IDs/order invalid');
-  const context = Array.isArray(input.context) ? input.context.slice(-12).map(c => ({
-    text: bounded(c.text, 1600, 'context'), translation: typeof c.translation === 'string' ? c.translation.slice(0, 2000) : ''
+  const context = Array.isArray(input.context) ? input.context.slice(0, 24).map(c => ({
+    text: bounded(c.text, 2000, 'context'), translation: typeof c.translation === 'string' ? c.translation.slice(0, 2000) : ''
   })) : [];
   // Translating an episode again: the page's own token for one such attempt.
   const redo = typeof input.redo === 'string' && /^[a-f0-9-]{36}$/.test(input.redo) ? input.redo : undefined;
@@ -71,7 +69,7 @@ export function validateTranslation(raw, cues) {
 
 export function cacheKey(request, config) {
   const { session, target, cues, context } = request;
-  return createHash('sha256').update(JSON.stringify({ v: PROMPT_VERSION, session, target, cues, context, model: request.provider === 'local' ? `${LOCAL_MODEL}-batch-v${LOCAL_PROMPT_VERSION}` : config.model, glossary: config.glossary, ...(request.provider === 'google' ? { provider: 'google-v2' } : request.provider === 'local' ? { provider: 'local-hy-mt2' } : {}), ...(request.redo ? { redo: request.redo } : {}) })).digest('hex');
+  return createHash('sha256').update(JSON.stringify({ v: PROMPT_VERSION, session, target, cues, context, model: config.model, glossary: config.glossary, ...(request.provider === 'google' ? { provider: 'google-v2' } : {}), ...(request.redo ? { redo: request.redo } : {}) })).digest('hex');
 }
 // Codex receives the original subtitles numbered 1..n in one input and returns one translation per
 // number in one output. Timing never passes through the model: each number maps to exactly one
