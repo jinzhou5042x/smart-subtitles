@@ -5,7 +5,7 @@ import { DEFAULTS, PROVIDERS, endpoint, validateWindow, validateSegments, cacheK
 import { readCache, writeCache, clearCache } from './cache.js';
 import { chatgpt, beginLogin, finishLogin, clearLoginRule, loginStatus, cancelLogin, focusLogin } from './chatgpt-connection.js';
 
-chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
+const storageReady = chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
 const active = new Map();
 const isPage = sender => !!sender.tab && !!globalThis.SubtitleSites.identify(sender.url);
 const isUI = sender => ['popup.html', 'settings.html'].some(file => sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL(file));
@@ -30,10 +30,12 @@ async function broadcast(resetTranslations = false) {
   return next;
 }
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
+  if (!message || typeof message !== 'object' || sender.id !== chrome.runtime.id) return;
   if (message.target === 'chatgpt-runtime') return;
   const callback = message.type === 'chatgptCallback' && sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL('auth-callback.html');
   if (!isPage(sender) && !isUI(sender) && !callback) return;
   (async () => {
+    await storageReady;
     const ui = isUI(sender);
     switch (message.type) {
       case 'ping': return {};

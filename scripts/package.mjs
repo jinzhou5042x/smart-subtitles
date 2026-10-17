@@ -4,12 +4,14 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { root } from './paths.mjs';
 import { buildExtension } from './extension-build.mjs';
+import { checkExtensionSecurity } from './extension-security.mjs';
 
 const out = path.join(root, 'dist/store'), staging = path.join(out, 'extension');
 // Keep dist/store/assets (store images); replace only the staged extension and old zips.
 await mkdir(out, { recursive: true });
 for (const file of await readdir(out)) if (file.endsWith('.zip')) await rm(path.join(out, file));
 await buildExtension(staging, { store: true });
+await checkExtensionSecurity(staging);
 const manifest = JSON.parse(await readFile(path.join(staging, 'manifest.json'), 'utf8'));
 
 const zip = path.join(out, `smart-subtitles-${manifest.version}.zip`);

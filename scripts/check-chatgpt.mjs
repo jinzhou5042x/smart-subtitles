@@ -77,6 +77,18 @@ try {
   const id = new URL(worker.url()).hostname;
   context.on('page', page => page.on('pageerror', e => errors.push(e.message)));
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#chatgpt`);
+  // The shipped CSP must block injected scripts, including remote code on a permitted host.
+  let remoteScripts = 0;
+  await context.route('https://api.openai.com/security-check.js', route => { remoteScripts++; return route.fulfill({ contentType: 'text/javascript', body: 'globalThis.injectedRemote = true;' }); });
+  await settings.evaluate(() => {
+    globalThis.scriptViolations = 0;
+    document.addEventListener('securitypolicyviolation', event => { if (event.effectiveDirective.startsWith('script-src')) scriptViolations++; });
+    const inline = document.createElement('script'); inline.textContent = 'globalThis.injectedInline = true;'; document.body.append(inline);
+    const remote = document.createElement('script'); remote.src = 'https://api.openai.com/security-check.js'; document.body.append(remote);
+  });
+  await settings.waitForFunction(() => scriptViolations >= 2);
+  assert.equal(await settings.evaluate(() => !!(globalThis.injectedInline || globalThis.injectedRemote)), false);
+  assert.equal(remoteScripts, 0);
   // Exercise an unanswered native prompt and rejection without clicking a real OS dialog.
   await settings.evaluate(() => {
     globalThis.realPermissionRequest = chrome.permissions.request.bind(chrome.permissions);
@@ -118,6 +130,12 @@ try {
   assert.equal(await settings.locator('#account').isDisabled(), true);
   await settings.locator('#signin').evaluate(button => button.click());
   assert.equal(authorizations, 1, 'repeat clicks cannot start another authorization');
+  // A loopback callback in any other tab must not be captured by this login's rule.
+  await context.route('http://127.0.0.1:1455/auth/callback?**', route => route.fulfill({ contentType: 'text/plain', body: 'Unrelated tab' }));
+  const unrelated = await context.newPage();
+  await unrelated.goto('http://127.0.0.1:1455/auth/callback?code=unrelated&state=unrelated');
+  assert.ok(unrelated.url().startsWith('http://127.0.0.1:1455/'));
+  await unrelated.close();
   await mkdir('dist/checks', { recursive: true }); await settings.screenshot({ path: 'dist/checks/chatgpt-waiting.png', fullPage: true });
   await settings.locator('#cancelLogin').click();
   await settings.getByText('Sign-in cancelled.', { exact: true }).waitFor();
@@ -136,6 +154,8 @@ try {
   await connected.waitForURL(`chrome-extension://${id}/settings.html#chatgpt`, { timeout: 30000 });
   await connected.getByRole('button', { name: 'Got it', exact: true }).click();
   await connected.getByText('Using ChatGPT plan', { exact: true }).waitFor();
+  await settings.getByText('Using ChatGPT plan', { exact: true }).waitFor();
+  assert.equal(await settings.locator('#signin').isVisible(), false, 'the original settings tab also reflects completed sign-in');
   await connected.locator('#testChatgpt').click(); await connected.getByText('Connected: 你好。', { exact: true }).waitFor();
   assert.equal(refreshCount, 1); assert.equal(inferenceCount, 1);
   const local = await worker.evaluate(() => chrome.storage.local.get(null));
@@ -161,7 +181,7 @@ try {
   });
   assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-access|synthetic-refresh|eyJ/);
   assert.deepEqual(errors, []);
-  console.log('ChatGPT browser check passed: pending/denied permission UI, stalled startup recovery, duplicate-click prevention, cancellation/retry, closed-tab recovery, OAuth callback, PKCE/JWT, renewal, translation, sleeping service worker, quota error, sign-out, and no persisted tokens. Host consent and OpenAI responses are simulated.');
+  console.log('ChatGPT browser check passed: CSP, tab-specific callback rules, pending/denied permission UI, stalled startup recovery, duplicate-click prevention, cancellation/retry, closed-tab recovery, OAuth callback, PKCE/JWT, renewal, translation, sleeping service worker, quota error, sign-out, and no persisted tokens. Host consent and OpenAI responses are simulated.');
 } catch (error) {
   for (const page of context.pages()) if (page.url().startsWith('chrome-extension://')) console.error('Extension check state:', await page.locator('body').innerText().catch(() => 'unavailable'));
   throw error;

@@ -104,7 +104,7 @@ export async function focusLogin() {
   catch { await cancelLogin('The sign-in page has closed. Please try again.'); throw new Error(loginError); }
 }
 export async function finishLogin(sender, params) {
-  if (sender.id !== chrome.runtime.id || !sender.tab || sender.url?.split(/[?#]/)[0] !== chrome.runtime.getURL('auth-callback.html')) throw new Error('Unexpected sign-in callback.');
+  if (sender.id !== chrome.runtime.id || !sender.tab || sender.frameId !== 0 || sender.url?.split(/[?#]/)[0] !== chrome.runtime.getURL('auth-callback.html')) throw new Error('Unexpected sign-in callback.');
   try { const result = await chatgpt('finish', { ...params, tabId: sender.tab.id }); loginError = ''; return result; }
   catch (error) { loginError = error.message; throw error; }
   finally { if (!(await chatgpt('status')).pending) { await clearLoginRule(sender.tab.id); await chrome.alarms.clear(LOGIN_ALARM); } }

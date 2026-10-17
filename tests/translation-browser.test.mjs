@@ -21,6 +21,7 @@ test('Google uses direct API, counts Unicode characters and preserves cue timing
     sent = { url, ...options }; return Response.json({ data: { translations: [{ translatedText: 'Hola &amp; tú' }, { translatedText: 'Bien.' }] } });
   });
   assert.equal(sent.headers['X-Goog-Api-Key'], 'test'); assert.equal(sent.redirect, 'error');
+  assert.equal(sent.credentials, 'omit'); assert.equal(sent.cache, 'no-store'); assert.equal(sent.referrerPolicy, 'no-referrer');
   assert.equal(JSON.parse(sent.body).q[0], 'Hello there & you.'); assert.equal(result.segments[0].text, 'Hola & tú'); assert.equal(result.segments[0].start, 1);
 });
 test('cloud adapters parse provider output with exact IDs and reject missing or shuffled cues', async () => {

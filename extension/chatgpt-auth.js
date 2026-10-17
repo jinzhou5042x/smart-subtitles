@@ -1,6 +1,7 @@
 // Official Sign in with ChatGPT / Responses flow. Credentials live only in this worker's memory.
 import { createLocalJWKSet, jwtVerify } from 'jose';
 import { subtitleInstructions, subtitlePrompt, parseModelSegments } from './translation.js';
+import { PRIVATE_REQUEST, readJSON } from './network.js';
 
 export const AUTH_ORIGIN = 'https://auth.openai.com';
 export const API_ORIGIN = 'https://api.openai.com';
@@ -47,11 +48,9 @@ export class ChatGPTClient {
   }
   async json(url, options = {}) {
     let response;
-    try { response = await this.fetcher(url, { ...options, redirect: 'error', signal: options.signal || AbortSignal.timeout(15000) }); }
+    try { response = await this.fetcher(url, { ...options, ...PRIVATE_REQUEST, signal: options.signal || AbortSignal.timeout(15000) }); }
     catch (e) { if (options.signal?.aborted) throw e; throw fail('Could not reach OpenAI. Check your connection and try again.'); }
-    const text = await response.text();
-    if (text.length > 1_000_000) throw fail('OpenAI returned an unexpectedly large response.');
-    let data; try { data = text ? JSON.parse(text) : {}; } catch { throw fail(`OpenAI returned an unreadable response (HTTP ${response.status}).`); }
+    const data = await readJSON(response);
     if (!response.ok) throw apiError(response.status, data, 'OpenAI request failed');
     return data;
   }
@@ -113,6 +112,7 @@ export class ChatGPTClient {
   }
   tokenSet(data, previous) {
     if (typeof data.access_token !== 'string' || !data.access_token || data.access_token.length > 32000 || !Number.isFinite(data.expires_in) || data.expires_in <= 0 || data.expires_in > 86400) throw fail('OpenAI returned incomplete credentials. Sign in again.');
+    if ((data.token_type !== undefined && (typeof data.token_type !== 'string' || data.token_type.toLowerCase() !== 'bearer')) || /[\r\n]/.test(data.access_token) || (data.refresh_token !== undefined && (typeof data.refresh_token !== 'string' || !data.refresh_token || data.refresh_token.length > 32000 || /[\r\n]/.test(data.refresh_token)))) throw fail('OpenAI returned invalid credentials. Sign in again.');
     return { access: data.access_token, refresh: typeof data.refresh_token === 'string' ? data.refresh_token : previous?.refresh, idToken: data.id_token || previous?.idToken, scopes: typeof data.scope === 'string' ? data.scope.split(/\s+/) : previous?.scopes || [], expires: this.now() + data.expires_in * 1000, models: previous?.models || [] };
   }
   async access(id) {
@@ -178,9 +178,9 @@ export class ChatGPTClient {
     if (!token.models.some(m => m.slug === account.model)) throw fail('The default model is not available to this account. Choose a model in Translator settings.');
     let response;
     try {
-      response = await this.fetcher(`${RESOURCE}/responses`, { method: 'POST', redirect: 'error', signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token.access}` }, body: JSON.stringify({ model: account.model, instructions: subtitleInstructions, input: [{ role: 'user', content: subtitlePrompt(request, target) }], store: false, stream: true, ...(account.model.startsWith('gpt-6') ? { reasoning: { effort: 'low' } } : {}) }) });
+      response = await this.fetcher(`${RESOURCE}/responses`, { ...PRIVATE_REQUEST, method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token.access}` }, body: JSON.stringify({ model: account.model, instructions: subtitleInstructions, input: [{ role: 'user', content: subtitlePrompt(request, target) }], store: false, stream: true, ...(account.model.startsWith('gpt-6') ? { reasoning: { effort: 'low' } } : {}) }) });
     } catch (e) { if (signal?.aborted) throw e; throw fail('Could not reach OpenAI. Retry when your connection is ready.'); }
-    if (!response.ok) { let data; try { data = await response.json(); } catch {} throw apiError(response.status, data, 'ChatGPT translation failed'); }
+    if (!response.ok) { let data; try { data = await readJSON(response); } catch {} throw apiError(response.status, data, 'ChatGPT translation failed'); }
     return readResponsesStream(response, request.cues, signal);
   }
 }

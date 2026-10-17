@@ -1,4 +1,5 @@
 // Shared by the background worker, settings UI and tests. No Node or page globals.
+import { PRIVATE_REQUEST, readJSON } from './network.js';
 export const PROVIDERS = {
   builtin: { name: 'Browser translation' },
   google: { name: 'Google Cloud', baseUrl: 'https://translation.googleapis.com/language/translate/v2', guide: 'https://docs.cloud.google.com/translate/docs/setup' },
@@ -73,12 +74,12 @@ export async function translateRemote(settings, profile, request, signal, fetche
       body = { model, messages: [{ role: 'system', content: instructions }, { role: 'user', content: prompt }], stream: false };
     }
   }
-  const response = await fetcher(url, { method: 'POST', headers, body: JSON.stringify(body), redirect: 'error', signal });
+  const response = await fetcher(url, { ...PRIVATE_REQUEST, method: 'POST', headers, body: JSON.stringify(body), signal });
   if (!response.ok) {
     const action = response.status === 401 || response.status === 403 ? 'Check your API key and access permissions.' : response.status === 429 ? 'Your rate limit or quota was reached. Try again later.' : 'Try again later.';
     throw Object.assign(new Error(`${PROVIDERS[provider].name}: HTTP ${response.status}. ${action}`), { needsUser: [400, 401, 403, 404, 429].includes(response.status) });
   }
-  const data = await response.json(); let segments;
+  const data = await readJSON(response); let segments;
   if (provider === 'google') {
     if (data.data?.translations?.length !== request.cues.length) throw new Error('Google returned an incomplete translation');
     segments = data.data.translations.map((t, i) => ({ sourceIds: [request.cues[i].id], text: oneLine(decode(t.translatedText)) }));

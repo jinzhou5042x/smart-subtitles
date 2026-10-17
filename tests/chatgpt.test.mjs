@@ -49,6 +49,7 @@ test('ChatGPT uses its issued client ID, PKCE, verified identity and direct Resp
   assert.equal(body.model, 'gpt-6-luna'); assert.equal(body.reasoning.effort, 'low');
   assert.equal(body.store, false); assert.equal(body.stream, true); assert.ok(Array.isArray(body.input));
   assert.equal(inference.init.redirect, 'error');
+  for (const { init } of f.calls) { assert.equal(init.credentials, 'omit'); assert.equal(init.cache, 'no-store'); assert.equal(init.referrerPolicy, 'no-referrer'); }
   assert.doesNotMatch(JSON.stringify(f.client.status()) + JSON.stringify(f.client.metadata()), /secret-access|secret-refresh|eyJ/);
   await assert.rejects(f.finish(query), /expired|match/);
 });

@@ -83,6 +83,15 @@ try {
   // Content scripts cannot read provider credentials from extension storage.
   const isolated = await worker.evaluate(async () => { const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' }); return chrome.scripting.executeScript({ target: { tabId: tab.id }, func: async () => { try { await chrome.storage.local.get('profiles'); return false; } catch { return true; } } }); });
   assert.equal(isolated[0].result, true, 'API profiles are restricted to trusted extension contexts');
+  const restricted = await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' });
+    return chrome.scripting.executeScript({ target: { tabId: tab.id }, func: async () => {
+      const results = [];
+      for (const message of [{ type: 'profiles' }, { type: 'chatgptAccount', action: 'status' }, { type: 'saveSettings', settings: { provider: 'chatgpt' } }, { type: 'clearCache' }]) results.push(await chrome.runtime.sendMessage(message));
+      return results;
+    } });
+  });
+  assert.ok(restricted[0].result.every(reply => !reply.ok && /Settings page only/.test(reply.error)), 'video content scripts cannot access accounts, keys, or privileged settings');
   await settings.locator('#clear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();
   await waitForCall(before + 1); assert.equal(calls[before].cues[0].text, 'Dialogue 0', 'clearing the cache starts fresh at the beginning');
   await settings.locator('#provider').selectOption('builtin'); await settings.locator('#useBuiltin').click();

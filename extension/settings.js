@@ -62,8 +62,9 @@ async function refreshAccount() {
   if (refreshingAccount) return;
   refreshingAccount = true;
   try {
+    const previousActive = accountState.active;
     accountState = await accountCall('status');
-    if (selectedAccount === undefined) selectedAccount = accountState.active || '';
+    if (selectedAccount === undefined || accountState.active !== previousActive) selectedAccount = accountState.active || '';
     const entries = accountState.accounts;
     $('accountPicker').hidden = !entries.length;
     $('account').replaceChildren(new Option('Add an account', ''), ...entries.map(a => new Option(`${a.email || 'Previous sign-in'} · ${a.id.slice(-6)}`, a.id)));
