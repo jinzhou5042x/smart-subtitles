@@ -33,7 +33,9 @@ function apiError(status, data, fallback) {
 export class ChatGPTClient {
   #tokens = new Map(); #pending = null; #refreshes = new Map(); #keys = null; #discovery = null;
   constructor({ metadata = {}, fetcher = fetch, now = Date.now } = {}) {
-    this.fetcher = fetcher; this.now = now;
+    // Native browser fetch requires Window/WorkerGlobalScope as its receiver.
+    // Calling an unbound fetch as this.fetcher throws before sending a request.
+    this.fetcher = fetcher.bind(globalThis); this.now = now;
     this.hostId = metadata.hostId || `urn:uuid:${crypto.randomUUID()}`;
     this.active = metadata.active || '';
     this.accounts = new Map((metadata.accounts || []).map(a => [a.id, { id: a.id, subject: a.subject || '', email: a.email || '', model: a.model || DEFAULT_MODEL, welcomed: !!a.welcomed }]));

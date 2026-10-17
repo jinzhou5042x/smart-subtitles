@@ -73,7 +73,9 @@ const server = createServer(async (req, res) => {
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const workerFile = path.join(extension, 'chatgpt-worker.js');
-await writeFile(workerFile, `const testFetch = self.fetch; self.fetch = (url, init) => testFetch('http://127.0.0.1:${server.address().port}/' + encodeURIComponent(url), init);\n` + await readFile(workerFile, 'utf8'));
+// Preserve the native receiver check. An arrow wrapper hides Illegal invocation when
+// the client accidentally calls WorkerGlobalScope.fetch with itself as the receiver.
+await writeFile(workerFile, `const testFetch = self.fetch; self.fetch = function (url, init) { return Reflect.apply(testFetch, this, ['http://127.0.0.1:${server.address().port}/' + encodeURIComponent(url), init]); };\n` + await readFile(workerFile, 'utf8'));
 try {
   let worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).hostname;

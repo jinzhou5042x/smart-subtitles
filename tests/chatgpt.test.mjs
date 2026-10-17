@@ -34,6 +34,18 @@ function fixture({ scope = PLAN_SCOPE, claims = {}, models = ['gpt-6-luna'] } = 
   return { client, calls, begin, finish, login, advance: ms => { clock += ms; }, blockRefresh: promise => { refreshGate = promise; }, refreshError: code => { refreshError = code; }, revokeError: () => { revokeError = true; } };
 }
 
+test('ChatGPT requests use the global fetch receiver required by Chrome workers', async () => {
+  const receivers = [];
+  const client = new ChatGPTClient({ fetcher: async function () {
+    receivers.push(this);
+    if (this !== globalThis) throw new TypeError('Illegal invocation');
+    return json({ keys: [publicKey] });
+  } });
+  assert.deepEqual(await client.checkConnection(), { reachable: true });
+  assert.equal(receivers.length, 1);
+  assert.equal(receivers[0], globalThis);
+});
+
 test('ChatGPT uses its issued client ID, PKCE, verified identity and direct Responses inference', async () => {
   const f = fixture(), query = await f.login();
   assert.equal(query.get('client_id'), 'dynamic_agent_client'); assert.equal(query.get('redirect_uri'), CALLBACK);
