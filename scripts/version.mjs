@@ -1,5 +1,5 @@
 // Sets the version everywhere it is written: node scripts/version.mjs 0.9.2 (or: npm run bump -- 0.9.2).
-// package.json is read by the service, manifest.json by the extension (chrome.runtime.getManifest()).
+// package.json identifies the build, manifest.json identifies the Chrome extension.
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

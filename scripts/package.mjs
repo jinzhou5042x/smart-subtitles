@@ -1,27 +1,16 @@
-// Builds the Chrome Web Store upload: dist/store/smart-subtitles-<version>.zip.
-// Unlike `npm run build`, it starts from extension/ (never dist/extension), so the developer's
-// local-connection.json pairing file cannot be included; optional companion access is granted in settings.
-// Content scripts run on the registered services only (extension/sites.js), not on the local test
-// clip. API servers and native messaging are optional permissions.
-import { cp, mkdir, readFile, rm, writeFile, readdir, stat } from 'node:fs/promises';
+// Package the browser extension for store upload or developer-mode installation.
+import { mkdir, readFile, rm, readdir, stat } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { root } from '../service/config.mjs';
+import { root } from './paths.mjs';
+import { buildExtension } from './extension-build.mjs';
 
-const source = path.join(root, 'extension'), out = path.join(root, 'dist/store'), staging = path.join(out, 'extension');
+const out = path.join(root, 'dist/store'), staging = path.join(out, 'extension');
 // Keep dist/store/assets (store images); replace only the staged extension and old zips.
 await mkdir(out, { recursive: true });
-await rm(staging, { recursive: true, force: true });
 for (const file of await readdir(out)) if (file.endsWith('.zip')) await rm(path.join(out, file));
-await cp(source, staging, { recursive: true });
-await cp(path.join(root, 'shared/languages.js'), path.join(staging, 'languages.js'));
-await rm(path.join(staging, 'local-connection.json'), { force: true });
-
-const manifestFile = path.join(staging, 'manifest.json');
-const manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
-for (const script of manifest.content_scripts) script.matches = script.matches.filter(match => !match.startsWith('http://127.0.0.1'));
-manifest.host_permissions = manifest.host_permissions.filter(match => !match.startsWith('http://127.0.0.1'));
-await writeFile(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
+await buildExtension(staging, { store: true });
+const manifest = JSON.parse(await readFile(path.join(staging, 'manifest.json'), 'utf8'));
 
 const zip = path.join(out, `smart-subtitles-${manifest.version}.zip`);
 // Windows' bsdtar writes standard zip entries (forward slashes). PowerShell 5.1 Compress-Archive writes
@@ -39,5 +28,7 @@ if (process.platform === 'win32') {
 if (!entries.includes('manifest.json') || entries.some(e => e.includes('\\'))) throw new Error('The zip must have manifest.json at its root and forward-slash paths');
 
 const files = await readdir(staging, { recursive: true });
-if (files.some(file => /local-connection\.json$/.test(file))) throw new Error('The pairing file must not be packaged');
+if (files.some(file => /local-connection\.json$|browser-test|node_modules|config[\\/]/.test(file))) throw new Error('Development or local files must not be packaged');
+if (manifest.permissions.includes('nativeMessaging') || manifest.optional_permissions?.includes('nativeMessaging')) throw new Error('Native programs are not part of this extension');
+if ((await readFile(path.join(staging, 'chatgpt-worker.js'), 'utf8')).includes('testFetch')) throw new Error('The authentication test transport must not be packaged');
 console.log(`${zip} (${Math.round((await stat(zip)).size / 1024)} KB, ${files.length} entries): ${files.sort().join(', ')}`);

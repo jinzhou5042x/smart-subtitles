@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { root } from '../service/config.mjs';
+import { root } from './paths.mjs';
 import '../extension/sites.js';
 // The services named on the promo tile: the ones the registry says work, most recent first.
 const sites = [...globalThis.SubtitleSites.names].reverse();

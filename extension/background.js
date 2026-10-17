@@ -3,6 +3,7 @@ import './sites.js';
 import { readSubtitleResource } from './subtitle-resource.js';
 import { DEFAULTS, PROVIDERS, endpoint, validateWindow, validateSegments, cacheKeys, translateRemote } from './translation.js';
 import { readCache, writeCache, clearCache } from './cache.js';
+import { chatgpt, beginLogin, finishLogin, clearLoginRule } from './chatgpt-connection.js';
 
 chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
 const active = new Map();
@@ -13,7 +14,13 @@ async function settings() {
   const { preferences = {} } = await chrome.storage.local.get('preferences');
   return { ...DEFAULTS, ...preferences };
 }
-async function profile(provider) { return (await chrome.storage.local.get('profiles')).profiles?.[provider] || {}; }
+async function profile(provider) {
+  if (provider === 'chatgpt') {
+    const { chatgptMetadata = {} } = await chrome.storage.local.get('chatgptMetadata');
+    return { model: chatgptMetadata.accounts?.find(a => a.id === chatgptMetadata.active)?.model || PROVIDERS.chatgpt.model };
+  }
+  return (await chrome.storage.local.get('profiles')).profiles?.[provider] || {};
+}
 function cancelAll() { for (const controller of active.values()) controller.abort(); active.clear(); }
 async function broadcast(resetTranslations = false) {
   if (resetTranslations) cancelAll();
@@ -22,35 +29,10 @@ async function broadcast(resetTranslations = false) {
   await Promise.allSettled(tabs.map(tab => chrome.tabs.sendMessage(tab.id, { type: 'settingsChanged', settings: next, resetTranslations })));
   return next;
 }
-async function companion(route, method = 'GET', body, signal) {
-  let { companionConnection: conn } = await chrome.storage.local.get('companionConnection');
-  if (!conn) {
-    if (!await chrome.permissions.contains({ permissions: ['nativeMessaging'], origins: ['http://127.0.0.1/*'] })) throw new Error('Enable the optional Codex connection in Translator settings');
-    conn = await chrome.runtime.sendNativeMessage('com.smart_subtitles.companion', { type: 'connect' });
-    if (!conn?.ok || !/^[a-f0-9]{48}$/.test(conn.token) || !Number.isInteger(conn.port) || conn.port < 1024 || conn.port > 65535) throw new Error('Codex companion is not installed or did not answer');
-    await chrome.storage.local.set({ companionConnection: conn });
-  }
-  try {
-    const response = await fetch(`http://127.0.0.1:${conn.port}${route}`, { method, headers: { Authorization: `Bearer ${conn.token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000) });
-    if (!response.ok) throw new Error(`Codex companion: HTTP ${response.status}`);
-    return await response.json();
-  } catch (e) { await chrome.storage.local.remove('companionConnection'); throw e; }
-}
-async function codex(request, target, client, signal) {
-  let job = await companion('/jobs', 'POST', { ...request, target, provider: 'codex', client }, signal);
-  try {
-    for (let n = 0; n < 90; n++) {
-      signal.throwIfAborted();
-      if (job.status === 'done') return { segments: validateSegments(job.segments, request.cues), usage: job.progress?.usage || {} };
-      if (['error', 'cancelled'].includes(job.status)) throw new Error(job.error || 'Codex request cancelled');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      job = await companion(`/jobs/${job.id}`, 'GET', undefined, signal);
-    }
-    throw new Error('Codex took too long for this window. Retry when ready.');
-  } finally { await companion('/cancel', 'POST', { client, epoch: request.epoch }).catch(() => {}); }
-}
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
-  if (!isPage(sender) && !isUI(sender)) return;
+  if (message.target === 'chatgpt-runtime') return;
+  const callback = message.type === 'chatgptCallback' && sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL('auth-callback.html');
+  if (!isPage(sender) && !isUI(sender) && !callback) return;
   (async () => {
     const ui = isUI(sender);
     switch (message.type) {
@@ -77,7 +59,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         return Object.fromEntries(Object.entries(profiles).map(([id, { key, ...rest }]) => [id, { ...rest, configured: !!key || id === 'custom' }]));
       }
       case 'saveProfile': {
-        if (!ui || !PROVIDERS[message.provider] || ['builtin', 'codex'].includes(message.provider)) throw new Error('Invalid translator');
+        if (!ui || !PROVIDERS[message.provider] || ['builtin', 'chatgpt'].includes(message.provider)) throw new Error('Invalid translator');
         const { profiles = {} } = await chrome.storage.local.get('profiles');
         if (message.clear) delete profiles[message.provider];
         else {
@@ -98,14 +80,38 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         if (!ui) throw new Error('Settings page only');
         const s = { ...await settings(), provider: message.provider }, p = await profile(s.provider);
         const request = { title: '', session: 'connection-test', epoch: 'test', context: [], cues: [{ id: 'test', start: 0, end: 1, text: 'Hello.' }] };
-        const result = await translateRemote(s, p, request, AbortSignal.timeout(25000));
+        const result = s.provider === 'chatgpt' ? await chatgpt('translate', { request, target: s.target }, AbortSignal.timeout(90000)) : await translateRemote(s, p, request, AbortSignal.timeout(25000));
         return { text: result.segments[0].text, usage: result.usage };
       }
-      case 'codexAccount': {
+      case 'providerReady': {
+        if (!ui || !PROVIDERS[message.provider]) throw new Error('Settings page only');
+        if (message.provider === 'builtin') return true;
+        if (message.provider === 'chatgpt') { const state = await chatgpt('status'); return !!state.accounts.find(a => a.id === state.active)?.ready; }
+        const p = await profile(message.provider); return !!(p.key || (message.provider === 'custom' && p.baseUrl && p.model));
+      }
+      case 'chatgptCallback': {
+        const state = await finishLogin(sender, message.params);
+        if (state.accounts.find(a => a.id === state.active)?.ready) {
+          await chrome.storage.local.set({ preferences: { ...await settings(), provider: 'chatgpt' } });
+          await broadcast(true);
+        }
+        return { connected: true };
+      }
+      case 'chatgptAccount': {
         if (!ui) throw new Error('Settings page only');
-        if (message.action === 'status') return companion('/status');
-        if (!['sign-in', 'sign-out', 'cancel'].includes(message.action)) throw new Error('Unknown account action');
-        return companion('/settings/codex/' + message.action, 'POST', {});
+        const { action, accountId, model, enablePlan } = message;
+        if (action === 'begin') return beginLogin({ accountId, enablePlan });
+        if (action === 'status') return chatgpt('status');
+        if (action === 'models') return chatgpt('models', { accountId });
+        if (action === 'welcome') return chatgpt('welcome');
+        if (action === 'cancel') { await clearLoginRule(); return chatgpt('cancel'); }
+        if (action === 'signOut') { cancelAll(); const result = await chatgpt('signOut', { accountId }); await clearLoginRule(); await broadcast(true); return result; }
+        if (action === 'use') {
+          cancelAll(); await chatgpt('use', { accountId, model });
+          await chrome.storage.local.set({ preferences: { ...await settings(), provider: 'chatgpt' } });
+          await broadcast(true); return {};
+        }
+        throw new Error('Unknown account action');
       }
       case 'subtitleResource': {
         if (!isPage(sender) || !globalThis.SubtitleSites.subtitleResource(message.url, sender.url)) throw new Error('This player may not request that file');
@@ -128,7 +134,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
           const s = await settings();
           controller.signal.throwIfAborted();
           if (!s.enabled || s.provider !== message.provider || s.target !== message.target) throw new Error('Translation settings changed');
-          const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(s.provider === 'codex' ? 100000 : 25000)]);
+          const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(s.provider === 'chatgpt' ? 100000 : 25000)]);
           const p = await profile(s.provider), keys = await cacheKeys(request, s, p);
           signal.throwIfAborted();
           if (message.type === 'saveBuiltin') {
@@ -139,9 +145,9 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
           const cached = await readCache(keys), missing = request.cues.filter((_, i) => !cached[i]);
           signal.throwIfAborted();
           if (!missing.length || s.provider === 'builtin') return { segments: cached.filter(Boolean), missing, cached: !missing.length };
-          if (s.provider !== 'codex' && !p.key && s.provider !== 'custom') throw Object.assign(new Error('Add your API key in Translator settings'), { needsUser: true });
+          if (s.provider !== 'chatgpt' && !p.key && s.provider !== 'custom') throw Object.assign(new Error('Add your API key in Translator settings'), { needsUser: true });
           const part = { ...request, cues: missing };
-          const result = s.provider === 'codex' ? await codex(part, s.target, client, signal) : await translateRemote(s, p, part, signal);
+          const result = s.provider === 'chatgpt' ? await chatgpt('translate', { request: part, target: s.target }, signal) : await translateRemote(s, p, part, signal);
           signal.throwIfAborted();
           const segments = validateSegments(result.segments, missing);
           await writeCache(keys.filter((_, i) => !cached[i]), segments);
@@ -150,7 +156,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       }
       default: throw new Error('Unknown message');
     }
-  })().then(data => respond({ ok: true, data }), error => respond({ ok: false, error: error.name === 'TimeoutError' ? 'Translation timed out. Retry or choose a faster model.' : error.message, needsUser: !!error.needsUser }));
+  })().then(data => respond({ ok: true, data }), error => respond({ ok: false, error: error.name === 'TimeoutError' ? 'Translation timed out. Retry or choose a faster model.' : error.message, code: error.code || '', needsUser: !!error.needsUser }));
   return true;
 });
 chrome.tabs.onRemoved.addListener(tabId => { for (const [client, controller] of active) if (client.startsWith(`tab-${tabId}-`)) { controller.abort(); active.delete(client); } });

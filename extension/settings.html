@@ -13,8 +13,18 @@
 <p><a id="guide" target="_blank" rel="noopener">Get an API key / setup guide</a></p>
 <div class="actions"><button class="primary" type="submit">Save and use</button><button id="test" type="button" class="quiet">Test with “Hello.”</button><button id="remove" type="button" class="quiet">Remove key</button></div><p class="note">The test sends one short translation request and may use paid quota.</p>
 </form>
-<section id="codex" hidden><p>Codex uses your ChatGPT subscription through the optional companion. Other translators do not need it.</p><p><a href="https://github.com/jinzhou5042x/smart-subtitles/releases" target="_blank" rel="noopener">Download the optional companion</a>. Run <strong>Set Up Codex</strong> once, then connect below.</p><div class="actions"><button id="connect" class="primary">Connect Codex</button><button id="signin" class="quiet">Log in</button><button id="signout" class="quiet">Log out</button></div><p class="note">Browser-only subscription login is not available in this release. Logging out also affects other tools using the same Codex login.</p></section>
+<section id="chatgpt" hidden>
+<p>Use your ChatGPT plan for subtitles. Sign in on OpenAI's website and choose whether to allow plan usage. Nothing else to install.</p>
+<label for="account">ChatGPT account</label><select id="account"><option value="">Add an account</option></select>
+<p id="accountStatus" role="status"></p>
+<div class="actions"><button id="signin" class="primary">Continue with ChatGPT</button><button id="cancelLogin" class="quiet" hidden>Cancel sign-in</button><button id="signout" class="quiet" hidden>Sign out</button></div>
+<div id="chatgptModelSettings" hidden><label for="chatgptModel">Model</label><select id="chatgptModel"></select><p class="note">Default: gpt-6-luna, low reasoning effort. Choose an available model if your account does not offer it.</p><div class="actions"><button id="useChatgpt" class="primary">Use this account and model</button><button id="refreshModels" class="quiet">Refresh models</button><button id="testChatgpt" class="quiet">Test with “Hello.”</button></div><p class="note">The test uses a small amount of your ChatGPT allowance.</p></div>
+<p><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage</a> · <a href="https://developers.openai.com/siwc/token-sharing-open-source" target="_blank" rel="noopener">How ChatGPT plan usage works</a></p>
+<p class="note">Sign-in stays in memory while Chrome is running. After quitting Chrome or reloading the extension, sign in again. Signing out here affects only this extension. Access and limits depend on your ChatGPT account and workspace.</p>
+</section>
+<dialog id="planWelcome"><h2>You're using your ChatGPT plan</h2><p>Subtitle translation will use the allowance you authorized for Smart Subtitles. You can review usage and limits in <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">ChatGPT settings</a>.</p><button id="welcomeDone" class="primary">Got it</button></dialog>
 <p id="result" role="status" aria-live="polite"></p>
+<p id="usageLimit" hidden><a class="primary-action" href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage</a></p>
 <hr><p>Translations are saved in this browser, with a limit of 30,000 subtitle lines. Clearing them does not remove API keys.</p><button id="clear" class="quiet">Clear saved translations</button>
 <footer><a href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener">User guide</a> · <a href="legal.html" target="_blank">Terms &amp; Privacy</a></footer>
 </main><script type="module" src="settings.js"></script></body></html>

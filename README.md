@@ -14,7 +14,7 @@ Bilingual subtitles for Hulu and Disney+, including Hulu content on Disney+. Eng
 2. Open a video with English subtitles. Choose your language in the extension.
 3. Leave **Browser translation** selected. If a **Start subtitles** button appears on the video, click it and wait for Chrome to prepare the language pack.
 
-No ZIP, Node.js, API key or companion app is needed for browser translation. Language packs need an initial download and use local disk space. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
+The extension runs on desktop Chrome on Windows, macOS and Linux. There is no companion app to download or run. Browser translation needs no account or key; Chrome downloads a language pack on first use. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
 
 Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 30,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
 
@@ -33,7 +33,7 @@ Open **Translator settings** from the popup. Switching to a paid provider is alw
 | Claude API | Your API key and model |
 | Qwen | Your API key, model and workspace base URL for your region |
 | Other / local model | An OpenAI-compatible Chat Completions base URL and model; key optional for your local server |
-| Codex subscription | Optional companion, described below |
+| ChatGPT subscription | **Continue with ChatGPT**; uses the plan allowance you authorize |
 
 Click **Save and use**, then optionally **Test with “Hello.”** The test sends one small request and may use paid quota. Keys stay in the extension's local storage, are not synced, and are not sent to the video website. Clear a key with **Remove key**. Changing API servers requires entering the key again.
 
@@ -43,7 +43,7 @@ Google Cloud is fast and handled common idioms well in our small test. It does n
 
 We tested the same 36 English cues in Simplified Chinese, three times, without cache. Median time per window of 6–10 cues: **browser 0.098 s**, **Google 0.156 s**, **Codex 3.765 s**. Browser translation made several literal idiom errors. Google handled the selected idioms well. Codex sounded more natural but moved or repeated content between cues. Passing earlier translations as context kept the tested names consistent in the final runs. These are provider timings from one Windows machine, not general accuracy scores or full-player latency.
 
-[Full comparison, exact outputs and limitations](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html).
+The Codex result used the old CLI connection. It does **not** measure the new browser-based ChatGPT connection. [Full comparison, exact outputs and limitations](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html).
 
 ### Get a Google API key
 
@@ -57,13 +57,16 @@ Follow Google's [Cloud Translation setup guide](https://docs.cloud.google.com/tr
 
 We use Basic v2, which [supports API keys](https://docs.cloud.google.com/translate/docs/authentication). No credential file or local program is needed. Check [Google's pricing](https://cloud.google.com/translate/pricing) before use.
 
-### Optional: Codex subscription
+### Use your ChatGPT subscription
 
-This is the only bundled translator that needs our companion. It uses your Codex/ChatGPT login, with **gpt-6-luna**, reasoning effort **low**, by default. Access and usage limits depend on your account; see [OpenAI's plan information](https://learn.chatgpt.com/docs/pricing).
+1. Open **Translator settings → ChatGPT subscription**.
+2. Click **Continue with ChatGPT** and allow the connection when Chrome asks.
+3. Sign in on OpenAI's page and authorize Smart Subtitles to use your ChatGPT plan. Return to the extension when sign-in completes.
+4. The default is **gpt-6-luna / low**. If that model is unavailable, choose one offered to your account and click **Use this account and model**.
 
-Download the companion for [Windows x64](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip), [Mac Apple Silicon](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip) or [Mac Intel](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip). Extract it into a permanent folder and run **Set Up Codex** once. Then choose **Codex subscription → Connect Codex** in Translator settings. Chrome starts it when needed. If you move its folder, run **Start Subtitles** again. Mac may require allowing the launcher in **System Settings → Privacy & Security**.
+There is no API key or local program to set up. Account eligibility, available models and limits come from OpenAI. [Manage usage](https://chatgpt.com/settings/usage) shows the allowance you share with this extension. If you run out, translation pauses; it does not switch to a separately billed API. See [how ChatGPT plan sharing works](https://developers.openai.com/siwc/token-sharing-open-source).
 
-Browser-only subscription login is not implemented. The official open-source [Sign in with ChatGPT flow](https://developers.openai.com/siwc/token-sharing-open-source/sign-in) currently documents a local callback. The extension does not copy credentials out of another app or use private ChatGPT endpoints.
+Sign-in credentials stay in memory while Chrome runs. After fully quitting Chrome or reloading the extension, sign in again using the saved account entry. Closing a settings tab does not sign you out. **Sign out** disconnects this extension and asks OpenAI to revoke its token; other apps' logins are separate. Account labels are saved locally so you can reconnect later.
 
 ### Troubleshooting
 
@@ -83,12 +86,17 @@ npm run build
 npm test
 npx playwright install chromium
 npm run check:extension
+npm run check:chatgpt
 npm run package
 ```
 
-Load `dist/extension` at `chrome://extensions` with developer mode enabled. `npm start` serves the local video fixture at `http://127.0.0.1:43128/demo`. The store ZIP is in `dist/store`. `npm run release -- win-x64` builds the optional Codex companion; build Mac targets on a Mac. `npm run start:companion` starts the optional service during development.
+Load `dist/extension` at `chrome://extensions` with developer mode enabled. `npm start` serves the local video fixture at `http://127.0.0.1:43128/demo`. The store ZIP is in `dist/store`; the same package works across desktop operating systems. Dependencies are bundled locally during the build; the extension does not download executable code.
 
-The extension owns translation windows and IndexedDB caching. `extension/translation.js` implements cloud adapters; `extension/builtin.js` uses the document-only browser Translator API. `extension/session.js` processes the track in order, independently of playback position. `extension/sites.js` registers players; run `npm run manifest` after changing it. Browser checks use a local model test double and a fresh browser profile; they do not prove provider account access or every streaming player works. `node scripts/check-native.mjs` separately checks the actual browser translator in installed desktop Chrome and may download a language pack.
+The extension owns translation windows and IndexedDB caching. `extension/translation.js` implements cloud adapters; `extension/builtin.js` uses the document-only browser Translator API. `extension/session.js` processes the track in order, independently of playback position. `extension/sites.js` registers players; run `npm run manifest` after changing it.
+
+ChatGPT credentials live in a dedicated worker hosted by an offscreen document. The extension uses the [official OAuth/PKCE flow](https://developers.openai.com/siwc/token-sharing-open-source/sign-in) and public Responses API. A temporary, tab-specific Chrome redirect rule captures the exact loopback callback; no local listener is started. The loopback flow is documented by OpenAI; this browser interception is our adaptation. Tokens are never written to Chrome storage. `jose` verifies ID-token signatures and claims.
+
+Browser checks use synthetic API responses and a fresh browser profile. They check callback validation, renewal, streaming, service-worker suspension, sign-out and the absence of stored tokens, but cannot prove real account access or streaming-site compatibility. `npm run check:chatgpt:live` opens an isolated Chrome window for manual OpenAI login, then sends a single “Hello.” translation using your allowance. `node scripts/check-native.mjs` separately checks Chrome's real local translator and may download a language pack.
 
 ## 中文
 
@@ -102,7 +110,7 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 2. 打开有英文字幕的视频，在扩展中选择目标语言。
 3. 保持 **Browser translation**。如果视频上出现 **Start subtitles**，点击后等待 Chrome 准备语言包。
 
-浏览器翻译不需要下载 ZIP、安装 Node、申请 API key 或运行配套程序。首次需要下载语言包并占用本地磁盘；是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
+Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP 或运行配套程序。浏览器翻译不需要账号或 key；首次会下载语言包并占用本地磁盘。是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
 
 拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 30,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
 
@@ -120,7 +128,7 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 
 同一组 36 条英文字幕翻成简体中文，重复 3 次、不用缓存。每窗口 6–10 条字幕的中位耗时：**内置 0.098 秒、Google 0.156 秒、Codex 3.765 秒**。内置有多处俚语直译；Google 在这组样本里表现稳定；Codex 更自然，但有跨行重复或调序；补上已译上下文后，本次人名保持一致。这是单台 Windows 机器的翻译引擎耗时，不是完整播放器延迟或通用准确率。
 
-[完整译例、原始数据和限制](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html)。
+Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT 连接的速度**。[完整译例、原始数据和限制](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html)。
 
 ### Google API key 怎么申请
 
@@ -134,13 +142,16 @@ The extension owns translation windows and IndexedDB caching. `extension/transla
 
 使用的是[支持 API key 的 Basic v2](https://docs.cloud.google.com/translate/docs/authentication)，不需要密钥文件或本地程序。使用前查看[官方价格](https://cloud.google.com/translate/pricing)。
 
-### 可选：Codex 订阅
+### 使用 ChatGPT 订阅
 
-只有这个选项需要我们的配套程序。默认使用 **gpt-6-luna / low**，消耗自己的 Codex/ChatGPT 额度；模型权限和额度取决于账号，参考[官方订阅信息](https://learn.chatgpt.com/docs/pricing)。
+1. 打开 **Translator settings → ChatGPT subscription**。
+2. 点击 **Continue with ChatGPT**，允许 Chrome 提示的连接权限。
+3. 在 OpenAI 页面登录，授权 Smart Subtitles 使用自己的 ChatGPT 额度，完成后返回扩展。
+4. 默认使用 **gpt-6-luna / low**。如果账号没有这个模型，选择列表中可用的模型，点击 **Use this account and model**。
 
-下载 [Windows x64](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip)、[Mac Apple Silicon](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip) 或 [Mac Intel](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip) 的程序。解压到固定位置，运行一次 **Set Up Codex** 并登录，再在设置中选择 **Codex subscription → Connect Codex**。以后由 Chrome 按需启动。移动目录后重新运行 **Start Subtitles**。Mac 首次可能需要在“系统设置 → 隐私与安全性”放行。
+不需要 API key，也不需要安装本地程序。账号是否支持、模型和额度以 OpenAI 实际返回为准。[Manage usage](https://chatgpt.com/settings/usage) 可以查看分配给扩展的额度。额度用完会暂停，不会偷偷改用单独收费的 API。参见[官方订阅共享说明](https://developers.openai.com/siwc/token-sharing-open-source)。
 
-本版本没有实现纯浏览器的订阅登录，官方[开源登录流程](https://developers.openai.com/siwc/token-sharing-open-source/sign-in)目前要求本机回调。
+登录凭据只留在内存里。彻底退出 Chrome 或重新加载扩展后，需要选择保存的账号重新登录；关掉设置标签页不影响使用。**Sign out** 会退出当前扩展并请求 OpenAI 撤销令牌，其他应用的登录独立。扩展会保存账号名称等信息，方便下次连接。
 
 ### 遇到问题 / 开发
 
@@ -162,7 +173,7 @@ Subtítulos bilingües para Hulu y Disney+, incluido el contenido de Hulu en Dis
 2. Abre un video con subtítulos en inglés y elige tu idioma en la extensión.
 3. Mantén **Browser translation**. Si aparece **Start subtitles** sobre el video, púlsalo y espera a que Chrome prepare el paquete de idioma.
 
-La traducción del navegador no necesita ZIP, Node, clave API ni programa adicional. La primera descarga del idioma ocupa espacio local. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
+En Windows, macOS y Linux solo necesitas la extensión de Chrome para escritorio. No hay un programa adicional que descargar o ejecutar. La traducción del navegador no necesita cuenta ni clave; el paquete de idioma se descarga la primera vez y ocupa espacio local. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
 
 Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 30.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
 
@@ -178,7 +189,7 @@ Las claves se guardan únicamente en este perfil del navegador, sin sincronizars
 
 Tradujimos las mismas 36 líneas del inglés al chino simplificado, tres veces y sin caché. Mediana por ventana de 6–10 líneas: **navegador 0,098 s**, **Google 0,156 s**, **Codex 3,765 s**. El navegador cometió errores literales con modismos; Google funcionó bien en esta muestra; Codex sonó más natural, pero repitió o desplazó contenido entre líneas. El contexto con traducciones anteriores mantuvo los nombres de la prueba consistentes en la versión final. Son tiempos del motor en un solo equipo Windows, no una puntuación general de precisión ni la latencia completa del reproductor.
 
-[Resultados, traducciones originales y limitaciones](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html).
+El resultado de Codex corresponde a la antigua conexión CLI: **no mide la nueva conexión de ChatGPT desde el navegador**. [Resultados, traducciones originales y limitaciones](https://jinzhou5042x.github.io/smart-subtitles/docs/translation-review.html).
 
 ### Conseguir una clave de Google
 
@@ -192,13 +203,16 @@ Sigue la [guía oficial de configuración](https://docs.cloud.google.com/transla
 
 Usamos [Basic v2, compatible con claves API](https://docs.cloud.google.com/translate/docs/authentication). No hace falta un archivo de credenciales ni un programa local. Consulta los [precios de Google](https://cloud.google.com/translate/pricing).
 
-### Opcional: suscripción de Codex
+### Usar tu suscripción de ChatGPT
 
-Solo este modo necesita nuestro programa adicional. Usa tu cuenta de Codex/ChatGPT, con **gpt-6-luna / low** por defecto. El acceso y la cuota dependen de tu cuenta; consulta los [planes oficiales](https://learn.chatgpt.com/docs/pricing).
+1. Abre **Translator settings → ChatGPT subscription**.
+2. Pulsa **Continue with ChatGPT** y concede el permiso de conexión que pide Chrome.
+3. Inicia sesión en la página de OpenAI y autoriza a Smart Subtitles a usar tu plan. Al terminar, volverás a la extensión.
+4. El modelo predeterminado es **gpt-6-luna / low**. Si tu cuenta no lo ofrece, elige otro de la lista y pulsa **Use this account and model**.
 
-Descarga [Windows x64](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-win-x64.zip), [Mac Apple Silicon](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-arm64.zip) o [Mac Intel](https://github.com/jinzhou5042x/smart-subtitles/releases/latest/download/SmartSubtitles-Service-darwin-x64.zip). Extrae el ZIP a una carpeta permanente y ejecuta **Set Up Codex** una vez. Después elige **Codex subscription → Connect Codex** en la extensión. Chrome lo inicia cuando hace falta. Si mueves la carpeta, ejecuta **Start Subtitles** otra vez. macOS puede pedir autorización en **Ajustes del Sistema → Privacidad y seguridad**.
+No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos y límites están disponibles. Consulta la cuota compartida con la extensión en [Manage usage](https://chatgpt.com/settings/usage). Al agotarse, la traducción se pausa; no cambia a una API de pago. Más información en la [documentación oficial](https://developers.openai.com/siwc/token-sharing-open-source).
 
-No se ha implementado el acceso a la suscripción solo desde el navegador; el [flujo oficial de código abierto](https://developers.openai.com/siwc/token-sharing-open-source/sign-in) documenta una devolución de llamada local.
+Las credenciales permanecen en memoria mientras Chrome está abierto. Tras cerrar Chrome por completo o recargar la extensión, vuelve a iniciar sesión con la cuenta guardada. Cerrar la pestaña de ajustes no cierra la sesión. **Sign out** cierra la sesión de esta extensión y solicita a OpenAI que revoque su token; las sesiones de otras aplicaciones son independientes. Se guardan las etiquetas de las cuentas para facilitar el próximo acceso.
 
 ### Problemas y desarrollo
 
