@@ -10,19 +10,24 @@ import { buildExtension } from './extension-build.mjs';
 const extension = path.resolve('dist/checks/chatgpt-extension');
 await buildExtension(extension, { store: true });
 const manifestFile = path.join(extension, 'manifest.json'), manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
-// Simulate the permissions already approved by the user; production requests them on click.
-manifest.permissions.push('declarativeNetRequestWithHostAccess');
+// Host consent is simulated in this disposable profile. Keep the production DNR declaration:
+// changing that API to an optional permission caused the first real login to hang.
+assert.ok(manifest.permissions.includes('declarativeNetRequestWithHostAccess'));
+assert.ok(!manifest.optional_permissions?.includes('declarativeNetRequestWithHostAccess'));
 manifest.host_permissions.push('https://auth.openai.com/*', 'https://api.openai.com/*', 'http://127.0.0.1/*');
 await writeFile(manifestFile, JSON.stringify(manifest));
 const pair = await generateKeyPair('RS256'), key = { ...await exportJWK(pair.publicKey), kid: 'browser-check', alg: 'RS256', use: 'sig' };
-let auth, inferenceCount = 0, limit = false, refreshCount = 0;
+let auth, inferenceCount = 0, limit = false, refreshCount = 0, authorizations = 0;
 const errors = [];
 const context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`] });
 const sendJSON = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const authRoute = async route => {
   const url = new URL(route.request().url());
   if (url.pathname.endsWith('/authorize')) {
-    auth = url.searchParams;
+    auth = url.searchParams; authorizations++;
+    return route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Synthetic sign-in</title><p>Waiting for the test account.</p>' });
+  }
+  if (url.pathname === '/test/complete') {
     const callback = new URL(auth.get('redirect_uri')); callback.search = new URLSearchParams({ code: 'synthetic-code', state: auth.get('state'), client_id: 'oaiapp_browser' });
     return route.fulfill({ status: 302, headers: { location: callback.href }, body: '' });
   }
@@ -72,9 +77,62 @@ try {
   const id = new URL(worker.url()).hostname;
   context.on('page', page => page.on('pageerror', e => errors.push(e.message)));
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#chatgpt`);
-  const opening = context.waitForEvent('page');
+  // Exercise an unanswered native prompt and rejection without clicking a real OS dialog.
+  await settings.evaluate(() => {
+    globalThis.realPermissionRequest = chrome.permissions.request.bind(chrome.permissions);
+    globalThis.permissionRequests = 0;
+    chrome.permissions.request = () => { permissionRequests++; return new Promise(resolve => { globalThis.resolvePermission = resolve; }); };
+  });
+  await settings.locator('#signin').click();
+  await settings.getByText('Allow the connection in Chrome', { exact: true }).waitFor();
+  assert.equal(await settings.locator('#signin').isDisabled(), true);
+  await settings.locator('#signin').evaluate(button => button.click());
+  await settings.waitForTimeout(2200); // A status poll must not re-enable the button.
+  assert.equal(await settings.locator('#signin').isDisabled(), true);
+  assert.equal(await settings.evaluate(() => permissionRequests), 1);
+  await settings.evaluate(() => resolvePermission(false));
+  await settings.getByText('Could not connect', { exact: true }).waitFor();
+  assert.equal(await settings.locator('#signin').isEnabled(), true);
+  assert.equal(authorizations, 0);
+  await settings.evaluate(() => { chrome.permissions.request = realPermissionRequest; });
+  // Reproduce the original never-settling browser API. It must become a retryable error.
+  await worker.evaluate(() => {
+    globalThis.realUpdateRules = chrome.declarativeNetRequest.updateSessionRules.bind(chrome.declarativeNetRequest);
+    chrome.declarativeNetRequest.updateSessionRules = rules => rules.addRules ? new Promise(() => {}) : realUpdateRules(rules);
+  });
+  await settings.locator('#signin').click();
+  await settings.getByText('Opening ChatGPT…', { exact: true }).first().waitFor();
+  await settings.getByText('Could not connect', { exact: true }).waitFor({ timeout: 30000 });
+  assert.match(await settings.locator('#loginDetail').innerText(), /Could not open ChatGPT/);
+  assert.equal(await settings.locator('#signin').isEnabled(), true);
+  assert.equal(authorizations, 0);
+  assert.equal((await settings.evaluate(() => chrome.runtime.sendMessage({ type: 'chatgptAccount', action: 'status' }))).data.pending, false);
+  assert.equal((await worker.evaluate(() => chrome.declarativeNetRequest.getSessionRules())).length, 0);
+  await worker.evaluate(() => { chrome.declarativeNetRequest.updateSessionRules = realUpdateRules; });
+  let opening = context.waitForEvent('page');
   await settings.getByRole('button', { name: 'Continue with ChatGPT', exact: true }).click();
-  const connected = await opening;
+  let connected = await opening;
+  await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
+  await settings.getByText('Finish signing in on OpenAI', { exact: true }).waitFor();
+  assert.equal(await settings.locator('#signin').isVisible(), false);
+  assert.equal(await settings.locator('#account').isDisabled(), true);
+  await settings.locator('#signin').evaluate(button => button.click());
+  assert.equal(authorizations, 1, 'repeat clicks cannot start another authorization');
+  await mkdir('dist/checks', { recursive: true }); await settings.screenshot({ path: 'dist/checks/chatgpt-waiting.png', fullPage: true });
+  await settings.locator('#cancelLogin').click();
+  await settings.getByText('Sign-in cancelled.', { exact: true }).waitFor();
+  assert.equal(await settings.locator('#signin').isEnabled(), true);
+  assert.equal((await worker.evaluate(() => chrome.declarativeNetRequest.getSessionRules())).length, 0);
+  opening = context.waitForEvent('page');
+  await settings.locator('#signin').click(); connected = await opening;
+  await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
+  await connected.close();
+  await settings.getByText('The sign-in page was closed. Please try again.', { exact: true }).waitFor();
+  assert.equal(await settings.locator('#signin').isEnabled(), true);
+  opening = context.waitForEvent('page');
+  await settings.locator('#signin').click(); connected = await opening;
+  await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
+  await connected.goto('https://auth.openai.com/test/complete');
   await connected.waitForURL(`chrome-extension://${id}/settings.html#chatgpt`, { timeout: 30000 });
   await connected.getByRole('button', { name: 'Got it', exact: true }).click();
   await connected.getByText('Using ChatGPT plan', { exact: true }).waitFor();
@@ -94,7 +152,7 @@ try {
   assert.equal(inferenceCount, 2);
   await mkdir('dist/checks', { recursive: true }); await connected.screenshot({ path: 'dist/checks/chatgpt-settings.png', fullPage: true });
   await connected.locator('#signout').click(); await connected.getByText('Signed out of Smart Subtitles.', { exact: true }).waitFor();
-  await connected.getByText('Sign in to use your ChatGPT plan.', { exact: true }).waitFor();
+  await connected.getByText('Connect your ChatGPT account', { exact: true }).waitFor();
   // An unexpectedly closed offscreen document must recover without trapping the UI.
   await worker.evaluate(() => chrome.offscreen.closeDocument());
   await connected.waitForFunction(async () => {
@@ -103,7 +161,7 @@ try {
   });
   assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-access|synthetic-refresh|eyJ/);
   assert.deepEqual(errors, []);
-  console.log('ChatGPT browser check passed: OAuth callback without a local listener, PKCE/JWT, renewal, streamed translation, sleeping service worker, quota error, sign-out, and no persisted tokens.');
+  console.log('ChatGPT browser check passed: pending/denied permission UI, stalled startup recovery, duplicate-click prevention, cancellation/retry, closed-tab recovery, OAuth callback, PKCE/JWT, renewal, translation, sleeping service worker, quota error, sign-out, and no persisted tokens. Host consent and OpenAI responses are simulated.');
 } catch (error) {
   for (const page of context.pages()) if (page.url().startsWith('chrome-extension://')) console.error('Extension check state:', await page.locator('body').innerText().catch(() => 'unavailable'));
   throw error;

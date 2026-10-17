@@ -39,7 +39,7 @@ export class ChatGPTClient {
   }
   metadata() { return { hostId: this.hostId, active: this.active, accounts: [...this.accounts.values()] }; }
   status() {
-    return { active: this.active, pending: !!this.#pending, accounts: [...this.accounts.values()].map(a => {
+    return { active: this.active, pending: !!this.#pending, login: this.#pending ? { phase: this.#pending.exchanging ? 'verifying' : 'waiting', tabId: this.#pending.tabId } : null, accounts: [...this.accounts.values()].map(a => {
       const token = this.#tokens.get(a.id), models = token?.models || [];
       const connected = !!token, sharing = !!token?.scopes.includes(PLAN_SCOPE);
       return { ...a, connected, sharing, models, ready: sharing && models.some(m => m.slug === a.model) };

@@ -15,7 +15,8 @@
     "activeTab",
     "scripting",
     "offscreen",
-    "alarms"
+    "alarms",
+    "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
     "https://*.hulu.com/*",
@@ -80,9 +81,6 @@
       "run_at": "document_idle",
       "all_frames": true
     }
-  ],
-  "optional_permissions": [
-    "declarativeNetRequestWithHostAccess"
   ],
   "optional_host_permissions": [
     "https://*/*",

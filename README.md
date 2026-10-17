@@ -64,6 +64,8 @@ We use Basic v2, which [supports API keys](https://docs.cloud.google.com/transla
 3. Sign in on OpenAI's page and authorize Smart Subtitles to use your ChatGPT plan. Return to the extension when sign-in completes.
 4. The default is **gpt-6-luna / low**. If that model is unavailable, choose one offered to your account and click **Use this account and model**.
 
+While sign-in is open, **Return to sign-in** takes you back to that tab. **Cancel** closes the attempt. If the tab closes or sign-in times out, the settings page explains what happened and lets you try again.
+
 There is no API key or local program to set up. Account eligibility, available models and limits come from OpenAI. [Manage usage](https://chatgpt.com/settings/usage) shows the allowance you share with this extension. If you run out, translation pauses; it does not switch to a separately billed API. See [how ChatGPT plan sharing works](https://developers.openai.com/siwc/token-sharing-open-source).
 
 Sign-in credentials stay in memory while Chrome runs. After fully quitting Chrome or reloading the extension, sign in again using the saved account entry. Closing a settings tab does not sign you out. **Sign out** disconnects this extension and asks OpenAI to revoke its token; other apps' logins are separate. Account labels are saved locally so you can reconnect later.
@@ -149,6 +151,8 @@ Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT �
 3. 在 OpenAI 页面登录，授权 Smart Subtitles 使用自己的 ChatGPT 额度，完成后返回扩展。
 4. 默认使用 **gpt-6-luna / low**。如果账号没有这个模型，选择列表中可用的模型，点击 **Use this account and model**。
 
+登录途中切回了设置页，可以点 **Return to sign-in** 回到登录标签页，或点 **Cancel** 取消。关掉登录页或等待超时后，设置页会显示原因，可以重新登录。
+
 不需要 API key，也不需要安装本地程序。账号是否支持、模型和额度以 OpenAI 实际返回为准。[Manage usage](https://chatgpt.com/settings/usage) 可以查看分配给扩展的额度。额度用完会暂停，不会偷偷改用单独收费的 API。参见[官方订阅共享说明](https://developers.openai.com/siwc/token-sharing-open-source)。
 
 登录凭据只留在内存里。彻底退出 Chrome 或重新加载扩展后，需要选择保存的账号重新登录；关掉设置标签页不影响使用。**Sign out** 会退出当前扩展并请求 OpenAI 撤销令牌，其他应用的登录独立。扩展会保存账号名称等信息，方便下次连接。
@@ -209,6 +213,8 @@ Usamos [Basic v2, compatible con claves API](https://docs.cloud.google.com/trans
 2. Pulsa **Continue with ChatGPT** y concede el permiso de conexión que pide Chrome.
 3. Inicia sesión en la página de OpenAI y autoriza a Smart Subtitles a usar tu plan. Al terminar, volverás a la extensión.
 4. El modelo predeterminado es **gpt-6-luna / low**. Si tu cuenta no lo ofrece, elige otro de la lista y pulsa **Use this account and model**.
+
+Mientras inicias sesión, **Return to sign-in** te lleva de vuelta a esa pestaña y **Cancel** cancela el intento. Si cierras la pestaña o se agota el tiempo, verás el motivo y podrás volver a intentarlo.
 
 No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos y límites están disponibles. Consulta la cuota compartida con la extensión en [Manage usage](https://chatgpt.com/settings/usage). Al agotarse, la traducción se pausa; no cambia a una API de pago. Más información en la [documentación oficial](https://developers.openai.com/siwc/token-sharing-open-source).
 

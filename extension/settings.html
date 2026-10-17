@@ -14,10 +14,13 @@
 <div class="actions"><button class="primary" type="submit">Save and use</button><button id="test" type="button" class="quiet">Test with “Hello.”</button><button id="remove" type="button" class="quiet">Remove key</button></div><p class="note">The test sends one short translation request and may use paid quota.</p>
 </form>
 <section id="chatgpt" hidden>
-<p>Use your ChatGPT plan for subtitles. Sign in on OpenAI's website and choose whether to allow plan usage. Nothing else to install.</p>
-<label for="account">ChatGPT account</label><select id="account"><option value="">Add an account</option></select>
-<p id="accountStatus" role="status"></p>
-<div class="actions"><button id="signin" class="primary">Continue with ChatGPT</button><button id="cancelLogin" class="quiet" hidden>Cancel sign-in</button><button id="signout" class="quiet" hidden>Sign out</button></div>
+<p>Translate subtitles with your ChatGPT plan. Sign in once for this Chrome session.</p>
+<div id="accountPicker" hidden><label for="account">ChatGPT account</label><select id="account"><option value="">Add an account</option></select></div>
+<div id="loginPanel" class="login-panel" data-state="idle" aria-live="polite" aria-atomic="true">
+<div class="login-heading"><span class="login-indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></div>
+<p id="loginDetail">Chrome will ask you to allow the connection, then open OpenAI's sign-in page.</p>
+<div class="actions"><button id="signin" class="primary">Continue with ChatGPT</button><button id="returnLogin" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" class="quiet" hidden>Cancel</button><button id="signout" class="quiet" hidden>Sign out</button></div>
+</div>
 <div id="chatgptModelSettings" hidden><label for="chatgptModel">Model</label><select id="chatgptModel"></select><p class="note">Default: gpt-6-luna, low reasoning effort. Choose an available model if your account does not offer it.</p><div class="actions"><button id="useChatgpt" class="primary">Use this account and model</button><button id="refreshModels" class="quiet">Refresh models</button><button id="testChatgpt" class="quiet">Test with “Hello.”</button></div><p class="note">The test uses a small amount of your ChatGPT allowance.</p></div>
 <p><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage</a> · <a href="https://developers.openai.com/siwc/token-sharing-open-source" target="_blank" rel="noopener">How ChatGPT plan usage works</a></p>
 <p class="note">Sign-in stays in memory while Chrome is running. After quitting Chrome or reloading the extension, sign in again. Signing out here affects only this extension. Access and limits depend on your ChatGPT account and workspace.</p>

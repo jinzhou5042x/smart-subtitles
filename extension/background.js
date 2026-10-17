@@ -3,7 +3,7 @@ import './sites.js';
 import { readSubtitleResource } from './subtitle-resource.js';
 import { DEFAULTS, PROVIDERS, endpoint, validateWindow, validateSegments, cacheKeys, translateRemote } from './translation.js';
 import { readCache, writeCache, clearCache } from './cache.js';
-import { chatgpt, beginLogin, finishLogin, clearLoginRule } from './chatgpt-connection.js';
+import { chatgpt, beginLogin, finishLogin, clearLoginRule, loginStatus, cancelLogin, focusLogin } from './chatgpt-connection.js';
 
 chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
 const active = new Map();
@@ -101,10 +101,11 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         if (!ui) throw new Error('Settings page only');
         const { action, accountId, model, enablePlan } = message;
         if (action === 'begin') return beginLogin({ accountId, enablePlan });
-        if (action === 'status') return chatgpt('status');
+        if (action === 'status') return loginStatus();
         if (action === 'models') return chatgpt('models', { accountId });
         if (action === 'welcome') return chatgpt('welcome');
-        if (action === 'cancel') { await clearLoginRule(); return chatgpt('cancel'); }
+        if (action === 'cancel') return cancelLogin();
+        if (action === 'focus') return focusLogin();
         if (action === 'signOut') { cancelAll(); const result = await chatgpt('signOut', { accountId }); await clearLoginRule(); await broadcast(true); return result; }
         if (action === 'use') {
           cancelAll(); await chatgpt('use', { accountId, model });

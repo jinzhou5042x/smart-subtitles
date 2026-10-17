@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buildExtension } from './extension-build.mjs';
+import { withDeadline } from '../extension/async.js';
 const extension = path.resolve('dist/checks/chatgpt-live-extension');
 await buildExtension(extension, { store: true });
 const context = await chromium.launchPersistentContext(path.resolve('data/browser-chatgpt-live'), {
@@ -18,9 +19,9 @@ console.log('Independent Chrome window ready. Use Continue with ChatGPT and comp
 let last = '', tested = false;
 while (context.pages().length) {
   try {
-    const state = await settings.evaluate(() => chrome.runtime.sendMessage({ type: 'chatgptAccount', action: 'status' }));
+    const state = await withDeadline(settings.evaluate(() => chrome.runtime.sendMessage({ type: 'chatgptAccount', action: 'status' })), 15000, 'Extension status did not respond.');
     const account = state.data?.accounts.find(a => a.id === state.data.active);
-    const status = account?.ready ? 'ready' : account?.sharing ? 'choose-model' : account?.connected ? 'plan-permission-needed' : state.data?.pending ? 'awaiting-sign-in' : 'signed-out';
+    const status = state.data?.login?.phase || (state.data?.loginError ? 'sign-in-error' : account?.ready ? 'ready' : account?.sharing ? 'choose-model' : account?.connected ? 'plan-permission-needed' : 'signed-out');
     if (last !== status) { console.log(`ChatGPT connection: ${status}`); last = status; }
     if (account?.ready && !tested) {
       tested = true;
