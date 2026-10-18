@@ -11,9 +11,9 @@ console.log(`Manual ChatGPT check — use your regular Chrome, without browser a
 1. At chrome://extensions, reload Smart Subtitles if it already uses this folder.
    Otherwise enable Developer mode, choose Load unpacked, and select:
    ${extension}
-2. Open Smart Subtitles > Translator settings > ChatGPT subscription.
+2. Open Smart Subtitles > Translator settings and click ChatGPT.
 3. Continue with ChatGPT, allow the requested hosts, and complete sign-in.
-4. Click Test connection (sends “Hello.” using a small amount of your allowance).
+4. Click Test (sends “Hello.” using a small amount of your allowance).
 The check succeeds when settings shows Connected and a translation.
 This script does not control Chrome, read your login, or send a translation itself.`);
 

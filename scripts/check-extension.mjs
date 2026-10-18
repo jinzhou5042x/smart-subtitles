@@ -24,8 +24,11 @@ const server = http.createServer(async (req, res) => {
     assert.equal(req.headers.authorization, 'Bearer synthetic-api-key');
     assert.equal(req.headers.cookie, undefined, 'API requests must not carry browser login cookies');
     const chunks = []; for await (const c of req) chunks.push(c);
-    const body = JSON.parse(Buffer.concat(chunks)), prompt = JSON.parse(body.messages.at(-1).content); calls.push(prompt);
-    if (calls.length === 1) {
+    const body = JSON.parse(Buffer.concat(chunks)), prompt = JSON.parse(body.messages.at(-1).content);
+    // Connect in settings sends one test line; only subtitle requests are counted and held.
+    const connectionTest = prompt.cues.length === 1 && prompt.cues[0].id === 'test';
+    if (!connectionTest) calls.push(prompt);
+    if (!connectionTest && calls.length === 1) {
       res.on('close', () => { if (!res.writableEnded) firstAborted = true; });
       await new Promise(resolve => { releaseFirst = resolve; });
     }
@@ -52,8 +55,8 @@ try {
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#custom`);
   await settings.locator('#baseUrl').fill(base + '/v1'); await settings.locator('#model').fill('fixture-model');
   await settings.locator('#key').fill('synthetic-api-key');
-  await settings.getByRole('button', { name: 'Save and use', exact: true }).click();
-  await settings.getByText('Saved. Translation uses this provider when you play a video.').waitFor();
+  await settings.getByRole('button', { name: 'Connect', exact: true }).click();
+  await settings.getByText('Connected. Subtitles now use Other / local model.').waitFor();
   assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-api-key/);
   assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
   await context.addCookies([{ name: 'browserSession', value: 'must-not-be-forwarded', url: base }]);
@@ -119,8 +122,8 @@ try {
   assert.equal((await settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'cacheStats' })).data)).count, 31100);
   await settings.locator('#clear').click(); await settings.locator('#confirmClear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();
   await waitForCall(before + 1); assert.equal(calls[before].cues[0].text, 'Dialogue 0', 'clearing the cache starts fresh at the beginning');
-  await settings.locator('[data-mode=builtin]').click(); await settings.locator('#useBuiltin').click();
-  await settings.getByText('Ready. Open your video and choose a language in the extension.').waitFor();
+  await settings.locator('#builtin .option-head').click();
+  await settings.getByText('Subtitles now use browser translation.').waitFor();
   await popup.reload(); await popup.locator('#provider').waitFor();
   assert.equal(await popup.locator('#provider').inputValue(), 'builtin');
   await popup.locator('body').screenshot({ path: 'dist/checks/popup.png' });

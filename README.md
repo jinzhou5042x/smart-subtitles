@@ -35,7 +35,7 @@ Open **Translator settings** from the popup. Switching to a paid provider is alw
 | Other / local model | An OpenAI-compatible Chat Completions base URL and model; key optional for your local server |
 | ChatGPT subscription | **Continue with ChatGPT**; uses the plan allowance you authorize |
 
-Choose **API / local model** and your provider, then click **Save and use**. **Test connection** sends one small request and may use paid quota. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. Clear a key with **Remove key**. Changing API servers requires entering the key again.
+Open **Your own API key** in Translator settings, pick the service, paste your key and click **Connect**. Connect sends one short test line (which may use paid quota) and switches subtitles to that service once it answers. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. **Disconnect** clears the key. Changing API servers requires entering the key again.
 
 Google Cloud is fast and handled common idioms well in our small test. It does not receive the nearby context sent to LLMs. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
 
@@ -53,16 +53,16 @@ Follow Google's [Cloud Translation setup guide](https://docs.cloud.google.com/tr
 2. Enable billing for that project and enable **Cloud Translation API**.
 3. In **APIs & Services → Credentials**, choose **Create credentials → API key**.
 4. Restrict the key to **Cloud Translation API** and review the project's quotas. Application restrictions must permit requests from the extension.
-5. In **Translator settings → Google Cloud**, paste the key and click **Save and use**.
+5. In **Translator settings → Your own API key**, choose **Google Cloud**, paste the key and click **Connect**.
 
 We use Basic v2, which [supports API keys](https://docs.cloud.google.com/translate/docs/authentication). No credential file or local program is needed. Check [Google's pricing](https://cloud.google.com/translate/pricing) before use.
 
 ### Use your ChatGPT subscription
 
-1. Open **Translator settings → ChatGPT subscription**.
+1. Open **Translator settings** and click **ChatGPT**.
 2. Click **Continue with ChatGPT** and allow the connection when Chrome asks.
-3. Sign in on OpenAI's page and authorize Smart Subtitles to use your ChatGPT plan. Return to the extension when sign-in completes.
-4. The default is **gpt-6-luna / low**. If that model is unavailable, choose one offered to your account and click **Use this account and model**.
+3. Sign in on OpenAI's page and authorize Smart Subtitles to use your ChatGPT plan. You return to settings automatically, and subtitles switch to ChatGPT.
+4. The default model is **gpt-6-luna / low**. To change it, pick another in **Model**; it is saved right away.
 
 While sign-in is open, **Return to sign-in** takes you back to that tab. **Cancel** closes the attempt. If the tab closes or sign-in times out, the settings page explains what happened and lets you try again.
 
@@ -102,7 +102,7 @@ The store build injects scripts only on supported video sites. Provider hosts ne
 
 The release checks enforce a file inventory, permissions and content security policy, and reject remote executable code, native helpers and test transports. CI runs dependency auditing and uses pinned GitHub Actions with limited permissions. These checks reduce specific risks; they do not constitute a security certification or guarantee sign-in eligibility. Public installation should go through the Chrome Web Store. A GitHub ZIP is a developer build, and publishing a GitHub release does not submit it for store review.
 
-Browser checks use synthetic API responses and a fresh browser profile. They check callback validation, renewal, streaming, service-worker suspension, sign-out and the absence of stored tokens, but cannot prove real account access or streaming-site compatibility. `npm run check:chatgpt:live` builds the production extension and opens your regular Chrome's extensions page. Load or reload `dist/extension`, sign in from Translator settings, then click **Test connection** to check a real translation using your allowance. Use regular Chrome for this check: [Google may reject sign-in in an automated browser](https://support.google.com/accounts/answer/7675428). `node scripts/check-native.mjs` separately checks Chrome's real local translator and may download a language pack.
+Browser checks use synthetic API responses and a fresh browser profile. They check callback validation, renewal, streaming, service-worker suspension, sign-out and the absence of stored tokens, but cannot prove real account access or streaming-site compatibility. `npm run check:chatgpt:live` builds the production extension and opens your regular Chrome's extensions page. Load or reload `dist/extension`, sign in from Translator settings, then click **Test** to check a real translation using your allowance. Use regular Chrome for this check: [Google may reject sign-in in an automated browser](https://support.google.com/accounts/answer/7675428). `node scripts/check-native.mjs` separately checks Chrome's real local translator and may download a language pack.
 
 ## 中文
 
@@ -124,11 +124,11 @@ Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP �
 
 ### 云端翻译和本地模型
 
-打开 **Translator settings → API / local model**，点击要用的服务。支持 Google Cloud、OpenAI API、DeepSeek、Claude API、Qwen，以及提供 OpenAI Chat Completions 兼容接口的其他服务或本地模型。
+打开 **Translator settings → Your own API key**，在 **Service** 里选要用的服务。支持 Google Cloud、OpenAI API、DeepSeek、Claude API、Qwen，以及提供 OpenAI Chat Completions 兼容接口的其他服务或本地模型。
 
-填写自己的 key 和模型名称，点击 **Save and use**。Qwen 还需要填对应区域的工作区 API base URL；本地模型填写 `http://localhost:端口/v1`，并先启动自己的模型服务。云端连接使用 HTTPS，选定服务后才请求对应权限。API 费用由服务商收取，与聊天产品订阅通常分开。
+填写自己的 key 和模型名称，点击 **Connect**。Qwen 还需要填对应区域的工作区 API base URL；本地模型填写 `http://localhost:端口/v1`，并先启动自己的模型服务。云端连接使用 HTTPS，选定服务后才请求对应权限。API 费用由服务商收取，与聊天产品订阅通常分开。
 
-**Test connection** 会发送一次简短测试请求，可能使用付费额度。key 只留在 Chrome 当前会话的内存中，不传给视频网页。重启 Chrome 或重新加载扩展后需要重新填 key，服务器地址和模型会保留。**Remove key** 删除凭据；更换服务器也需要重新填 key。
+**Connect** 会发送一句简短的测试请求（可能使用付费额度），测试通过后字幕就改用这个服务。key 只留在 Chrome 当前会话的内存中，不传给视频网页。重启 Chrome 或重新加载扩展后需要重新填 key，服务器地址和模型会保留。**Disconnect** 删除凭据；更换服务器也需要重新填 key。
 
 ### 实测对比
 
@@ -144,16 +144,16 @@ Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT �
 2. 为项目启用结算，启用 **Cloud Translation API**。
 3. 进入 **APIs & Services → Credentials → Create credentials → API key**。
 4. 将 key 的 API 权限限制为 **Cloud Translation API**，检查项目配额；应用限制需要允许扩展发出的请求。
-5. 在 **Translator settings → Google Cloud** 粘贴 key，点击 **Save and use**。
+5. 在 **Translator settings → Your own API key** 选 **Google Cloud**，粘贴 key，点击 **Connect**。
 
 使用的是[支持 API key 的 Basic v2](https://docs.cloud.google.com/translate/docs/authentication)，不需要密钥文件或本地程序。使用前查看[官方价格](https://cloud.google.com/translate/pricing)。
 
 ### 使用 ChatGPT 订阅
 
-1. 打开 **Translator settings → ChatGPT subscription**。
+1. 打开 **Translator settings**，点击 **ChatGPT**。
 2. 点击 **Continue with ChatGPT**，允许 Chrome 提示的连接权限。
-3. 在 OpenAI 页面登录，授权 Smart Subtitles 使用自己的 ChatGPT 额度，完成后返回扩展。
-4. 默认使用 **gpt-6-luna / low**。如果账号没有这个模型，选择列表中可用的模型，点击 **Use this account and model**。
+3. 在 OpenAI 页面登录，授权 Smart Subtitles 使用自己的 ChatGPT 额度。完成后会自动回到设置页，字幕随即改用 ChatGPT。
+4. 默认使用 **gpt-6-luna / low**。要换模型，在 **Model** 里直接选，立即生效。
 
 登录途中切回了设置页，可以点 **Return to sign-in** 回到登录标签页，或点 **Cancel** 取消。关掉登录页或等待超时后，设置页会显示原因，可以重新登录。
 
@@ -189,9 +189,9 @@ La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/transl
 
 ### Proveedores
 
-En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Introduce tu clave y modelo y pulsa **Save and use**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
+En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Abre **Your own API key**, elige el servicio, introduce tu clave y modelo y pulsa **Connect**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
 
-Las claves permanecen en memoria durante esta sesión de Chrome y no se envían al sitio del video. Tras reiniciar Chrome o recargar la extensión, introduce la clave de nuevo; la dirección del servidor y el modelo se conservan. **Remove key** elimina la clave. Cambiar de servidor también requiere introducirla de nuevo. **Test connection** envía una petición pequeña que puede consumir cuota de pago. La facturación API es independiente de las suscripciones de chat.
+Las claves permanecen en memoria durante esta sesión de Chrome y no se envían al sitio del video. Tras reiniciar Chrome o recargar la extensión, introduce la clave de nuevo; la dirección del servidor y el modelo se conservan. **Disconnect** elimina la clave. Cambiar de servidor también requiere introducirla de nuevo. **Connect** envía una petición de prueba pequeña que puede consumir cuota de pago y, si responde, los subtítulos pasan a usar ese servicio. La facturación API es independiente de las suscripciones de chat.
 
 ### Comparación medida
 
@@ -207,16 +207,16 @@ Sigue la [guía oficial de configuración](https://docs.cloud.google.com/transla
 2. Activa la facturación y **Cloud Translation API**.
 3. Ve a **APIs & Services → Credentials → Create credentials → API key**.
 4. Limita la clave a **Cloud Translation API** y revisa las cuotas. Las restricciones de aplicación deben permitir peticiones de la extensión.
-5. Pega la clave en **Translator settings → Google Cloud** y pulsa **Save and use**.
+5. En **Translator settings → Your own API key**, elige **Google Cloud**, pega la clave y pulsa **Connect**.
 
 Usamos [Basic v2, compatible con claves API](https://docs.cloud.google.com/translate/docs/authentication). No hace falta un archivo de credenciales ni un programa local. Consulta los [precios de Google](https://cloud.google.com/translate/pricing).
 
 ### Usar tu suscripción de ChatGPT
 
-1. Abre **Translator settings → ChatGPT subscription**.
+1. Abre **Translator settings** y pulsa **ChatGPT**.
 2. Pulsa **Continue with ChatGPT** y concede el permiso de conexión que pide Chrome.
-3. Inicia sesión en la página de OpenAI y autoriza a Smart Subtitles a usar tu plan. Al terminar, volverás a la extensión.
-4. El modelo predeterminado es **gpt-6-luna / low**. Si tu cuenta no lo ofrece, elige otro de la lista y pulsa **Use this account and model**.
+3. Inicia sesión en la página de OpenAI y autoriza a Smart Subtitles a usar tu plan. Volverás a la configuración automáticamente y los subtítulos pasarán a usar ChatGPT.
+4. El modelo predeterminado es **gpt-6-luna / low**. Para cambiarlo, elige otro en **Model**; se guarda al instante.
 
 Mientras inicias sesión, **Return to sign-in** te lleva de vuelta a esa pestaña y **Cancel** cancela el intento. Si cierras la pestaña o se agota el tiempo, verás el motivo y podrás volver a intentarlo.
 

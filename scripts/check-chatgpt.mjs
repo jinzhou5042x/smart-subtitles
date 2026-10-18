@@ -24,6 +24,20 @@ const context = await chromium.launchPersistentContext('', { channel: 'chromium'
 context.on('console', message => {
   if (/Content Security Policy/i.test(message.text()) && !(deliberateScriptViolations && /script-src/.test(message.text()))) errors.push(message.text());
 });
+// The sign-in tab is found by its address once OpenAI receives the new authorization request.
+// The next new page can be another tab on a slow runner, so never take it on trust.
+function signInPage() {
+  // Started before the click; a failure elsewhere must not surface first as an unhandled rejection.
+  const waiting = findSignInPage(authorizations); waiting.catch(() => {}); return waiting;
+}
+async function findSignInPage(before) {
+  for (const end = Date.now() + 30000; Date.now() < end; await new Promise(resolve => setTimeout(resolve, 100))) {
+    const page = authorizations > before && context.pages().find(p => !p.isClosed() && p.url().startsWith('https://auth.openai.com/api/accounts/authorize?'));
+    if (page) { await page.waitForLoadState(); return page; }
+  }
+  const states = await Promise.all(context.pages().filter(p => p.url().startsWith('chrome-extension://')).map(p => p.locator('#chatgpt').innerText().catch(() => '')));
+  throw new Error(`The sign-in page did not open. Open pages: ${context.pages().map(p => p.url()).join(', ')}. Settings: ${states.join(' | ').replace(/\s+/g, ' ')}`);
+}
 const sendJSON = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const authRoute = async route => {
   const url = new URL(route.request().url());
@@ -129,13 +143,12 @@ try {
   assert.equal((await settings.evaluate(() => chrome.runtime.sendMessage({ type: 'chatgptAccount', action: 'status' }))).data.pending, false);
   assert.equal((await worker.evaluate(() => chrome.declarativeNetRequest.getSessionRules())).length, 0);
   await worker.evaluate(() => { chrome.declarativeNetRequest.updateSessionRules = realUpdateRules; });
-  let opening = context.waitForEvent('page');
+  let opening = signInPage();
   await settings.getByRole('button', { name: 'Continue with ChatGPT', exact: true }).click();
   let connected = await opening;
-  await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
   await settings.getByText('Finish signing in on OpenAI', { exact: true }).waitFor();
   assert.equal(await settings.locator('#signin').isVisible(), false);
-  assert.equal(await settings.locator('#accountChoices button').evaluateAll(buttons => buttons.length > 0 && buttons.every(button => button.disabled)), true);
+  assert.equal(await settings.locator('#otherAccount').isVisible(), false, 'switching accounts is unavailable while signing in');
   await settings.locator('#signin').evaluate(button => button.click());
   assert.equal(authorizations, 1, 'repeat clicks cannot start another authorization');
   // A loopback callback in any other tab must not be captured by this login's rule.
@@ -149,20 +162,19 @@ try {
   await settings.getByText('Sign-in cancelled.', { exact: true }).waitFor();
   assert.equal(await settings.locator('#signin').isEnabled(), true);
   assert.equal((await worker.evaluate(() => chrome.declarativeNetRequest.getSessionRules())).length, 0);
-  opening = context.waitForEvent('page');
+  opening = signInPage();
   await settings.locator('#signin').click(); connected = await opening;
-  await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
   await connected.close();
   await settings.getByText('The sign-in page was closed. Please try again.', { exact: true }).waitFor();
   assert.equal(await settings.locator('#signin').isEnabled(), true);
-  opening = context.waitForEvent('page');
+  opening = signInPage();
   await settings.locator('#signin').click(); connected = await opening;
-  await connected.waitForURL('https://auth.openai.com/api/accounts/authorize?**');
   await connected.goto('https://auth.openai.com/test/complete');
   await connected.waitForURL(`chrome-extension://${id}/settings.html#chatgpt`, { timeout: 30000 });
-  await connected.getByRole('button', { name: 'Got it', exact: true }).click();
-  await connected.getByText('Using ChatGPT plan', { exact: true }).waitFor();
-  await settings.getByText('Using ChatGPT plan', { exact: true }).waitFor();
+  await connected.locator('#chatgptReady').waitFor();
+  await settings.locator('#chatgptReady').waitFor();
+  assert.equal(await connected.locator('#chatgpt').getAttribute('data-active'), 'true');
+  assert.equal(await connected.locator('#chatgptModel').inputValue(), 'gpt-6-luna');
   assert.equal(await settings.locator('#signin').isVisible(), false, 'the original settings tab also reflects completed sign-in');
   await connected.locator('#testChatgpt').click(); await connected.getByText('Connected: 你好。', { exact: true }).waitFor();
   assert.equal(refreshCount, 1); assert.equal(inferenceCount, 1);
@@ -172,15 +184,16 @@ try {
   assert.equal((await worker.evaluate(() => chrome.declarativeNetRequest.getSessionRules())).length, 0);
   // Credentials remain in the dedicated worker while the MV3 service worker sleeps.
   const cdp = await context.newCDPSession(connected); await cdp.send('ServiceWorker.enable'); await cdp.send('ServiceWorker.stopAllWorkers');
-  await connected.reload(); await connected.getByText('Using ChatGPT plan', { exact: true }).waitFor();
+  await connected.reload(); await connected.locator('#chatgptReady').waitFor();
   worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   limit = true; await connected.locator('#testChatgpt').click(); await connected.getByText('ChatGPT usage limit reached. Open Manage usage in Translator settings.', { exact: true }).waitFor();
   assert.equal(await connected.locator('#usageLimit a').getAttribute('href'), 'https://chatgpt.com/settings/usage');
   assert.equal(await connected.locator('#usageLimit').isVisible(), true);
   assert.equal(inferenceCount, 2);
   await mkdir('dist/checks', { recursive: true }); await connected.screenshot({ path: 'dist/checks/chatgpt-settings.png', fullPage: true });
-  await connected.locator('#signout').click(); await connected.getByText('Signed out of Smart Subtitles.', { exact: true }).waitFor();
-  await connected.getByText('Connect your ChatGPT account', { exact: true }).waitFor();
+  await connected.locator('#signout').click(); await connected.getByText('Signed out of Smart Subtitles. Subtitles now use browser translation.', { exact: true }).waitFor();
+  await connected.getByText('Sign in again', { exact: true }).waitFor();
+  assert.equal(await connected.locator('#builtin').getAttribute('data-active'), 'true');
   // An unexpectedly closed offscreen document must recover without trapping the UI.
   await worker.evaluate(() => chrome.offscreen.closeDocument());
   await connected.waitForFunction(async () => {
