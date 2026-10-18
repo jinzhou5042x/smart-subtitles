@@ -25,7 +25,11 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run check:extension
+      # Not on Windows: there Playwright's Chromium (1248) renderer sometimes dies with an access
+      # violation (0xC0000005) while a newly opened sign-in tab commits its page. Measured in 48-run
+      # experiments on 2026-10-18; it is a Chromium bug, not this extension. Recheck after a Playwright upgrade.
       - run: npm run check:chatgpt
+        if: runner.os != 'Windows'
       - run: npm run package
       - name: Check that the extension scripts parse
         shell: bash

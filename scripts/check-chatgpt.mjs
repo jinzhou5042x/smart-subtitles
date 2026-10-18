@@ -25,8 +25,7 @@ context.on('console', message => {
   if (/Content Security Policy/i.test(message.text()) && !(deliberateScriptViolations && /script-src/.test(message.text()))) errors.push(message.text());
 });
 // The sign-in tab is the one the extension reports once OpenAI receives the new authorization
-// request. It is driven through Chrome by its id: on slow Windows runners that tab can stay
-// "unloaded" for Playwright and Chrome alike although its request was sent (CI, 1.1.2 to 1.2.0).
+// request, and driven through Chrome by its id.
 // What Chrome, Playwright and the test server saw, for a sign-in tab that never arrives.
 const pageEvents = [];
 context.on('page', page => {
@@ -89,8 +88,10 @@ const apiRoute = async route => {
 // Redirect only this test build's worker transport to a local test server.
 const served = [], started = Date.now();
 const server = createServer(async (req, res) => {
-  served.push(`${Date.now() - started}ms ${req.method} ${req.url.slice(0, 80)}`); res.on('finish', () => served.push(`${Date.now() - started}ms done ${res.statusCode} ${req.url.slice(0, 40)}`));
+  served.push(`${Date.now() - started}ms ${req.method} ${req.headers.host} ${req.url.slice(0, 80)}`); res.on('finish', () => served.push(`${Date.now() - started}ms done ${res.statusCode} ${req.url.slice(0, 40)}`));
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+  // A page served from here makes Chrome ask for its icon; that is not an API call (CI, 1.2.0).
+  if (req.url === '/favicon.ico') { res.writeHead(404); res.end(); return; }
   const chunks = []; for await (const part of req) chunks.push(part);
   // /navigate/… is a tab navigation to auth.openai.com, redirected here by the test rule below.
   const data = Buffer.concat(chunks).toString(), url = req.url.startsWith('/navigate/') ? 'https://auth.openai.com/' + req.url.slice('/navigate/'.length) : decodeURIComponent(req.url.slice(1));
@@ -108,8 +109,7 @@ await writeFile(workerFile, `const testFetch = self.fetch; self.fetch = function
 try {
   let worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).hostname;
-  // Serve OpenAI's sign-in pages from the local server with Chrome's own redirect rules. Playwright's
-  // request interception loses navigations in extension-opened tabs on slow CI runners.
+  // Serve OpenAI's sign-in pages from the local server with Chrome's own redirect rules.
   await worker.evaluate(() => { globalThis.tabLog = []; chrome.tabs.onUpdated.addListener((id, change) => tabLog.push(`${id} ${JSON.stringify(change).slice(0, 160)}`)); });
   await worker.evaluate(port => chrome.declarativeNetRequest.updateDynamicRules({ addRules: [{ id: 9001, priority: 2,
     action: { type: 'redirect', redirect: { regexSubstitution: `http://127.0.0.1:${port}/navigate/\\1` } },
