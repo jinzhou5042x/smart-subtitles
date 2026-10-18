@@ -10,29 +10,31 @@ const kindOf = id => PROVIDERS[id]?.kind;
 const providersOf = kind => Object.keys(PROVIDERS).filter(id => kindOf(id) === kind);
 const panelOf = id => kindOf(id) === 'api' ? 'cloud' : id;
 let preferences = {}, profiles = {}, opened = null;
-const lastShown = {};
 let accountState = { accounts: [] }, selectedAccount, loginAction = null, signInError = '', loginAttempt = 0, refreshingAccount = false;
 
 $('version').textContent = 'v' + chrome.runtime.getManifest().version;
 for (const language of globalThis.SubtitleLanguages.list) $('target').append(new Option(language.name, language.code));
 const element = (tag, props = {}, ...children) => { const e = Object.assign(document.createElement(tag), props); e.append(...children); return e; };
-const dot = () => element('span', { className: 'live', ariaHidden: 'true' });
-const tabs = Object.entries(KINDS).map(([kind, { name }]) => {
-  const tab = element('button', { type: 'button', id: 'kind-' + kind, role: 'tab' }, dot(), name);
-  tab.dataset.kind = kind; tab.setAttribute('aria-controls', 'kindPanel'); return tab;
-});
-$('kinds').append(...tabs);
-const tiles = Object.entries(PROVIDERS).map(([id, { short }]) => {
-  const tile = element('button', { type: 'button', className: 'provider', role: 'radio' }, element('span', { className: 'name' }, dot(), element('span', {}, short)), element('span', { className: 'state' }));
-  tile.dataset.provider = id; return tile;
-});
-$('providers').append(...tiles);
+const svg = path => { const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); icon.setAttribute('viewBox', '0 0 16 16'); icon.setAttribute('aria-hidden', 'true'); icon.innerHTML = `<path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`; return icon; };
+// One grouped list per kind, one row per provider; the open row's setup unfolds beneath it.
+const rows = [];
+for (const [kind, { name, blurb }] of Object.entries(KINDS)) {
+  const items = providersOf(kind).map(id => {
+    const check = svg('M3.5 8.5l3 3 6-7'), chevron = svg('M6 3.5L10.5 8 6 12.5');
+    check.classList.add('check'); chevron.classList.add('chevron');
+    const row = element('button', { type: 'button', className: 'option' }, element('span', { className: 'name' }, PROVIDERS[id].short), element('span', { className: 'state' }, check, element('span')), chevron);
+    row.dataset.provider = id; row.setAttribute('aria-controls', 'detail'); row.onclick = () => show(opened === id ? null : id);
+    rows.push(row); return row;
+  });
+  $('kinds').append(element('div', { className: 'kind' }, element('p', { className: 'kind-name' }, `${name} · ${blurb}`), element('div', { className: 'group' }, ...items)));
+}
 
-function say(text, tone = '') { $('result').dataset.tone = tone; $('result').textContent = text; if (tone !== 'error') $('usageLimit').hidden = true; }
-async function run(action, button) {
-  say(''); if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
-  try { say(await action() || ''); }
-  catch (e) { say(e.message, 'error'); $('usageLimit').hidden = e.code !== 'subscription_sharing_usage_limit_exceeded'; }
+// Each section reports in its own line: translators under the open provider, the others below them.
+function say(text, tone = '', out = $('result')) { out.dataset.tone = tone; out.textContent = text; if (out === $('result') && tone !== 'error') $('usageLimit').hidden = true; }
+async function run(action, button, out = $('result')) {
+  say('', '', out); if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+  try { say(await action() || '', '', out); }
+  catch (e) { say(e.message, 'error', out); if (out === $('result')) $('usageLimit').hidden = e.code !== 'subscription_sharing_usage_limit_exceeded'; }
   finally { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); } }
 }
 const ready = provider => kindOf(provider) === 'browser' || (provider === 'chatgpt' ? !!accountState.accounts.find(a => a.id === accountState.active)?.ready : !!profiles[provider]?.configured);
@@ -42,27 +44,20 @@ async function activate(provider) {
   preferences = await call({ type: 'saveSettings', settings: { provider } }); render();
 }
 const NAMES = { builtin: 'browser translation', chatgpt: 'your ChatGPT plan' };
-// The provider a kind opens on: the one last shown there, the one in use, a ready one, or the first.
-const firstOf = kind => lastShown[kind] || (kindOf(preferences.provider) === kind ? preferences.provider : providersOf(kind).find(ready) || providersOf(kind)[0]);
 
-// Choosing a kind or a provider only shows it; Use, or finishing its setup, switches to it.
+// Opening a provider only shows its setup; Use, or finishing its setup, switches to it.
 function render() {
-  const kind = kindOf(opened);
-  for (const tab of tabs) {
-    const open = tab.dataset.kind === kind;
-    tab.setAttribute('aria-selected', String(open)); tab.tabIndex = open ? 0 : -1;
-    tab.dataset.active = String(tab.dataset.kind === kindOf(preferences.provider));
+  for (const row of rows) {
+    const id = row.dataset.provider;
+    row.setAttribute('aria-expanded', String(id === opened));
+    row.dataset.active = String(id === preferences.provider);
+    row.querySelector('.state span').textContent = stateOf(id);
   }
-  $('kindPanel').setAttribute('aria-labelledby', 'kind-' + kind);
-  $('kindBlurb').textContent = KINDS[kind].blurb;
-  for (const tile of tiles) {
-    const id = tile.dataset.provider, open = id === opened;
-    tile.hidden = kindOf(id) !== kind;
-    tile.setAttribute('aria-checked', String(open)); tile.tabIndex = open ? 0 : -1;
-    tile.dataset.active = String(id === preferences.provider);
-    tile.lastElementChild.textContent = stateOf(id);
-  }
-  $('detailName').textContent = PROVIDERS[opened].name; $('detailBlurb').textContent = PROVIDERS[opened].blurb;
+  $('detail').hidden = !opened;
+  if (!opened) return;
+  const row = rows.find(r => r.dataset.provider === opened);
+  if (row.nextElementSibling !== $('detail')) row.after($('detail'));
+  $('detailBlurb').textContent = PROVIDERS[opened].blurb;
   for (const panel of ['builtin', 'chatgpt', 'cloud']) $(panel).hidden = panelOf(opened) !== panel;
   $('detail').dataset.active = String(opened === preferences.provider);
   $('use').hidden = !ready(opened);
@@ -70,18 +65,10 @@ function render() {
 function show(id) {
   const changed = opened !== id;
   if (changed) say('');
-  opened = id; lastShown[kindOf(id)] = id;
+  opened = id;
   if (changed && kindOf(id) === 'api') renderCloud();
   render(); if (id === 'chatgpt') void refreshAccount();
 }
-// Arrow keys move along the kind tabs, and along the provider tiles shown.
-const arrows = (items, pick) => e => {
-  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!step) return;
-  e.preventDefault(); const shown = items.filter(i => !i.hidden), next = shown[(shown.indexOf(e.currentTarget) + step + shown.length) % shown.length];
-  pick(next); next.focus();
-};
-for (const tab of tabs) { tab.onclick = () => show(firstOf(tab.dataset.kind)); tab.onkeydown = arrows(tabs, next => show(firstOf(next.dataset.kind))); }
-for (const tile of tiles) { tile.onclick = () => show(tile.dataset.provider); tile.onkeydown = arrows(tiles, next => show(next.dataset.provider)); }
 $('use').onclick = () => run(async () => { const id = opened; await activate(id); return `Subtitles now use ${NAMES[id] || PROVIDERS[id].name}.`; }, $('use'));
 
 // Your own API key
@@ -225,9 +212,9 @@ $('signout').onclick = () => run(async () => {
 $('testChatgpt').onclick = () => run(async () => `Connected: ${(await call({ type: 'testProfile', provider: 'chatgpt' })).text}`, $('testChatgpt'));
 
 // Subtitles
-$('target').onchange = () => run(async () => { preferences = await call({ type: 'saveSettings', settings: { target: $('target').value } }); return ''; });
+$('target').onchange = () => run(async () => { preferences = await call({ type: 'saveSettings', settings: { target: $('target').value } }); return ''; }, null, $('subtitlesResult'));
 $('fontSize').oninput = () => { $('fontSizeValue').value = $('fontSize').value; };
-$('fontSize').onchange = () => run(async () => { preferences = await call({ type: 'saveSettings', settings: { fontSize: Number($('fontSize').value) } }); return ''; });
+$('fontSize').onchange = () => run(async () => { preferences = await call({ type: 'saveSettings', settings: { fontSize: Number($('fontSize').value) } }); return ''; }, null, $('subtitlesResult'));
 function renderSubtitles() {
   if (document.activeElement !== $('target')) $('target').value = preferences.target;
   if (document.activeElement !== $('fontSize')) { $('fontSize').value = preferences.fontSize; $('fontSizeValue').value = preferences.fontSize; }
@@ -245,7 +232,7 @@ async function refreshCache() {
 }
 $('clear').onclick = () => $('clearDialog').showModal();
 $('cancelClear').onclick = () => $('clearDialog').close();
-$('confirmClear').onclick = () => { $('clearDialog').close(); void run(async () => { await call({ type: 'clearCache' }); await refreshCache(); return 'Saved translations cleared.'; }); };
+$('confirmClear').onclick = () => { $('clearDialog').close(); void run(async () => { await call({ type: 'clearCache' }); await refreshCache(); return 'Saved translations cleared.'; }, null, $('storageResult')); };
 
 // Keep the page in step with the popup and with sign-in finishing in another tab.
 setInterval(async () => {
@@ -257,9 +244,9 @@ setInterval(() => { if (!document.hidden) void refreshCache(); }, 15000);
 try {
   [preferences, profiles] = await Promise.all([call({ type: 'settings' }), call({ type: 'profiles' })]);
   const requested = location.hash.slice(1);
-  show(PROVIDERS[requested] ? requested : KINDS[requested] ? firstOf(requested) : PROVIDERS[preferences.provider] ? preferences.provider : 'builtin');
+  show(PROVIDERS[requested] ? requested : null);
   renderSubtitles();
   if (opened === 'chatgpt' || preferences.provider === 'chatgpt') await refreshAccount();
   else void refreshAccount();
   void refreshCache();
-} catch (e) { say(e.message, 'error'); }
+} catch (e) { say(e.message, 'error', $('subtitlesResult')); }
