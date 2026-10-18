@@ -16,43 +16,45 @@ for (const language of globalThis.SubtitleLanguages.list) $('target').append(new
 
 function say(text, tone = '') { $('result').dataset.tone = tone; $('result').textContent = text; if (tone !== 'error') $('usageLimit').hidden = true; }
 async function run(action, button) {
-  say('Working…'); if (button) button.disabled = true;
-  try { say(await action() || 'Saved.'); }
+  say(''); if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+  try { say(await action() || ''); }
   catch (e) { say(e.message, 'error'); $('usageLimit').hidden = e.code !== 'subscription_sharing_usage_limit_exceeded'; }
-  finally { if (button) button.disabled = false; }
+  finally { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); } }
 }
 const ready = provider => provider === 'builtin' || (provider === 'chatgpt' ? !!accountState.accounts.find(a => a.id === accountState.active)?.ready : !!profiles[provider]?.configured);
 async function activate(provider) {
   if (preferences.provider === provider) return;
   preferences = await call({ type: 'saveSettings', settings: { provider } }); render();
 }
+const NAMES = { builtin: 'browser translation', chatgpt: 'your ChatGPT plan' };
 
+// A tab only shows a translator; Use, or finishing its setup, switches to it.
 function render() {
   const current = optionOf(preferences.provider);
-  for (const option of document.querySelectorAll('.option')) {
-    const id = option.dataset.option, open = opened === id, active = id === current;
-    option.dataset.active = String(active);
-    option.querySelector('.option-head').setAttribute('aria-expanded', String(open));
-    option.querySelector('.panel').hidden = !open;
-    option.querySelector('.state').textContent = active ? 'In use' : id === 'cloud' ? (API_PROVIDERS.some(ready) ? 'Ready' : 'Set up') : ready(id) ? 'Ready' : 'Set up';
-    // Messages appear inside the card they are about.
-    if (open) option.querySelector('.panel').append($('result'), $('usageLimit'));
+  for (const tab of document.querySelectorAll('[role=tab]')) {
+    const id = tab.dataset.option, panel = $(id), open = opened === id;
+    tab.setAttribute('aria-selected', String(open)); tab.tabIndex = open ? 0 : -1;
+    tab.dataset.active = String(id === current);
+    panel.hidden = !open;
+    // The cloud card is "in use" only for the service shown in it.
+    panel.dataset.active = String(id === 'cloud' ? preferences.provider === apiProvider : id === current);
   }
-  if (!opened) $('result').closest('.block').append($('result'), $('usageLimit'));
-  const using = current === 'cloud' && PROVIDERS[preferences.provider];
-  $('cloudSummary').textContent = using ? `Using ${using.name}${profiles[preferences.provider]?.model && preferences.provider !== 'google' ? ` · ${profiles[preferences.provider].model}` : ''}` : 'Google Cloud, OpenAI, Claude, DeepSeek, Qwen or a local model.';
+  $('useBuiltin').hidden = false;
+  $('useChatgpt').hidden = !ready('chatgpt');
+  $('useCloud').hidden = !ready(apiProvider);
 }
-async function choose(id) {
-  say('');
-  if (opened === id) { opened = null; render(); return; }
-  opened = id; render();
-  try {
-    if (id === 'builtin') { await activate('builtin'); say('Subtitles now use browser translation.'); }
-    if (id === 'chatgpt') { await refreshAccount(); if (ready('chatgpt') && preferences.provider !== 'chatgpt') { await activate('chatgpt'); say('Subtitles now use your ChatGPT plan.'); } }
-    if (id === 'cloud' && ready(apiProvider) && preferences.provider !== apiProvider) { await activate(apiProvider); say(`Subtitles now use ${PROVIDERS[apiProvider].name}.`); }
-  } catch (e) { say(e.message, 'error'); }
+function show(id) { if (opened !== id) say(''); opened = id; render(); if (id === 'chatgpt') void refreshAccount(); }
+const tabs = [...document.querySelectorAll('[role=tab]')];
+for (const tab of tabs) {
+  tab.onclick = () => show(tab.dataset.option);
+  tab.onkeydown = e => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key]; if (!step) return;
+    const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length]; next.focus(); show(next.dataset.option);
+  };
 }
-for (const option of document.querySelectorAll('.option')) option.querySelector('.option-head').onclick = () => choose(option.dataset.option);
+for (const [button, provider] of [[$('useBuiltin'), () => 'builtin'], [$('useChatgpt'), () => 'chatgpt'], [$('useCloud'), () => apiProvider]]) {
+  button.onclick = () => run(async () => { const id = provider(); await activate(id); return `Subtitles now use ${NAMES[id] || PROVIDERS[id].name}.`; }, button);
+}
 
 // Your own API key
 function renderCloud() {
@@ -66,11 +68,8 @@ function renderCloud() {
   $('endpointHelp').textContent = apiProvider === 'qwen' ? 'Copy the API base URL for your region from Model Studio.' : 'An OpenAI-compatible base URL. A model on this computer can use http://localhost:PORT/v1.';
   $('remove').hidden = !profiles[apiProvider];
 }
-$('provider').onchange = async () => {
-  apiProvider = $('provider').value; renderCloud(); say('');
-  if (ready(apiProvider)) { try { await activate(apiProvider); say(`Subtitles now use ${PROVIDERS[apiProvider].name}.`); } catch (e) { say(e.message, 'error'); } }
-};
-$('cloudPanel').onsubmit = e => {
+$('provider').onchange = () => { apiProvider = $('provider').value; renderCloud(); render(); say(''); };
+$('cloud').onsubmit = e => {
   e.preventDefault(); const provider = apiProvider;
   let baseUrl; try { baseUrl = endpoint(provider, { baseUrl: $('baseUrl').value }); } catch (error) { say(error.message, 'error'); return; }
   // Requested directly in the click, while user activation is present.
@@ -78,7 +77,7 @@ $('cloudPanel').onsubmit = e => {
   void run(async () => {
     if (!await permission) throw new Error('Chrome did not allow access to this server. Click Connect and choose Allow.');
     await call({ type: 'saveProfile', provider, profile: { baseUrl, model: $('model').value, key: $('key').value } });
-    profiles = await call({ type: 'profiles' }); renderCloud(); say('Checking the connection…');
+    profiles = await call({ type: 'profiles' }); renderCloud();
     await call({ type: 'testProfile', provider });
     await activate(provider); render();
     return `Connected. Subtitles now use ${PROVIDERS[provider].name}.`;
@@ -182,14 +181,15 @@ $('otherAccount').onclick = () => {
 $('account').onchange = () => run(async () => {
   signInError = ''; selectedAccount = $('account').value;
   const account = accountState.accounts.find(a => a.id === selectedAccount);
-  if (account?.ready) { await accountCall('use', { accountId: account.id, model: account.model }); preferences = await call({ type: 'settings' }); await refreshAccount(); return `Subtitles now use ${account.email || 'this account'}.`; }
+  if (account?.ready) { await accountCall('use', { accountId: account.id, model: account.model }); preferences = await call({ type: 'settings' }); await refreshAccount(); render(); return `Subtitles now use ChatGPT with ${account.email || 'this account'}.`; }
   renderChatgpt(); return '';
 });
 $('chatgptModel').onchange = () => run(async () => {
   if (!$('chatgptModel').value) return '';
+  const switching = preferences.provider !== 'chatgpt', name = $('chatgptModel').selectedOptions[0].text;
   await accountCall('use', { accountId: selectedAccount, model: $('chatgptModel').value });
-  preferences = await call({ type: 'settings' }); await refreshAccount();
-  return 'Model saved. Subtitles use it from the next line.';
+  preferences = await call({ type: 'settings' }); await refreshAccount(); render();
+  return switching ? `Subtitles now use your ChatGPT plan with ${name}.` : `Model saved. Subtitles use ${name} from the next line.`;
 });
 $('signout').onclick = () => run(async () => {
   const r = await accountCall('signOut', { accountId: selectedAccount });

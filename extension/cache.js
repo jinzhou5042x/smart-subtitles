@@ -1,5 +1,5 @@
 // Only the extension origin stores translations. No SQLite or local daemon.
-export const CACHE_LIMIT = 1_000_000;
+export const CACHE_LIMIT = 100_000;
 let database;
 function open() {
   return database ||= new Promise((resolve, reject) => {

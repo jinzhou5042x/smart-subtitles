@@ -16,13 +16,13 @@ Bilingual subtitles for Hulu and Disney+, including Hulu content on Disney+. Eng
 
 The extension runs on desktop Chrome on Windows, macOS and Linux. There is no companion app to download or run. Browser translation needs no account or key; Chrome prepares the language pack on the video page on first use, without a separate installer. Availability depends on your browser, language and organization settings. If unavailable, choose a cloud translator.
 
-Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 1,000,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
+Move the subtitles by dragging them. Adjust **Size** in the popup. Translation starts at the beginning and works through the subtitles in order, one batch at a time, including while the video is paused. Seeking does not restart or reorder it. If you jump ahead, you may need to wait for translation to catch up, especially with an LLM. The popup shows how many lines are done. Completed lines are saved in this browser, up to 100,000 lines. Reloading reuses saved translations. A failed request pauses with **Retry** instead of repeatedly spending quota.
 
 Chrome's [built-in Translator API](https://developer.chrome.com/docs/ai/translator-api) is a local translation model, separate from Google Cloud Translation. Translation quality varies; cloud LLMs can use nearby dialogue to handle context and slang. LLMs may take longer, and short windows can lose some long-range context. Netflix, YouTube, mobile browsers and live TV are not supported.
 
 ### Choose a translator
 
-Open **Translator settings** from the popup. Switching to a paid provider is always your choice; the extension does not silently fall back to one.
+Open **Translator settings** from the popup. It is one page with three tabs, **Browser**, **ChatGPT** and **API key**. A green dot marks the translator in use; **Use** switches to a translator that is ready, and finishing a setup switches to it automatically. Language, subtitle size and saved translations are on the same page. Switching to a paid provider is always your choice; the extension does not silently fall back to one.
 
 | Translator | Setup |
 | --- | --- |
@@ -33,9 +33,9 @@ Open **Translator settings** from the popup. Switching to a paid provider is alw
 | Claude API | Your API key and model |
 | Qwen | Your API key, model and workspace base URL for your region |
 | Other / local model | An OpenAI-compatible Chat Completions base URL and model; key optional for your local server |
-| ChatGPT subscription | **Continue with ChatGPT**; uses the plan allowance you authorize |
+| ChatGPT subscription | **Continue with ChatGPT** with a **personal** ChatGPT account (Go, Plus or Pro); uses the plan allowance you authorize. Business, Enterprise and Edu accounts cannot be used |
 
-Open **Your own API key** in Translator settings, pick the service, paste your key and click **Connect**. Connect sends one short test line (which may use paid quota) and switches subtitles to that service once it answers. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. **Disconnect** clears the key. Changing API servers requires entering the key again.
+Open the **API key** tab in Translator settings, pick the service, paste your key and click **Connect**. Connect sends one short test line (which may use paid quota) and switches subtitles to that service once it answers. Keys stay in memory for this Chrome session and are not sent to the video website. Enter the key again after restarting Chrome or reloading the extension; the server address and model are remembered. **Disconnect** clears the key. Changing API servers requires entering the key again.
 
 Google Cloud is fast and handled common idioms well in our small test. It does not receive the nearby context sent to LLMs. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
 
@@ -53,13 +53,15 @@ Follow Google's [Cloud Translation setup guide](https://docs.cloud.google.com/tr
 2. Enable billing for that project and enable **Cloud Translation API**.
 3. In **APIs & Services → Credentials**, choose **Create credentials → API key**.
 4. Restrict the key to **Cloud Translation API** and review the project's quotas. Application restrictions must permit requests from the extension.
-5. In **Translator settings → Your own API key**, choose **Google Cloud**, paste the key and click **Connect**.
+5. In **Translator settings → API key**, choose **Google Cloud**, paste the key and click **Connect**.
 
 We use Basic v2, which [supports API keys](https://docs.cloud.google.com/translate/docs/authentication). No credential file or local program is needed. Check [Google's pricing](https://cloud.google.com/translate/pricing) before use.
 
 ### Use your ChatGPT subscription
 
-1. Open **Translator settings** and click **ChatGPT**.
+> **Personal accounts only.** Smart Subtitles can use the plan of a personal ChatGPT account (Go, Plus or Pro). A ChatGPT **Business, Enterprise or Edu** workspace cannot share its plan with apps, and its admin has no setting to allow it. See [Work accounts](#work-accounts-chatgpt-business-enterprise-edu).
+
+1. Open **Translator settings** and choose the **ChatGPT** tab.
 2. Click **Continue with ChatGPT** and allow the connection when Chrome asks.
 3. Sign in on OpenAI's page and authorize Smart Subtitles to use your ChatGPT plan. You return to settings automatically, and subtitles switch to ChatGPT.
 4. The default model is **gpt-6-luna / low**. To change it, pick another in **Model**; it is saved right away.
@@ -70,14 +72,16 @@ There is no API key or local program to set up. Account eligibility, available m
 
 #### Work accounts (ChatGPT Business, Enterprise, Edu)
 
+**Short answer: not supported. Use a personal account or another translator.**
+
 If OpenAI's page says **“Your organization hasn't enabled access for this app”** (error `3p_delegated_access_policy_denied`), your work workspace does not let outside apps use its ChatGPT plan. Signing in again or retrying will not change this.
 
 **An admin cannot switch it on.** We checked the OpenAI Admin Console on 2026-10-17. Under **External access**, a global admin can allow three kinds of access for apps: **Identity**, **Connected apps** and **ChatGPT Ads**. None of them covers ChatGPT plan usage. Individual apps can be allowed only if they appear in that list. Smart Subtitles registers its own connection the first time each person signs in, so it never appears there in advance. Setting the organization defaults to **Allowed** does not help either.
 
 What works:
 
-1. **Use your personal ChatGPT account.** In **Translator settings → ChatGPT**, click **Cancel**, then **Continue with ChatGPT** again. When OpenAI asks which account or workspace to use, choose your personal one, not the work one. OpenAI offers plan usage in other apps on Go, Plus and Pro. It also says supported open-source tools are available to all ChatGPT users. ([OpenAI: Using your ChatGPT plan in other apps](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites))
-2. **Use another translator:** **Browser translation** (free, no account), or **Your own API key** (Google Cloud, OpenAI API, Claude, DeepSeek, Qwen or a local model).
+1. **Use your personal ChatGPT account.** In the **ChatGPT** tab of Translator settings, click **Cancel**, then **Continue with ChatGPT** again. When OpenAI asks which account or workspace to use, choose your personal one, not the work one. OpenAI offers plan usage in other apps on Go, Plus and Pro. It also says supported open-source tools are available to all ChatGPT users. ([OpenAI: Using your ChatGPT plan in other apps](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites))
+2. **Use another translator:** the **Browser** tab (free, no account), or the **API key** tab (Google Cloud, OpenAI API, Claude, DeepSeek, Qwen or a local model).
 3. **Ask OpenAI to allow it for your workspace.** Only OpenAI can do this today. Contact [OpenAI Support](https://help.openai.com/) with the app name (Smart Subtitles), your workspace name, the error code and the `request_id` from **Copy diagnostics** on the error page.
 
 Sign-in credentials stay in memory while Chrome runs. After fully quitting Chrome or reloading the extension, sign in again using the saved account entry. Closing a settings tab does not sign you out. **Sign out** disconnects this extension and asks OpenAI to revoke its token; other apps' logins are separate. Account labels are saved locally so you can reconnect later.
@@ -130,13 +134,17 @@ Browser checks use synthetic API responses and a fresh browser profile. They che
 
 Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP 或运行配套程序。浏览器翻译不需要账号或 key；首次由 Chrome 在视频页面内准备语言包，会占用本地磁盘，不用去别处下载或安装。是否可用取决于浏览器、语言和组织策略。不支持时，可以自行选择云端翻译器，不会自动切换到收费服务。
 
-拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 1,000,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
+拖动字幕可以调整位置，**Size** 调整字号。翻译从第一条字幕开始，一批接一批按顺序处理，暂停视频时也会继续。拖动进度条不会让翻译重头来过，也不会改变翻译顺序。快进到尚未翻译的位置，需要等翻译追上，LLM 的等待可能比较久；弹窗会显示已经完成的条数。缓存保存在浏览器中，最多 100,000 行，刷新后可以复用。请求失败会暂停，修复后点击 **Retry translation**，不会无限重试扣额度。
 
 [Chrome 内置翻译](https://developer.chrome.com/docs/ai/translator-api)使用本地模型，与 Google Cloud 是不同服务，效果需要按实际影片判断。Google Cloud 很快，在这次小样本测试中也正确处理了常见俚语；它没有收到 LLM 那样的附近上下文。LLM 的表达通常更自然，但更慢，也可能出现跨行重复或译名不统一。目前不支持 Netflix、YouTube、手机浏览器和直播。
 
+### 设置页
+
+在弹窗里点 **Translator settings**。设置只有一页，顶部三个标签：**Browser**、**ChatGPT**、**API key**。绿点表示正在使用的翻译器；已经可用的翻译器点 **Use** 就切换，完成登录或连接后也会自动切换。翻译语言、字幕大小和已保存的翻译（最多 100,000 行）也在同一页。
+
 ### 云端翻译和本地模型
 
-打开 **Translator settings → Your own API key**，在 **Service** 里选要用的服务。支持 Google Cloud、OpenAI API、DeepSeek、Claude API、Qwen，以及提供 OpenAI Chat Completions 兼容接口的其他服务或本地模型。
+打开 **Translator settings** 的 **API key** 标签，在 **Service** 里选要用的服务。支持 Google Cloud、OpenAI API、DeepSeek、Claude API、Qwen，以及提供 OpenAI Chat Completions 兼容接口的其他服务或本地模型。
 
 填写自己的 key 和模型名称，点击 **Connect**。Qwen 还需要填对应区域的工作区 API base URL；本地模型填写 `http://localhost:端口/v1`，并先启动自己的模型服务。云端连接使用 HTTPS，选定服务后才请求对应权限。API 费用由服务商收取，与聊天产品订阅通常分开。
 
@@ -156,13 +164,15 @@ Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT �
 2. 为项目启用结算，启用 **Cloud Translation API**。
 3. 进入 **APIs & Services → Credentials → Create credentials → API key**。
 4. 将 key 的 API 权限限制为 **Cloud Translation API**，检查项目配额；应用限制需要允许扩展发出的请求。
-5. 在 **Translator settings → Your own API key** 选 **Google Cloud**，粘贴 key，点击 **Connect**。
+5. 在 **Translator settings → API key** 选 **Google Cloud**，粘贴 key，点击 **Connect**。
 
 使用的是[支持 API key 的 Basic v2](https://docs.cloud.google.com/translate/docs/authentication)，不需要密钥文件或本地程序。使用前查看[官方价格](https://cloud.google.com/translate/pricing)。
 
 ### 使用 ChatGPT 订阅
 
-1. 打开 **Translator settings**，点击 **ChatGPT**。
+> **只支持个人账号。** Smart Subtitles 只能使用**个人** ChatGPT 账号（Go、Plus、Pro）的额度。ChatGPT **Business、Enterprise、Edu** 工作区不能把额度分享给应用，管理员也没有可以打开的设置。详见下面的[工作账号](#工作账号chatgpt-businessenterpriseedu)。
+
+1. 打开 **Translator settings**，选 **ChatGPT** 标签。
 2. 点击 **Continue with ChatGPT**，允许 Chrome 提示的连接权限。
 3. 在 OpenAI 页面登录，授权 Smart Subtitles 使用自己的 ChatGPT 额度。完成后会自动回到设置页，字幕随即改用 ChatGPT。
 4. 默认使用 **gpt-6-luna / low**。要换模型，在 **Model** 里直接选，立即生效。
@@ -173,14 +183,16 @@ Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT �
 
 #### 工作账号（ChatGPT Business、Enterprise、Edu）
 
+**结论：不支持。请用个人账号，或换其他翻译器。**
+
 如果 OpenAI 页面显示 **“Your organization hasn't enabled access for this app”**（错误代码 `3p_delegated_access_policy_denied`），说明你所在的工作区不允许外部应用使用它的 ChatGPT 额度。重新登录或反复重试都不会改变。
 
 **管理员目前打不开这个权限。** 我们在 2026-10-17 检查过 OpenAI 管理后台（Admin Console）：**External access** 页面里，全局管理员只能给应用开放三类权限：**Identity**（身份登录）、**Connected apps**、**ChatGPT Ads**，没有任何一项对应“使用 ChatGPT 额度”。单个应用只有出现在那个列表里才能单独放行；Smart Subtitles 是每个人第一次登录时才各自注册连接，所以不会事先出现在列表里。把组织默认值（Organization defaults）全部设成 **Allowed** 也没用。
 
 可行的办法：
 
-1. **改用个人 ChatGPT 账号。** 在 **Translator settings → ChatGPT** 点 **Cancel**，再点 **Continue with ChatGPT**；OpenAI 让你选账号或工作区时，选个人账号，不要选工作区。OpenAI 说明 Go、Plus、Pro 可以在其他应用中使用额度，并且受支持的开源工具对所有 ChatGPT 用户开放（[OpenAI 官方说明](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)）。
-2. **换用其他翻译器：** **Browser translation**（免费，无需账号），或 **Your own API key**（Google Cloud、OpenAI API、Claude、DeepSeek、Qwen 或本地模型）。
+1. **改用个人 ChatGPT 账号。** 在 Translator settings 的 **ChatGPT** 标签点 **Cancel**，再点 **Continue with ChatGPT**；OpenAI 让你选账号或工作区时，选个人账号，不要选工作区。OpenAI 说明 Go、Plus、Pro 可以在其他应用中使用额度，并且受支持的开源工具对所有 ChatGPT 用户开放（[OpenAI 官方说明](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)）。
+2. **换用其他翻译器：** **Browser** 标签（免费，无需账号），或 **API key** 标签（Google Cloud、OpenAI API、Claude、DeepSeek、Qwen 或本地模型）。
 3. **请 OpenAI 为你的工作区开放。** 目前只有 OpenAI 能处理。联系 [OpenAI Support](https://help.openai.com/)，附上应用名称（Smart Subtitles）、工作区名称、错误代码，以及错误页 **Copy diagnostics** 里的 `request_id`。
 
 登录凭据只留在内存里。彻底退出 Chrome 或重新加载扩展后，需要选择保存的账号重新登录；关掉设置标签页不影响使用。**Sign out** 会退出当前扩展并请求 OpenAI 撤销令牌，其他应用的登录独立。扩展会保存账号名称等信息，方便下次连接。
@@ -207,13 +219,17 @@ Subtítulos bilingües para Hulu y Disney+, incluido el contenido de Hulu en Dis
 
 En Windows, macOS y Linux solo necesitas la extensión de Chrome para escritorio. No hay un programa adicional que descargar o ejecutar. La traducción del navegador no necesita cuenta ni clave; Chrome prepara el paquete de idioma en la página del video la primera vez. Ocupa espacio local, pero no requiere un instalador aparte. La disponibilidad depende del navegador, el idioma y las políticas de tu organización. Si no está disponible, puedes elegir un proveedor en la nube; nunca se cambia automáticamente a uno de pago.
 
-Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 1.000.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
+Arrastra los subtítulos para moverlos y ajusta **Size**. La traducción empieza desde el principio y avanza en orden, un lote cada vez, incluso con el video en pausa. Adelantar o retroceder no la reinicia ni cambia el orden. Si saltas a una parte aún sin traducir, tendrás que esperar a que la traducción llegue hasta allí, sobre todo con un LLM. La ventana de la extensión muestra cuántas líneas están listas. Se guardan hasta 100.000 líneas en el navegador y se reutilizan al recargar. Un fallo pausa la traducción para evitar reintentos de pago continuos.
 
 La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/translator-api) usa un modelo local distinto de Google Cloud. Google Cloud fue rápido y resolvió bien los modismos de nuestra pequeña prueba. Los LLM reciben diálogo cercano y suelen sonar más naturales, pero tardan más y pueden repetir contenido entre subtítulos o variar los nombres. No se admiten Netflix, YouTube, navegadores móviles ni emisiones en directo.
 
+### Ajustes
+
+Abre **Translator settings** desde la ventana de la extensión. Es una sola página con tres pestañas: **Browser**, **ChatGPT** y **API key**. Un punto verde marca el traductor en uso; **Use** cambia a un traductor que ya está listo, y al terminar una configuración se cambia automáticamente. El idioma, el tamaño de los subtítulos y las traducciones guardadas (hasta 100.000 líneas) están en la misma página.
+
 ### Proveedores
 
-En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Abre **Your own API key**, elige el servicio, introduce tu clave y modelo y pulsa **Connect**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
+En **Translator settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Abre la pestaña **API key**, elige el servicio, introduce tu clave y modelo y pulsa **Connect**. Qwen requiere la URL base del espacio de trabajo y región; para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
 
 Las claves permanecen en memoria durante esta sesión de Chrome y no se envían al sitio del video. Tras reiniciar Chrome o recargar la extensión, introduce la clave de nuevo; la dirección del servidor y el modelo se conservan. **Disconnect** elimina la clave. Cambiar de servidor también requiere introducirla de nuevo. **Connect** envía una petición de prueba pequeña que puede consumir cuota de pago y, si responde, los subtítulos pasan a usar ese servicio. La facturación API es independiente de las suscripciones de chat.
 
@@ -231,13 +247,15 @@ Sigue la [guía oficial de configuración](https://docs.cloud.google.com/transla
 2. Activa la facturación y **Cloud Translation API**.
 3. Ve a **APIs & Services → Credentials → Create credentials → API key**.
 4. Limita la clave a **Cloud Translation API** y revisa las cuotas. Las restricciones de aplicación deben permitir peticiones de la extensión.
-5. En **Translator settings → Your own API key**, elige **Google Cloud**, pega la clave y pulsa **Connect**.
+5. En **Translator settings → API key**, elige **Google Cloud**, pega la clave y pulsa **Connect**.
 
 Usamos [Basic v2, compatible con claves API](https://docs.cloud.google.com/translate/docs/authentication). No hace falta un archivo de credenciales ni un programa local. Consulta los [precios de Google](https://cloud.google.com/translate/pricing).
 
 ### Usar tu suscripción de ChatGPT
 
-1. Abre **Translator settings** y pulsa **ChatGPT**.
+> **Solo cuentas personales.** Smart Subtitles puede usar el plan de una cuenta **personal** de ChatGPT (Go, Plus o Pro). Un espacio de trabajo **Business, Enterprise o Edu** no puede compartir su plan con apps y su administrador no tiene ningún ajuste para permitirlo. Consulta [Cuentas de trabajo](#cuentas-de-trabajo-chatgpt-business-enterprise-edu).
+
+1. Abre **Translator settings** y elige la pestaña **ChatGPT**.
 2. Pulsa **Continue with ChatGPT** y concede el permiso de conexión que pide Chrome.
 3. Inicia sesión en la página de OpenAI y autoriza a Smart Subtitles a usar tu plan. Volverás a la configuración automáticamente y los subtítulos pasarán a usar ChatGPT.
 4. El modelo predeterminado es **gpt-6-luna / low**. Para cambiarlo, elige otro en **Model**; se guarda al instante.
@@ -248,14 +266,16 @@ No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos
 
 #### Cuentas de trabajo (ChatGPT Business, Enterprise, Edu)
 
+**En resumen: no es compatible. Usa una cuenta personal u otro traductor.**
+
 Si la página de OpenAI dice **“Your organization hasn't enabled access for this app”** (error `3p_delegated_access_policy_denied`), tu espacio de trabajo no permite que apps externas usen su plan de ChatGPT. Volver a iniciar sesión o reintentar no lo cambia.
 
 **Un administrador no puede activarlo.** Lo comprobamos en la consola de administración de OpenAI el 2026-10-17. En **External access**, un administrador global solo puede permitir tres tipos de acceso: **Identity**, **Connected apps** y **ChatGPT Ads**. Ninguno cubre el uso del plan de ChatGPT. Solo se pueden permitir apps concretas si aparecen en esa lista. Smart Subtitles registra su propia conexión la primera vez que cada persona inicia sesión, así que nunca aparece ahí de antemano. Poner los valores predeterminados de la organización en **Allowed** tampoco sirve.
 
 Qué funciona:
 
-1. **Usa tu cuenta personal de ChatGPT.** En **Translator settings → ChatGPT**, pulsa **Cancel** y después **Continue with ChatGPT**. Cuando OpenAI pregunte qué cuenta o espacio de trabajo usar, elige la personal, no la de trabajo. OpenAI ofrece el uso del plan en otras apps con Go, Plus y Pro, y dice que las herramientas de código abierto compatibles están disponibles para todos los usuarios de ChatGPT ([documentación de OpenAI](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)).
-2. **Usa otro traductor:** **Browser translation** (gratis, sin cuenta) o **Your own API key** (Google Cloud, OpenAI API, Claude, DeepSeek, Qwen o un modelo local).
+1. **Usa tu cuenta personal de ChatGPT.** En la pestaña **ChatGPT** de Translator settings, pulsa **Cancel** y después **Continue with ChatGPT**. Cuando OpenAI pregunte qué cuenta o espacio de trabajo usar, elige la personal, no la de trabajo. OpenAI ofrece el uso del plan en otras apps con Go, Plus y Pro, y dice que las herramientas de código abierto compatibles están disponibles para todos los usuarios de ChatGPT ([documentación de OpenAI](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)).
+2. **Usa otro traductor:** la pestaña **Browser** (gratis, sin cuenta) o la pestaña **API key** (Google Cloud, OpenAI API, Claude, DeepSeek, Qwen o un modelo local).
 3. **Pide a OpenAI que lo permita para tu espacio de trabajo.** Por ahora solo OpenAI puede hacerlo. Contacta con [OpenAI Support](https://help.openai.com/) indicando la app (Smart Subtitles), el espacio de trabajo, el código de error y el `request_id` de **Copy diagnostics** en la página de error.
 
 Las credenciales permanecen en memoria mientras Chrome está abierto. Tras cerrar Chrome por completo o recargar la extensión, vuelve a iniciar sesión con la cuenta guardada. Cerrar la pestaña de ajustes no cierra la sesión. **Sign out** cierra la sesión de esta extensión y solicita a OpenAI que revoque su token; las sesiones de otras aplicaciones son independientes. Se guardan las etiquetas de las cuentas para facilitar el próximo acceso.

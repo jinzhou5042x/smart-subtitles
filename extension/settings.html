@@ -3,68 +3,68 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Settings · Smart Subtitles</title><link rel="stylesheet" href="settings.css"></head>
 <body>
 <main class="shell">
-  <header class="top"><a class="brand" href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener"><img src="icon.svg" alt="" width="24" height="24"><span>Smart Subtitles</span></a><span id="version" class="version"></span></header>
+  <header class="top"><a class="brand" href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener"><img src="icon.svg" alt="" width="22" height="22"><span>Smart Subtitles</span></a><span id="version" class="version"></span></header>
 
   <section class="block" aria-labelledby="translatorHeading">
-    <h1 id="translatorHeading">Translator</h1>
-    <p class="lead">Choose how subtitles are translated. The filled dot is the one in use.</p>
-    <div class="options">
-      <article class="option" id="builtin" data-option="builtin">
-        <button type="button" class="option-head" aria-expanded="false" aria-controls="builtinPanel"><span class="dot" aria-hidden="true"></span><span class="option-text"><strong>Browser translation</strong><span>Free and private. Runs inside Chrome, no sign-in.</span></span><span class="state"></span></button>
-        <div class="panel" id="builtinPanel" hidden>
-          <p class="note">Chrome downloads a language pack the first time. If the video shows <strong>Start subtitles</strong>, click it once. Slang may be translated literally.</p>
-        </div>
-      </article>
-
-      <article class="option" id="chatgpt" data-option="chatgpt">
-        <button type="button" class="option-head" aria-expanded="false" aria-controls="chatgptPanel"><span class="dot" aria-hidden="true"></span><span class="option-text"><strong>ChatGPT</strong><span>Natural, context-aware subtitles using your ChatGPT plan.</span></span><span class="state"></span></button>
-        <div class="panel" id="chatgptPanel" hidden>
-          <div id="loginPanel" class="login" data-state="idle" aria-live="polite" aria-atomic="true">
-            <p class="login-title"><span class="indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></p>
-            <p id="loginDetail" class="note"></p>
-            <div class="actions"><button id="signin" type="button" class="primary">Continue with ChatGPT</button><button id="returnLogin" type="button" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" type="button" class="link" hidden>Cancel</button><button id="otherAccount" type="button" class="link" hidden>Use a different account</button></div>
-          </div>
-          <div id="chatgptReady" class="rows" hidden>
-            <div class="row"><label for="account">Account</label><select id="account"></select></div>
-            <div class="row"><label for="chatgptModel">Model</label><select id="chatgptModel"></select></div>
-            <div class="actions"><button id="testChatgpt" type="button" class="secondary">Test</button><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage&nbsp;↗</a><button id="signout" type="button" class="link push">Sign out</button></div>
-          </div>
-          <p class="fine">Uses the allowance you approve on OpenAI’s page. Sign-in is kept only until Chrome closes. <a href="https://developers.openai.com/siwc/token-sharing-open-source" target="_blank" rel="noopener">How it works&nbsp;↗</a></p>
-        </div>
-      </article>
-
-      <article class="option" id="cloud" data-option="cloud">
-        <button type="button" class="option-head" aria-expanded="false" aria-controls="cloudPanel"><span class="dot" aria-hidden="true"></span><span class="option-text"><strong>Your own API key</strong><span id="cloudSummary">Google Cloud, OpenAI, Claude, DeepSeek, Qwen or a local model.</span></span><span class="state"></span></button>
-        <form class="panel" id="cloudPanel" hidden novalidate>
-          <div class="rows">
-            <div class="row"><label for="provider">Service</label><select id="provider"></select></div>
-            <div class="row" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><a id="guide" target="_blank" rel="noopener">Get an API key&nbsp;↗</a></div></div>
-            <div class="row" id="modelRow"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
-            <div class="row" id="endpointRow"><label for="baseUrl">Server</label><div class="stack"><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><span id="endpointHelp" class="hint"></span></div></div>
-          </div>
-          <div class="actions"><button id="connect" class="primary" type="submit">Connect</button><button id="remove" type="button" class="link push" hidden>Disconnect</button></div>
-          <p class="fine">Connecting sends one short test line, billed by your provider. Keys are kept only until Chrome closes; server and model are remembered.</p>
-        </form>
-      </article>
+    <h1 id="translatorHeading" class="label">Translator</h1>
+    <div class="segments" role="tablist" aria-labelledby="translatorHeading">
+      <button type="button" role="tab" id="tab-builtin" data-option="builtin" aria-controls="builtin" aria-selected="false"><span class="live" aria-hidden="true"></span>Browser</button>
+      <button type="button" role="tab" id="tab-chatgpt" data-option="chatgpt" aria-controls="chatgpt" aria-selected="false"><span class="live" aria-hidden="true"></span>ChatGPT</button>
+      <button type="button" role="tab" id="tab-cloud" data-option="cloud" aria-controls="cloud" aria-selected="false"><span class="live" aria-hidden="true"></span>API key</button>
     </div>
-    <p id="result" class="feedback" role="status" aria-live="polite"></p>
-    <p id="usageLimit" class="feedback-link" hidden><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage ChatGPT usage&nbsp;↗</a></p>
+
+    <div class="card">
+      <section class="panel" id="builtin" role="tabpanel" aria-labelledby="tab-builtin" hidden>
+        <div class="panel-head"><div><h2>Browser translation</h2><p>Free and private. Chrome translates on this computer; no account.</p></div><span class="chip">In use</span><button type="button" class="use primary" id="useBuiltin">Use</button></div>
+        <ul class="facts"><li>Chrome downloads a language pack the first time.</li><li>If the video shows <strong>Start subtitles</strong>, click it once.</li><li>Fast, but slang may be translated literally.</li></ul>
+      </section>
+
+      <section class="panel" id="chatgpt" role="tabpanel" aria-labelledby="tab-chatgpt" hidden>
+        <div class="panel-head"><div><h2>ChatGPT</h2><p>Natural, context-aware subtitles using your ChatGPT plan.</p></div><span class="chip">In use</span><button type="button" class="use primary" id="useChatgpt">Use</button></div>
+        <div id="loginPanel" class="login" data-state="idle" aria-live="polite" aria-atomic="true">
+          <p class="login-title"><span class="indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></p>
+          <p id="loginDetail" class="note"></p>
+          <div class="actions"><button id="signin" type="button" class="primary">Continue with ChatGPT</button><button id="returnLogin" type="button" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" type="button" class="link" hidden>Cancel</button><button id="otherAccount" type="button" class="link" hidden>Use a different account</button></div>
+        </div>
+        <div id="chatgptReady" class="rows" hidden>
+          <div class="row"><label for="account">Account</label><select id="account"></select></div>
+          <div class="row"><label for="chatgptModel">Model</label><select id="chatgptModel"></select></div>
+          <div class="actions"><button id="testChatgpt" type="button" class="secondary">Test</button><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage&nbsp;↗</a><button id="signout" type="button" class="link push">Sign out</button></div>
+        </div>
+        <p class="fine"><strong>Personal accounts only.</strong> Use a personal ChatGPT account (Go, Plus or Pro). Business, Enterprise and Edu workspaces cannot share their plan with apps, and their admins have no setting for it. <a href="https://github.com/jinzhou5042x/smart-subtitles#work-accounts-chatgpt-business-enterprise-edu" target="_blank" rel="noopener">Why&nbsp;↗</a></p>
+      </section>
+
+      <form class="panel" id="cloud" role="tabpanel" aria-labelledby="tab-cloud" hidden novalidate>
+        <div class="panel-head"><div><h2>Your own API key</h2><p>Billed by the provider you choose, separately from any subscription.</p></div><span class="chip">In use</span><button type="button" class="use primary" id="useCloud">Use</button></div>
+        <div class="rows">
+          <div class="row"><label for="provider">Service</label><select id="provider"></select></div>
+          <div class="row" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><a id="guide" target="_blank" rel="noopener">Get an API key&nbsp;↗</a></div></div>
+          <div class="row" id="modelRow"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
+          <div class="row" id="endpointRow"><label for="baseUrl">Server</label><div class="stack"><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><span id="endpointHelp" class="hint"></span></div></div>
+        </div>
+        <div class="actions"><button id="connect" class="primary" type="submit">Connect</button><button id="remove" type="button" class="link push" hidden>Disconnect</button></div>
+        <p class="fine">Connect sends one short test line, then switches subtitles to this service. Keys are kept only until Chrome closes; server and model are remembered.</p>
+      </form>
+
+      <p id="result" class="feedback" role="status" aria-live="polite"></p>
+      <p id="usageLimit" class="feedback-link" hidden><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage ChatGPT usage&nbsp;↗</a></p>
+    </div>
   </section>
 
   <section class="block" aria-labelledby="subtitlesHeading">
-    <h2 id="subtitlesHeading">Subtitles</h2>
-    <div class="card rows">
+    <h2 id="subtitlesHeading" class="label">Subtitles</h2>
+    <div class="card grid">
       <div class="row"><label for="target">Translate into</label><select id="target"></select></div>
       <div class="row"><label for="fontSize">Size</label><div class="range"><input id="fontSize" type="range" min="18" max="100"><output id="fontSizeValue" for="fontSize"></output></div></div>
     </div>
   </section>
 
   <section class="block" aria-labelledby="storageHeading">
-    <h2 id="storageHeading">Saved translations</h2>
+    <h2 id="storageHeading" class="label">Saved translations</h2>
     <div class="card storage">
       <div class="storage-line"><p><strong id="cacheCount">—</strong> lines <span id="cacheBytes" class="muted">Checking storage…</span></p><button id="clear" type="button" class="link" aria-haspopup="dialog">Clear…</button></div>
       <div class="meter" aria-hidden="true"><div id="cacheProgress"></div></div>
-      <p class="fine">Reused when you come back to a video. Up to 1 million lines; the oldest are removed first.</p>
+      <p class="fine">Reused when you come back to a video. Up to 100,000 lines; the oldest are removed first.</p>
     </div>
   </section>
 
