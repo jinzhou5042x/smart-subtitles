@@ -31,20 +31,10 @@ function signInPage() {
   const waiting = findSignInPage(authorizations); waiting.catch(() => {}); return waiting;
 }
 async function findSignInPage(before) {
-  let nudged = false;
-  for (const start = Date.now(), end = start + 30000; Date.now() < end; await new Promise(resolve => setTimeout(resolve, 100))) {
-    const page = authorizations > before && context.pages().find(p => !p.isClosed() && p.url().startsWith('https://auth.openai.com/api/accounts/authorize?'));
+  const authorize = `http://127.0.0.1:${server.address().port}/navigate/api/accounts/authorize?`;
+  for (const end = Date.now() + 30000; Date.now() < end; await new Promise(resolve => setTimeout(resolve, 100))) {
+    const page = authorizations > before && context.pages().find(p => !p.isClosed() && p.url().startsWith(authorize));
     if (page) { await page.waitForLoadState(); return page; }
-    // On the Windows runner the test browser can leave the tab "unloaded" with no address even
-    // though the authorization request arrived. Load the same request into that tab once.
-    if (!nudged && authorizations > before && Date.now() - start > 5000) {
-      nudged = true;
-      const url = `https://auth.openai.com/api/accounts/authorize?${auth}`;
-      await context.serviceWorkers()[0]?.evaluate(async url => {
-        const [tab] = (await chrome.tabs.query({})).filter(t => t.status === 'unloaded' && !t.url && !t.pendingUrl);
-        if (tab) await chrome.tabs.update(tab.id, { url });
-      }, url).catch(() => {});
-    }
   }
   const states = await Promise.all(context.pages().filter(p => p.url().startsWith('chrome-extension://')).map(p => p.locator('#chatgpt').innerText().catch(() => '')));
   // Chrome's own view of the tabs tells a navigation that never happened from one Playwright missed.
@@ -85,13 +75,13 @@ const apiRoute = async route => {
   const events = limit ? [{ type: 'response.failed', response: { error: { code: 'subscription_sharing_usage_limit_exceeded' } } }] : [{ type: 'response.output_text.delta', delta: text }, { type: 'response.completed', response: { usage: { input_tokens: 10, output_tokens: 4 } } }];
   return route.fulfill({ status: 200, contentType: 'text/event-stream', body: events.map(e => `data: ${JSON.stringify(e)}\n\n`).join('') });
 };
-await context.route('https://auth.openai.com/**', authRoute);
 // Playwright cannot route fetches from a worker owned by an offscreen document.
 // Redirect only this test build's worker transport to a local test server.
 const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   const chunks = []; for await (const part of req) chunks.push(part);
-  const data = Buffer.concat(chunks).toString(), url = decodeURIComponent(req.url.slice(1));
+  // /navigate/… is a tab navigation to auth.openai.com, redirected here by the test rule below.
+  const data = Buffer.concat(chunks).toString(), url = req.url.startsWith('/navigate/') ? 'https://auth.openai.com/' + req.url.slice('/navigate/'.length) : decodeURIComponent(req.url.slice(1));
   const route = { request: () => ({ url: () => url, postData: () => data, postDataJSON: () => JSON.parse(data), headers: () => req.headers }),
     fulfill: ({ status, contentType, headers, body }) => { res.writeHead(status, { ...(contentType ? { 'Content-Type': contentType } : {}), ...headers }); res.end(body); },
     abort: () => { res.writeHead(500); res.end(); } };
@@ -106,6 +96,11 @@ await writeFile(workerFile, `const testFetch = self.fetch; self.fetch = function
 try {
   let worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).hostname;
+  // Serve OpenAI's sign-in pages from the local server with Chrome's own redirect rules. Playwright's
+  // request interception loses navigations in extension-opened tabs on slow CI runners.
+  await worker.evaluate(port => chrome.declarativeNetRequest.updateDynamicRules({ addRules: [{ id: 9001, priority: 2,
+    action: { type: 'redirect', redirect: { regexSubstitution: `http://127.0.0.1:${port}/navigate/\\1` } },
+    condition: { regexFilter: '^https://auth\\.openai\\.com/(.*)$', resourceTypes: ['main_frame'] } }] }), server.address().port);
   context.on('page', page => page.on('pageerror', e => errors.push(e.message)));
   const settings = await context.newPage(); await settings.goto(`chrome-extension://${id}/settings.html#chatgpt`);
   assert.deepEqual(errors, [], 'The browser must accept every CSP directive and source');
