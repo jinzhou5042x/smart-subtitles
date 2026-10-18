@@ -66,7 +66,7 @@ We use Basic v2, which [supports API keys](https://docs.cloud.google.com/transla
 
 While sign-in is open, **Return to sign-in** takes you back to that tab. **Cancel** closes the attempt. If the tab closes or sign-in times out, the settings page explains what happened and lets you try again.
 
-There is no API key or local program to set up. Account eligibility, available models and limits come from OpenAI. [Manage usage](https://chatgpt.com/settings/usage) shows the allowance you share with this extension. If you run out, translation pauses; it does not switch to a separately billed API. See [how ChatGPT plan sharing works](https://developers.openai.com/siwc/token-sharing-open-source).
+There is no API key or local program to set up. Account eligibility, available models and limits come from OpenAI. ChatGPT Business, Enterprise and Edu workspaces may not allow apps to use their plan: OpenAI then shows “Your organization hasn't enabled access for this app” (`3p_delegated_access_policy_denied`), and the workspace's admin console has no switch for it. Sign in with a personal Plus or Pro account instead, or use another translator. [Manage usage](https://chatgpt.com/settings/usage) shows the allowance you share with this extension. If you run out, translation pauses; it does not switch to a separately billed API. See [how ChatGPT plan sharing works](https://developers.openai.com/siwc/token-sharing-open-source).
 
 Sign-in credentials stay in memory while Chrome runs. After fully quitting Chrome or reloading the extension, sign in again using the saved account entry. Closing a settings tab does not sign you out. **Sign out** disconnects this extension and asks OpenAI to revoke its token; other apps' logins are separate. Account labels are saved locally so you can reconnect later.
 
@@ -157,7 +157,7 @@ Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT �
 
 登录途中切回了设置页，可以点 **Return to sign-in** 回到登录标签页，或点 **Cancel** 取消。关掉登录页或等待超时后，设置页会显示原因，可以重新登录。
 
-不需要 API key，也不需要安装本地程序。账号是否支持、模型和额度以 OpenAI 实际返回为准。[Manage usage](https://chatgpt.com/settings/usage) 可以查看分配给扩展的额度。额度用完会暂停，不会偷偷改用单独收费的 API。参见[官方订阅共享说明](https://developers.openai.com/siwc/token-sharing-open-source)。
+不需要 API key，也不需要安装本地程序。账号是否支持、模型和额度以 OpenAI 实际返回为准。ChatGPT Business、Enterprise、Edu 工作区可能不允许第三方应用使用工作区额度：这时 OpenAI 页面会显示 “Your organization hasn't enabled access for this app”（`3p_delegated_access_policy_denied`），管理后台也没有对应开关。请改用个人 Plus 或 Pro 账号登录，或换用其他翻译器。[Manage usage](https://chatgpt.com/settings/usage) 可以查看分配给扩展的额度。额度用完会暂停，不会偷偷改用单独收费的 API。参见[官方订阅共享说明](https://developers.openai.com/siwc/token-sharing-open-source)。
 
 登录凭据只留在内存里。彻底退出 Chrome 或重新加载扩展后，需要选择保存的账号重新登录；关掉设置标签页不影响使用。**Sign out** 会退出当前扩展并请求 OpenAI 撤销令牌，其他应用的登录独立。扩展会保存账号名称等信息，方便下次连接。
 
@@ -220,7 +220,7 @@ Usamos [Basic v2, compatible con claves API](https://docs.cloud.google.com/trans
 
 Mientras inicias sesión, **Return to sign-in** te lleva de vuelta a esa pestaña y **Cancel** cancela el intento. Si cierras la pestaña o se agota el tiempo, verás el motivo y podrás volver a intentarlo.
 
-No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos y límites están disponibles. Consulta la cuota compartida con la extensión en [Manage usage](https://chatgpt.com/settings/usage). Al agotarse, la traducción se pausa; no cambia a una API de pago. Más información en la [documentación oficial](https://developers.openai.com/siwc/token-sharing-open-source).
+No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos y límites están disponibles. Los espacios de trabajo Business, Enterprise y Edu pueden no permitir que las apps usen su plan: OpenAI muestra “Your organization hasn't enabled access for this app” (`3p_delegated_access_policy_denied`) y la consola de administración no tiene un ajuste para ello. Inicia sesión con una cuenta personal Plus o Pro, o usa otro traductor. Consulta la cuota compartida con la extensión en [Manage usage](https://chatgpt.com/settings/usage). Al agotarse, la traducción se pausa; no cambia a una API de pago. Más información en la [documentación oficial](https://developers.openai.com/siwc/token-sharing-open-source).
 
 Las credenciales permanecen en memoria mientras Chrome está abierto. Tras cerrar Chrome por completo o recargar la extensión, vuelve a iniciar sesión con la cuenta guardada. Cerrar la pestaña de ajustes no cierra la sesión. **Sign out** cierra la sesión de esta extensión y solicita a OpenAI que revoque su token; las sesiones de otras aplicaciones son independientes. Se guardan las etiquetas de las cuentas para facilitar el próximo acceso.
 

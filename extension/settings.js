@@ -102,7 +102,7 @@ function renderChatgpt() {
   const views = {
     permission: ['Allow the connection in Chrome', 'Choose Allow in Chrome’s prompt. If you do not see it, look near the address bar.', 'Waiting for Chrome…'],
     opening: ['Opening ChatGPT…', 'OpenAI’s sign-in page opens in a new tab.', 'Opening ChatGPT…'],
-    waiting: ['Finish signing in on OpenAI', 'Complete sign-in in the tab that opened, and allow plan usage. You will come back here automatically.', 'Waiting for sign-in…'],
+    waiting: ['Finish signing in on OpenAI', 'Complete sign-in in the tab that opened, and allow plan usage. You will come back here automatically. If OpenAI says your organization hasn’t enabled access for this app, that work workspace does not let apps use its plan: cancel, then sign in with a personal Plus or Pro account, or choose another translator.', 'Waiting for sign-in…'],
     verifying: ['Finishing sign-in…', 'Checking your account and its models.', 'Finishing sign-in…'],
     cancelling: ['Cancelling sign-in…', '', 'Cancelling…'],
   };
