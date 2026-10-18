@@ -1,5 +1,6 @@
-/* One compact page: a segmented choice of translator above one card for it, then subtitles and
-   storage. Choosing a tab only shows that translator; Use (or finishing setup) switches to it.
+/* One compact page: the kind of translator (tabs), its providers (tiles), and the chosen provider's
+   setup, then subtitles and storage. Choosing only shows a provider; Use (or finishing setup)
+   switches to it.
    Every colour is a token with a light and a dark value. */
 :root{
   font:13px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -36,12 +37,25 @@ strong{font-weight:600}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
 
 /* Translator choice */
-.segments{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;margin-bottom:8px;background:var(--soft);border:1px solid var(--line);border-radius:9px}
+.segments{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;margin-bottom:8px;background:var(--soft);border:1px solid var(--line);border-radius:9px}
 .segments button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:4px 8px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:550;transition:background .12s,color .12s}
 .segments button:hover{color:var(--fg)}
 .segments button[aria-selected=true]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px #0000001f}
 .live{width:6px;height:6px;border-radius:50%;background:var(--accent);visibility:hidden;flex:none}
 .segments button[data-active=true] .live{visibility:visible}
+
+.kind-blurb{color:var(--muted);margin-bottom:9px}
+.providers{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.provider{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:left;transition:border-color .12s,background .12s}
+.provider:hover{border-color:var(--strong-line)}
+.provider[aria-checked=true]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.provider .name{display:flex;align-items:center;gap:6px;max-width:100%;font-weight:600;line-height:1.35}
+.provider .name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.provider .state{font-size:11.5px;color:var(--muted);line-height:1.35}
+.provider[data-active=true] .state{color:var(--accent);font-weight:600}
+.provider .live{display:none}
+.provider[data-active=true] .live{display:block;visibility:visible}
+.detail{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 
 .panel-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
 .panel-head>div{flex:1;min-width:0}
@@ -49,8 +63,8 @@ strong{font-weight:600}
 .panel-head p{color:var(--muted);margin-top:1px;overflow-wrap:anywhere}
 .chip{flex:none;display:none;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;line-height:20px}
 .chip:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.panel[data-active=true] .chip{display:inline-flex}
-.panel[data-active=true] .use{display:none}
+.detail[data-active=true] .chip{display:inline-flex}
+.detail[data-active=true] .use{display:none}
 .use{flex:none}
 .facts{padding-left:17px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
 .facts strong{color:var(--fg)}

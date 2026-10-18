@@ -1,11 +1,12 @@
 import './languages.js';
-import { PROVIDERS } from './translation.js';
+import { PROVIDERS, KINDS } from './translation.js';
 import { playerMessage, playerState } from './popup-player.js';
 const $ = id => document.getElementById(id);
 const call = async message => { const r = await chrome.runtime.sendMessage(message); if (!r?.ok) throw new Error(r?.error || 'Extension unavailable'); return r.data; };
 const player = message => playerMessage(chrome.tabs, message, undefined, chrome.scripting);
 for (const language of globalThis.SubtitleLanguages.list) $('target').append(new Option(language.name, language.code));
-for (const [id, p] of Object.entries(PROVIDERS)) $('provider').append(new Option(p.name, id));
+for (const { name } of Object.values(KINDS)) $('provider').append(Object.assign(document.createElement('optgroup'), { label: name }));
+for (const [id, p] of Object.entries(PROVIDERS)) $('provider').children[Object.keys(KINDS).indexOf(p.kind)].append(new Option(p.name, id));
 let current;
 function note() {
   $('planUsage').hidden = current.provider !== 'chatgpt';

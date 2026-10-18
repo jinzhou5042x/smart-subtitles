@@ -181,7 +181,7 @@ try {
   await connected.waitForURL(`chrome-extension://${id}/settings.html#chatgpt`, { timeout: 30000 });
   await connected.locator('#chatgptReady').waitFor();
   await settings.locator('#chatgptReady').waitFor();
-  assert.equal(await connected.locator('#chatgpt').getAttribute('data-active'), 'true');
+  assert.equal(await connected.locator('[data-provider=chatgpt]').getAttribute('data-active'), 'true');
   assert.equal(await connected.locator('#chatgptModel').inputValue(), 'gpt-6-luna');
   assert.equal(await settings.locator('#signin').isVisible(), false, 'the original settings tab also reflects completed sign-in');
   await connected.locator('#testChatgpt').click(); await connected.getByText('Connected: 你好。', { exact: true }).waitFor();
@@ -201,7 +201,7 @@ try {
   await mkdir('dist/checks', { recursive: true }); await connected.screenshot({ path: 'dist/checks/chatgpt-settings.png', fullPage: true });
   await connected.locator('#signout').click(); await connected.getByText('Signed out of Smart Subtitles. Subtitles now use browser translation.', { exact: true }).waitFor();
   await connected.getByText('Sign in again', { exact: true }).waitFor();
-  assert.equal(await connected.locator('#builtin').getAttribute('data-active'), 'true');
+  assert.equal(await connected.locator('[data-provider=builtin]').getAttribute('data-active'), 'true');
   // An unexpectedly closed offscreen document must recover without trapping the UI.
   await worker.evaluate(() => chrome.offscreen.closeDocument());
   await connected.waitForFunction(async () => {

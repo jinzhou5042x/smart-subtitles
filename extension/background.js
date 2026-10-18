@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         return Object.fromEntries(Object.entries(profiles).map(([id, { key, ...rest }]) => [id, { ...rest, configured: !!key || id === 'custom' }]));
       }
       case 'saveProfile': {
-        if (!ui || !PROVIDERS[message.provider] || ['builtin', 'chatgpt'].includes(message.provider)) throw new Error('Invalid translator');
+        if (!ui || PROVIDERS[message.provider]?.kind !== 'api') throw new Error('Invalid translator');
         const profiles = await profileStore.all();
         if (message.clear) delete profiles[message.provider];
         else {

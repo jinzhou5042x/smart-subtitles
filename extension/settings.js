@@ -1,18 +1,32 @@
 import './languages.js';
-import { PROVIDERS, endpoint } from './translation.js';
+import { PROVIDERS, KINDS, endpoint } from './translation.js';
 import { CHATGPT_PERMISSIONS } from './chatgpt-permissions.js';
 import { withDeadline } from './async.js';
 const $ = id => document.getElementById(id);
 const call = async m => { const r = await chrome.runtime.sendMessage(m); if (!r?.ok) throw Object.assign(new Error(r?.error || 'Request failed'), { code: r?.code }); return r.data; };
-// Three choices: two built-in translators and every key-based provider behind one card.
-const API_PROVIDERS = ['google', 'openai', 'claude', 'deepseek', 'qwen', 'custom'];
-const optionOf = provider => ['builtin', 'chatgpt'].includes(provider) ? provider : 'cloud';
-let preferences = {}, profiles = {}, opened = null, apiProvider = 'google';
+// Kinds of translator, each with its providers, all from the registry in translation.js.
+// Every API provider shares one setup form; other kinds have a setup per provider.
+const kindOf = id => PROVIDERS[id]?.kind;
+const providersOf = kind => Object.keys(PROVIDERS).filter(id => kindOf(id) === kind);
+const panelOf = id => kindOf(id) === 'api' ? 'cloud' : id;
+let preferences = {}, profiles = {}, opened = null;
+const lastShown = {};
 let accountState = { accounts: [] }, selectedAccount, loginAction = null, signInError = '', loginAttempt = 0, refreshingAccount = false;
 
 $('version').textContent = 'v' + chrome.runtime.getManifest().version;
-for (const id of API_PROVIDERS) $('provider').append(new Option(PROVIDERS[id].name, id));
 for (const language of globalThis.SubtitleLanguages.list) $('target').append(new Option(language.name, language.code));
+const element = (tag, props = {}, ...children) => { const e = Object.assign(document.createElement(tag), props); e.append(...children); return e; };
+const dot = () => element('span', { className: 'live', ariaHidden: 'true' });
+const tabs = Object.entries(KINDS).map(([kind, { name }]) => {
+  const tab = element('button', { type: 'button', id: 'kind-' + kind, role: 'tab' }, dot(), name);
+  tab.dataset.kind = kind; tab.setAttribute('aria-controls', 'kindPanel'); return tab;
+});
+$('kinds').append(...tabs);
+const tiles = Object.entries(PROVIDERS).map(([id, { short }]) => {
+  const tile = element('button', { type: 'button', className: 'provider', role: 'radio' }, element('span', { className: 'name' }, dot(), element('span', {}, short)), element('span', { className: 'state' }));
+  tile.dataset.provider = id; return tile;
+});
+$('providers').append(...tiles);
 
 function say(text, tone = '') { $('result').dataset.tone = tone; $('result').textContent = text; if (tone !== 'error') $('usageLimit').hidden = true; }
 async function run(action, button) {
@@ -21,56 +35,68 @@ async function run(action, button) {
   catch (e) { say(e.message, 'error'); $('usageLimit').hidden = e.code !== 'subscription_sharing_usage_limit_exceeded'; }
   finally { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); } }
 }
-const ready = provider => provider === 'builtin' || (provider === 'chatgpt' ? !!accountState.accounts.find(a => a.id === accountState.active)?.ready : !!profiles[provider]?.configured);
+const ready = provider => kindOf(provider) === 'browser' || (provider === 'chatgpt' ? !!accountState.accounts.find(a => a.id === accountState.active)?.ready : !!profiles[provider]?.configured);
+const stateOf = id => preferences.provider === id ? 'In use' : ready(id) ? 'Ready' : kindOf(id) === 'subscription' ? 'Sign in' : profiles[id] ? 'Key needed' : 'Not set up';
 async function activate(provider) {
   if (preferences.provider === provider) return;
   preferences = await call({ type: 'saveSettings', settings: { provider } }); render();
 }
 const NAMES = { builtin: 'browser translation', chatgpt: 'your ChatGPT plan' };
+// The provider a kind opens on: the one last shown there, the one in use, a ready one, or the first.
+const firstOf = kind => lastShown[kind] || (kindOf(preferences.provider) === kind ? preferences.provider : providersOf(kind).find(ready) || providersOf(kind)[0]);
 
-// A tab only shows a translator; Use, or finishing its setup, switches to it.
+// Choosing a kind or a provider only shows it; Use, or finishing its setup, switches to it.
 function render() {
-  const current = optionOf(preferences.provider);
-  for (const tab of document.querySelectorAll('[role=tab]')) {
-    const id = tab.dataset.option, panel = $(id), open = opened === id;
+  const kind = kindOf(opened);
+  for (const tab of tabs) {
+    const open = tab.dataset.kind === kind;
     tab.setAttribute('aria-selected', String(open)); tab.tabIndex = open ? 0 : -1;
-    tab.dataset.active = String(id === current);
-    panel.hidden = !open;
-    // The cloud card is "in use" only for the service shown in it.
-    panel.dataset.active = String(id === 'cloud' ? preferences.provider === apiProvider : id === current);
+    tab.dataset.active = String(tab.dataset.kind === kindOf(preferences.provider));
   }
-  $('useBuiltin').hidden = false;
-  $('useChatgpt').hidden = !ready('chatgpt');
-  $('useCloud').hidden = !ready(apiProvider);
+  $('kindPanel').setAttribute('aria-labelledby', 'kind-' + kind);
+  $('kindBlurb').textContent = KINDS[kind].blurb;
+  for (const tile of tiles) {
+    const id = tile.dataset.provider, open = id === opened;
+    tile.hidden = kindOf(id) !== kind;
+    tile.setAttribute('aria-checked', String(open)); tile.tabIndex = open ? 0 : -1;
+    tile.dataset.active = String(id === preferences.provider);
+    tile.lastElementChild.textContent = stateOf(id);
+  }
+  $('detailName').textContent = PROVIDERS[opened].name; $('detailBlurb').textContent = PROVIDERS[opened].blurb;
+  for (const panel of ['builtin', 'chatgpt', 'cloud']) $(panel).hidden = panelOf(opened) !== panel;
+  $('detail').dataset.active = String(opened === preferences.provider);
+  $('use').hidden = !ready(opened);
 }
-function show(id) { if (opened !== id) say(''); opened = id; render(); if (id === 'chatgpt') void refreshAccount(); }
-const tabs = [...document.querySelectorAll('[role=tab]')];
-for (const tab of tabs) {
-  tab.onclick = () => show(tab.dataset.option);
-  tab.onkeydown = e => {
-    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key]; if (!step) return;
-    const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length]; next.focus(); show(next.dataset.option);
-  };
+function show(id) {
+  const changed = opened !== id;
+  if (changed) say('');
+  opened = id; lastShown[kindOf(id)] = id;
+  if (changed && kindOf(id) === 'api') renderCloud();
+  render(); if (id === 'chatgpt') void refreshAccount();
 }
-for (const [button, provider] of [[$('useBuiltin'), () => 'builtin'], [$('useChatgpt'), () => 'chatgpt'], [$('useCloud'), () => apiProvider]]) {
-  button.onclick = () => run(async () => { const id = provider(); await activate(id); return `Subtitles now use ${NAMES[id] || PROVIDERS[id].name}.`; }, button);
-}
+// Arrow keys move along the kind tabs, and along the provider tiles shown.
+const arrows = (items, pick) => e => {
+  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!step) return;
+  e.preventDefault(); const shown = items.filter(i => !i.hidden), next = shown[(shown.indexOf(e.currentTarget) + step + shown.length) % shown.length];
+  pick(next); next.focus();
+};
+for (const tab of tabs) { tab.onclick = () => show(firstOf(tab.dataset.kind)); tab.onkeydown = arrows(tabs, next => show(firstOf(next.dataset.kind))); }
+for (const tile of tiles) { tile.onclick = () => show(tile.dataset.provider); tile.onkeydown = arrows(tiles, next => show(next.dataset.provider)); }
+$('use').onclick = () => run(async () => { const id = opened; await activate(id); return `Subtitles now use ${NAMES[id] || PROVIDERS[id].name}.`; }, $('use'));
 
 // Your own API key
 function renderCloud() {
-  const preset = PROVIDERS[apiProvider], p = profiles[apiProvider] || {};
-  $('provider').value = apiProvider;
+  const provider = opened, preset = PROVIDERS[provider], p = profiles[provider] || {};
   $('key').value = '';
-  $('key').placeholder = p.configured && apiProvider !== 'custom' ? 'Saved until Chrome closes. Leave blank to keep it.' : apiProvider === 'custom' ? 'Optional for local models' : 'Paste your API key';
+  $('key').placeholder = p.configured && provider !== 'custom' ? 'Saved until Chrome closes. Leave blank to keep it.' : provider === 'custom' ? 'Optional for local models' : 'Paste your API key';
   $('guide').hidden = !preset.guide; $('guide').href = preset.guide || '#';
-  $('modelRow').hidden = apiProvider === 'google'; $('model').value = p.model || preset.model || '';
+  $('modelRow').hidden = provider === 'google'; $('model').value = p.model || preset.model || '';
   $('endpointRow').hidden = !!preset.baseUrl; $('baseUrl').value = p.baseUrl || preset.baseUrl || '';
-  $('endpointHelp').textContent = apiProvider === 'qwen' ? 'Copy the API base URL for your region from Model Studio.' : 'An OpenAI-compatible base URL. A model on this computer can use http://localhost:PORT/v1.';
-  $('remove').hidden = !profiles[apiProvider];
+  $('endpointHelp').textContent = provider === 'qwen' ? 'Copy the API base URL for your region from Model Studio.' : 'An OpenAI-compatible base URL. A model on this computer can use http://localhost:PORT/v1.';
+  $('remove').hidden = !profiles[provider];
 }
-$('provider').onchange = () => { apiProvider = $('provider').value; renderCloud(); render(); say(''); };
 $('cloud').onsubmit = e => {
-  e.preventDefault(); const provider = apiProvider;
+  e.preventDefault(); const provider = opened;
   let baseUrl; try { baseUrl = endpoint(provider, { baseUrl: $('baseUrl').value }); } catch (error) { say(error.message, 'error'); return; }
   // Requested directly in the click, while user activation is present.
   const permission = chrome.permissions.request({ origins: [new URL(baseUrl).origin + '/*'] });
@@ -84,7 +110,7 @@ $('cloud').onsubmit = e => {
   }, $('connect'));
 };
 $('remove').onclick = () => run(async () => {
-  const provider = apiProvider;
+  const provider = opened;
   await call({ type: 'saveProfile', provider, clear: true }); profiles = await call({ type: 'profiles' });
   renderCloud();
   if (preferences.provider === provider) { await activate('builtin'); return 'Disconnected. Subtitles now use browser translation.'; }
@@ -231,9 +257,8 @@ setInterval(() => { if (!document.hidden) void refreshCache(); }, 15000);
 try {
   [preferences, profiles] = await Promise.all([call({ type: 'settings' }), call({ type: 'profiles' })]);
   const requested = location.hash.slice(1);
-  apiProvider = API_PROVIDERS.includes(requested) ? requested : API_PROVIDERS.includes(preferences.provider) ? preferences.provider : API_PROVIDERS.find(id => profiles[id]?.configured) || 'google';
-  opened = PROVIDERS[requested] ? optionOf(requested) : optionOf(preferences.provider);
-  renderCloud(); renderSubtitles(); render();
+  show(PROVIDERS[requested] ? requested : KINDS[requested] ? firstOf(requested) : PROVIDERS[preferences.provider] ? preferences.provider : 'builtin');
+  renderSubtitles();
   if (opened === 'chatgpt' || preferences.provider === 'chatgpt') await refreshAccount();
   else void refreshAccount();
   void refreshCache();

@@ -122,7 +122,7 @@ try {
   assert.equal((await settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'cacheStats' })).data)).count, 31100);
   await settings.locator('#clear').click(); await settings.locator('#confirmClear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();
   await waitForCall(before + 1); assert.equal(calls[before].cues[0].text, 'Dialogue 0', 'clearing the cache starts fresh at the beginning');
-  await settings.locator('#tab-builtin').click(); await settings.locator('#useBuiltin').click();
+  await settings.locator('#kind-browser').click(); await settings.locator('#use').click();
   await settings.getByText('Subtitles now use browser translation.').waitFor();
   await popup.reload(); await popup.locator('#provider').waitFor();
   assert.equal(await popup.locator('#provider').inputValue(), 'builtin');
