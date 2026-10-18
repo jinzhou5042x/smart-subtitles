@@ -36,7 +36,9 @@ async function findSignInPage(before) {
     if (page) { await page.waitForLoadState(); return page; }
   }
   const states = await Promise.all(context.pages().filter(p => p.url().startsWith('chrome-extension://')).map(p => p.locator('#chatgpt').innerText().catch(() => '')));
-  throw new Error(`The sign-in page did not open. Open pages: ${context.pages().map(p => p.url()).join(', ')}. Settings: ${states.join(' | ').replace(/\s+/g, ' ')}`);
+  // Chrome's own view of the tabs tells a navigation that never happened from one Playwright missed.
+  const tabs = await context.serviceWorkers()[0]?.evaluate(() => chrome.tabs.query({}).then(all => all.map(t => `${t.id}:${t.status}:${t.url || ''}:${t.pendingUrl || ''}`))).catch(e => [e.message]);
+  throw new Error(`The sign-in page did not open (authorizations ${before} -> ${authorizations}). Tabs: ${JSON.stringify(tabs)}. Open pages: ${context.pages().map(p => p.url()).join(', ')}. Settings: ${states.join(' | ').replace(/\s+/g, ' ')}`);
 }
 const sendJSON = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const authRoute = async route => {
