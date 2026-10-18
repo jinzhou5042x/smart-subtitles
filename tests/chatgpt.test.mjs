@@ -86,6 +86,38 @@ test('a valid identity without plan consent cannot spend subscription quota', as
   assert.ok(!f.calls.some(c => c.url.endsWith('/responses') || c.url.endsWith('/models')));
 });
 
+test('a saved registration without a known plan grant asks for consent again on every sign-in', async () => {
+  // A Business member who connected before the workspace admin allowed plan usage: a silent
+  // returning sign-in would reuse the old grant forever.
+  const f = fixture({ scope: 'openid email profile offline_access' }); await f.login();
+  assert.equal(f.client.status().accounts[0].plan, 'denied');
+  assert.equal(f.client.metadata().accounts[0].plan, 'denied');
+  const restarted = new ChatGPTClient({ metadata: f.client.metadata() }); // Chrome restarted: no tokens.
+  assert.equal(new URL((await restarted.begin({ tabId: 7, accountId: 'oaiapp_fixture' })).url).searchParams.get('prompt'), 'consent');
+  const legacy = new ChatGPTClient({ metadata: { accounts: [{ id: 'oaiapp_old', email: 'viewer@example.test' }] } });
+  assert.equal(new URL((await legacy.begin({ tabId: 7, accountId: 'oaiapp_old' })).url).searchParams.get('prompt'), 'consent');
+  const granted = fixture(); await granted.login();
+  assert.equal(granted.client.status().accounts[0].plan, 'granted');
+  assert.equal((await granted.begin({ accountId: 'oaiapp_fixture' })).get('prompt'), null);
+});
+
+test('OpenAI refusing the plan grant is shown and forces consent next time', async () => {
+  const f = fixture(); await f.login();
+  const original = f.client.fetcher;
+  f.client.fetcher = async (url, init) => url.endsWith('/responses') ? json({ error: { code: 'chatpass_v2_scope_not_authorized' } }, 403) : original(url, init);
+  await assert.rejects(f.client.translate({ request, target: 'zh-CN' }), e => e.code === 'chatpass_v2_scope_not_authorized' && e.needsUser);
+  assert.equal(f.client.status().accounts[0].plan, 'denied');
+  assert.equal((await f.begin({ accountId: 'oaiapp_fixture' })).get('prompt'), 'consent');
+});
+
+test('the reason OpenAI gives for a refused sign-in reaches the viewer, without markup', async () => {
+  const f = fixture(), query = await f.begin();
+  await assert.rejects(f.client.finish({ tabId: 7, state: query.get('state'), error: 'access_denied', errorDescription: 'Ask your <b>workspace admin</b>\nto allow this app.' }),
+    e => /^OpenAI did not complete sign-in: Ask your .*workspace admin.* to allow this app\.$/.test(e.message) && !/[<>\n]/.test(e.message) && e.code === 'access_denied');
+  const g = fixture(), next = await g.begin();
+  await assert.rejects(g.client.finish({ tabId: 7, state: next.get('state'), error: 'access_denied' }), /cancelled/);
+});
+
 test('nonce, issuer and audience are checked before activating a registration', async () => {
   for (const claims of [{ nonce: 'wrong' }, { iss: 'https://example.test' }, { aud: 'oaiapp_other' }]) {
     const f = fixture({ claims }); await assert.rejects(f.login(), /verify/);

@@ -15,16 +15,18 @@ const encode = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').
 const random = () => encode(crypto.getRandomValues(new Uint8Array(32)));
 const fail = (message, code = '', status = 0) => Object.assign(new Error(message), { code, status, needsUser: true });
 const safeCode = value => typeof value === 'string' && /^[a-zA-Z0-9_.-]{1,100}$/.test(value) ? value : '';
+const safeText = value => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : '';
+const planState = value => ['granted', 'denied'].includes(value) ? value : '';
 
 function apiError(status, data, fallback) {
   const code = safeCode(data?.error?.code || data?.error);
   const messages = {
-    subscription_sharing_user_not_eligible: 'ChatGPT plan usage is not available for this account or workspace.',
+    subscription_sharing_user_not_eligible: 'OpenAI says ChatGPT plan usage is not allowed for the workspace this connection belongs to. A connection stays tied to the workspace chosen when it was added: if your admin has allowed it, choose +\u00a0Add account and pick that workspace.',
     subscription_sharing_usage_limit_exceeded: 'ChatGPT usage limit reached. Open Manage usage in Translator settings.',
     subscription_sharing_usage_unavailable: 'ChatGPT usage could not be checked. Try again later.',
     subscription_sharing_route_not_supported: 'OpenAI has not enabled this request route for this connection.',
     subscription_sharing_unsupported_capability: 'This model or request is not supported by your ChatGPT plan connection.',
-    chatpass_v2_scope_not_authorized: 'This connection does not have permission to use your ChatGPT plan.',
+    chatpass_v2_scope_not_authorized: 'OpenAI has not authorized this connection to use your ChatGPT plan. In Translator settings, Continue with ChatGPT and allow plan usage again.',
     chatpass_v2_invalid_authorization_context: 'OpenAI did not accept this ChatGPT authorization. Sign in again.',
   };
   return fail(messages[code] || `${fallback} (HTTP ${status}${code ? `, ${code}` : ''}).`, code, status);
@@ -38,7 +40,7 @@ export class ChatGPTClient {
     this.fetcher = fetcher.bind(globalThis); this.now = now;
     this.hostId = metadata.hostId || `urn:uuid:${crypto.randomUUID()}`;
     this.active = metadata.active || '';
-    this.accounts = new Map((metadata.accounts || []).map(a => [a.id, { id: a.id, subject: a.subject || '', email: a.email || '', model: a.model || DEFAULT_MODEL, welcomed: !!a.welcomed }]));
+    this.accounts = new Map((metadata.accounts || []).map(a => [a.id, { id: a.id, subject: a.subject || '', email: a.email || '', model: a.model || DEFAULT_MODEL, welcomed: !!a.welcomed, plan: planState(a.plan) }]));
   }
   metadata() { return { hostId: this.hostId, active: this.active, accounts: [...this.accounts.values()] }; }
   status() {
@@ -92,17 +94,24 @@ export class ChatGPTClient {
     if (!account) query.set('agent_name_hint', 'Smart Subtitles');
     if (account?.email) query.set('login_hint', account.email);
     // Do not put an ID token into a browser URL/history. OpenAI supports login_hint alone.
-    if (enablePlan) query.set('prompt', 'consent');
+    // A returning sign-in silently reuses the previous grant. Ask again whenever that grant was not
+    // known to include plan usage, e.g. it was made before a workspace admin allowed it.
+    if (enablePlan || (account && account.plan !== 'granted')) query.set('prompt', 'consent');
     return { url: `${AUTH_ORIGIN}/api/accounts/authorize?${query}`, tabId };
   }
   cancel(tabId) {
     if (this.#pending && (tabId === undefined || this.#pending.tabId === tabId)) { this.#pending.controller.abort(); this.#pending = null; return true; }
     return false;
   }
-  async finish({ tabId, code, state, clientId, error }) {
+  async finish({ tabId, code, state, clientId, error, errorDescription }) {
     const attempt = this.#pending;
     if (!attempt || attempt.tabId !== tabId || attempt.state !== state || attempt.expires < this.now() || attempt.exchanging) throw fail('This sign-in is expired or does not match. Start sign-in again.');
-    if (error) { this.cancel(); throw fail(error === 'access_denied' ? 'ChatGPT sign-in was cancelled. You can continue with another translator.' : 'OpenAI could not complete sign-in. Try again.'); }
+    if (error) {
+      this.cancel();
+      const detail = safeText(errorDescription), code = safeCode(error);
+      if (detail) throw fail(`OpenAI did not complete sign-in: ${detail}`, code);
+      throw fail(error === 'access_denied' ? 'ChatGPT sign-in was cancelled. You can continue with another translator.' : `OpenAI could not complete sign-in${code ? ` (${code})` : ''}. Try again.`, code);
+    }
     const id = clientId || attempt.accountId;
     if (!id || id === 'dynamic_agent_client' || !/^[a-zA-Z0-9_-]{1,200}$/.test(id) || (attempt.accountId && id !== attempt.accountId)) throw fail('OpenAI returned an unexpected account registration.');
     if (typeof code !== 'string' || !code || code.length > 12000) throw fail('OpenAI did not return a valid authorization code.');
@@ -116,7 +125,7 @@ export class ChatGPTClient {
       if (previous?.subject && previous.subject !== identity.subject) throw fail('Sign-in returned a different ChatGPT account. Add it as a new account instead.');
       attempt.controller.signal.throwIfAborted();
       const token = this.tokenSet(data);
-      this.accounts.set(id, { ...this.accounts.get(id), ...identity });
+      this.accounts.set(id, { ...this.accounts.get(id), ...identity, plan: token.scopes.includes(PLAN_SCOPE) ? 'granted' : 'denied' });
       this.#tokens.set(id, token); this.active = id;
       if (token.scopes.includes(PLAN_SCOPE)) await this.models(id);
       return this.status();
@@ -152,7 +161,7 @@ export class ChatGPTClient {
   async models(id = this.active) {
     const token = await this.access(id);
     if (!token.scopes.includes(PLAN_SCOPE)) throw fail('Allow ChatGPT plan usage in Translator settings first.');
-    const data = await this.json(`${RESOURCE}/models`, { headers: { Authorization: `Bearer ${token.access}` } });
+    const data = await this.json(`${RESOURCE}/models`, { headers: { Authorization: `Bearer ${token.access}` } }).catch(e => { throw this.denied(id, e); });
     if (this.#tokens.get(id) !== token) throw fail('The ChatGPT connection changed.');
     if (!Array.isArray(data.models)) throw fail('OpenAI did not return the ChatGPT model list.');
     token.models = data.models.filter(m => m.visibility === 'list' && typeof m.slug === 'string').map(m => ({ slug: m.slug, name: String(m.display_name || m.slug) }));
@@ -164,6 +173,12 @@ export class ChatGPTClient {
     const chosen = model || account.model;
     if (!token.models.some(m => m.slug === chosen)) throw fail('Choose an available model for this ChatGPT account.');
     account.model = chosen; this.active = accountId; return this.status();
+  }
+  // OpenAI refused the plan grant: the next sign-in for this registration must ask for consent again.
+  denied(id, error) {
+    const account = this.accounts.get(id);
+    if (account && ['chatpass_v2_scope_not_authorized', 'subscription_sharing_user_not_eligible'].includes(error.code)) account.plan = 'denied';
+    return error;
   }
   welcome() { const account = this.accounts.get(this.active); if (account) account.welcomed = true; }
   async signOut(id = this.active) {
@@ -192,7 +207,7 @@ export class ChatGPTClient {
     try {
       response = await this.fetcher(`${RESOURCE}/responses`, { ...PRIVATE_REQUEST, method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token.access}` }, body: JSON.stringify({ model: account.model, instructions: subtitleInstructions, input: [{ role: 'user', content: subtitlePrompt(request, target) }], store: false, stream: true, ...(account.model.startsWith('gpt-6') ? { reasoning: { effort: 'low' } } : {}) }) });
     } catch (e) { if (signal?.aborted) throw e; throw fail('Could not reach OpenAI. Retry when your connection is ready.'); }
-    if (!response.ok) { let data; try { data = await readJSON(response); } catch {} throw apiError(response.status, data, 'ChatGPT translation failed'); }
+    if (!response.ok) { let data; try { data = await readJSON(response); } catch {} throw this.denied(id, apiError(response.status, data, 'ChatGPT translation failed')); }
     return readResponsesStream(response, request.cues, signal);
   }
 }

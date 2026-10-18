@@ -2,7 +2,7 @@ const query = new URLSearchParams(location.search);
 history.replaceState(null, '', location.pathname);
 try {
   const params = {};
-  for (const [source, target] of Object.entries({ code: 'code', state: 'state', client_id: 'clientId', error: 'error' })) {
+  for (const [source, target] of Object.entries({ code: 'code', state: 'state', client_id: 'clientId', error: 'error', error_description: 'errorDescription' })) {
     if (query.getAll(source).length > 1) throw new Error('Invalid sign-in callback. Start sign-in again.');
     if (query.has(source)) params[target] = query.get(source);
   }
