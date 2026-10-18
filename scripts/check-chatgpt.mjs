@@ -27,6 +27,18 @@ context.on('console', message => {
 // The sign-in tab is the one the extension reports once OpenAI receives the new authorization
 // request. It is driven through Chrome by its id: on slow Windows runners that tab can stay
 // "unloaded" for Playwright and Chrome alike although its request was sent (CI, 1.1.2 to 1.2.0).
+// What Chrome, Playwright and the test server saw, for a sign-in tab that never arrives.
+const pageEvents = [];
+context.on('page', page => {
+  const log = text => pageEvents.push(`${Date.now() - started}ms ${text}`);
+  page.on('crash', () => log('crash ' + page.url())); page.on('close', () => log('close ' + page.url().slice(0, 60)));
+  page.on('framenavigated', frame => frame === page.mainFrame() && log('navigated ' + frame.url().slice(0, 80)));
+  page.on('requestfailed', request => log(`failed ${request.url().slice(0, 80)} ${request.failure()?.errorText}`));
+});
+async function diagnose() {
+  const tabs = await context.serviceWorkers()[0]?.evaluate(async () => ({ tabs: await chrome.tabs.query({}), log: globalThis.tabLog || [] })).catch(e => e.message);
+  return JSON.stringify({ chrome: tabs, pages: context.pages().map(p => p.url().slice(0, 80)), pageEvents: pageEvents.slice(-30), served: served.slice(-30) });
+}
 function signInTab(page) {
   // Started before the click; a failure elsewhere must not surface first as an unhandled rejection.
   const waiting = findSignInTab(page, authorizations); waiting.catch(() => {}); return waiting;
@@ -37,8 +49,7 @@ async function findSignInTab(page, before) {
     state = await page.evaluate(() => chrome.runtime.sendMessage({ type: 'chatgptAccount', action: 'status' })).catch(() => null);
     if (authorizations > before && Number.isInteger(state?.data?.login?.tabId)) return state.data.login.tabId;
   }
-  const tabs = await context.serviceWorkers()[0]?.evaluate(() => chrome.tabs.query({}).then(all => all.map(t => `${t.id}:${t.status}:${t.url || ''}:${t.pendingUrl || ''}`))).catch(e => [e.message]);
-  throw new Error(`The sign-in tab did not open (authorizations ${before} -> ${authorizations}). Tabs: ${JSON.stringify(tabs)}. Status: ${JSON.stringify(state?.data?.login ?? state)}`);
+  throw new Error(`The sign-in tab did not open (authorizations ${before} -> ${authorizations}). Status: ${JSON.stringify(state?.data?.login ?? state)}. ${await diagnose()}`);
 }
 const sendJSON = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const authRoute = async route => {
@@ -76,7 +87,9 @@ const apiRoute = async route => {
 };
 // Playwright cannot route fetches from a worker owned by an offscreen document.
 // Redirect only this test build's worker transport to a local test server.
+const served = [], started = Date.now();
 const server = createServer(async (req, res) => {
+  served.push(`${Date.now() - started}ms ${req.method} ${req.url.slice(0, 80)}`); res.on('finish', () => served.push(`${Date.now() - started}ms done ${res.statusCode} ${req.url.slice(0, 40)}`));
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   const chunks = []; for await (const part of req) chunks.push(part);
   // /navigate/… is a tab navigation to auth.openai.com, redirected here by the test rule below.
@@ -97,6 +110,7 @@ try {
   const id = new URL(worker.url()).hostname;
   // Serve OpenAI's sign-in pages from the local server with Chrome's own redirect rules. Playwright's
   // request interception loses navigations in extension-opened tabs on slow CI runners.
+  await worker.evaluate(() => { globalThis.tabLog = []; chrome.tabs.onUpdated.addListener((id, change) => tabLog.push(`${id} ${JSON.stringify(change).slice(0, 160)}`)); });
   await worker.evaluate(port => chrome.declarativeNetRequest.updateDynamicRules({ addRules: [{ id: 9001, priority: 2,
     action: { type: 'redirect', redirect: { regexSubstitution: `http://127.0.0.1:${port}/navigate/\\1` } },
     condition: { regexFilter: '^https://auth\\.openai\\.com/(.*)$', resourceTypes: ['main_frame'] } }] }), server.address().port);
@@ -178,7 +192,8 @@ try {
   await settings.locator('#signin').click(); tabId = await opening;
   await worker.evaluate(tabId => chrome.tabs.update(tabId, { url: 'https://auth.openai.com/test/complete' }), tabId);
   // The callback returns the sign-in tab to settings; the rest is checked in a page Playwright opened.
-  await worker.evaluate(async ({ tabId, url }) => { for (const end = Date.now() + 30000; Date.now() < end; await new Promise(r => setTimeout(r, 100))) if ((await chrome.tabs.get(tabId)).url === url) return; throw new Error('Sign-in did not return to settings: ' + (await chrome.tabs.get(tabId)).url); }, { tabId, url: `chrome-extension://${id}/settings.html#chatgpt` });
+  if (!await worker.evaluate(async ({ tabId, url }) => { for (const end = Date.now() + 30000; Date.now() < end; await new Promise(r => setTimeout(r, 100))) if ((await chrome.tabs.get(tabId)).url === url) return true; return false; }, { tabId, url: `chrome-extension://${id}/settings.html#chatgpt` }))
+    throw new Error(`Sign-in did not return to settings. ${await diagnose()}`);
   const connected = await context.newPage(); await connected.goto(`chrome-extension://${id}/settings.html#chatgpt`);
   await connected.locator('#chatgptReady').waitFor();
   await settings.locator('#chatgptReady').waitFor();
