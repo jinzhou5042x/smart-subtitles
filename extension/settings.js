@@ -102,12 +102,12 @@ function renderChatgpt() {
   const views = {
     permission: ['Allow the connection in Chrome', 'Choose Allow in Chrome’s prompt. If you do not see it, look near the address bar.', 'Waiting for Chrome…'],
     opening: ['Opening ChatGPT…', 'OpenAI’s sign-in page opens in a new tab.', 'Opening ChatGPT…'],
-    waiting: ['Finish signing in on OpenAI', 'Complete sign-in in the tab that opened, and allow plan usage. You will come back here automatically. If OpenAI says your organization hasn’t enabled access for this app, that work workspace does not let apps use its plan: cancel, then sign in with a personal Plus or Pro account, or choose another translator.', 'Waiting for sign-in…'],
+    waiting: ['Finish signing in on OpenAI', 'Complete sign-in in the tab that opened, and allow plan usage. You will come back here automatically. If OpenAI says your organization hasn’t enabled access for this app, your work workspace does not let apps use its plan: cancel, sign in again and choose your personal account, or choose another translator.', 'Waiting for sign-in…'],
     verifying: ['Finishing sign-in…', 'Checking your account and its models.', 'Finishing sign-in…'],
     cancelling: ['Cancelling sign-in…', '', 'Cancelling…'],
   };
   const view = views[phase] || (error ? ['Could not connect', error, 'Continue with ChatGPT']
-    : account?.connected && account.plan === 'denied' ? ['ChatGPT plan usage was not granted', 'OpenAI signed you in but did not allow plan usage for this connection. A connection stays tied to the workspace chosen when it was added. If your workspace admin has allowed it, use a different account and pick that workspace.', 'Continue with ChatGPT']
+    : account?.connected && account.plan === 'denied' ? ['ChatGPT plan usage was not granted', 'OpenAI signed you in but did not allow plan usage for this connection. Work workspaces (ChatGPT Business, Enterprise, Edu) may not let apps use their plan, and their admins have no setting for it. Use a different account and pick your personal one, or choose another translator.', 'Continue with ChatGPT']
     : account?.connected ? ['Allow ChatGPT plan usage', 'You are signed in. Continue to allow subtitle translation with your plan.', 'Continue with ChatGPT']
     : account ? ['Sign in again', `Sign-in ends when Chrome closes. Continue to reconnect${account.email ? ` ${account.email}` : ''}.`, 'Continue with ChatGPT']
     : ['Connect your ChatGPT account', 'Sign in on OpenAI’s page and allow plan usage. You will come back here automatically.', 'Continue with ChatGPT']);

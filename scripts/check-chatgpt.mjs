@@ -31,9 +31,20 @@ function signInPage() {
   const waiting = findSignInPage(authorizations); waiting.catch(() => {}); return waiting;
 }
 async function findSignInPage(before) {
-  for (const end = Date.now() + 30000; Date.now() < end; await new Promise(resolve => setTimeout(resolve, 100))) {
+  let nudged = false;
+  for (const start = Date.now(), end = start + 30000; Date.now() < end; await new Promise(resolve => setTimeout(resolve, 100))) {
     const page = authorizations > before && context.pages().find(p => !p.isClosed() && p.url().startsWith('https://auth.openai.com/api/accounts/authorize?'));
     if (page) { await page.waitForLoadState(); return page; }
+    // On the Windows runner the test browser can leave the tab "unloaded" with no address even
+    // though the authorization request arrived. Load the same request into that tab once.
+    if (!nudged && authorizations > before && Date.now() - start > 5000) {
+      nudged = true;
+      const url = `https://auth.openai.com/api/accounts/authorize?${auth}`;
+      await context.serviceWorkers()[0]?.evaluate(async url => {
+        const [tab] = (await chrome.tabs.query({})).filter(t => t.status === 'unloaded' && !t.url && !t.pendingUrl);
+        if (tab) await chrome.tabs.update(tab.id, { url });
+      }, url).catch(() => {});
+    }
   }
   const states = await Promise.all(context.pages().filter(p => p.url().startsWith('chrome-extension://')).map(p => p.locator('#chatgpt').innerText().catch(() => '')));
   // Chrome's own view of the tabs tells a navigation that never happened from one Playwright missed.

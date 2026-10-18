@@ -66,7 +66,19 @@ We use Basic v2, which [supports API keys](https://docs.cloud.google.com/transla
 
 While sign-in is open, **Return to sign-in** takes you back to that tab. **Cancel** closes the attempt. If the tab closes or sign-in times out, the settings page explains what happened and lets you try again.
 
-There is no API key or local program to set up. Account eligibility, available models and limits come from OpenAI. ChatGPT Business, Enterprise and Edu workspaces may not allow apps to use their plan: OpenAI then shows “Your organization hasn't enabled access for this app” (`3p_delegated_access_policy_denied`), and the workspace's admin console has no switch for it. Sign in with a personal Plus or Pro account instead, or use another translator. [Manage usage](https://chatgpt.com/settings/usage) shows the allowance you share with this extension. If you run out, translation pauses; it does not switch to a separately billed API. See [how ChatGPT plan sharing works](https://developers.openai.com/siwc/token-sharing-open-source).
+There is no API key or local program to set up. Account eligibility, available models and limits come from OpenAI. [Manage usage](https://chatgpt.com/settings/usage) shows the allowance you share with this extension. If you run out, translation pauses; it does not switch to a separately billed API. See [how ChatGPT plan sharing works](https://developers.openai.com/siwc/token-sharing-open-source).
+
+#### Work accounts (ChatGPT Business, Enterprise, Edu)
+
+If OpenAI's page says **“Your organization hasn't enabled access for this app”** (error `3p_delegated_access_policy_denied`), your work workspace does not let outside apps use its ChatGPT plan. Signing in again or retrying will not change this.
+
+**An admin cannot switch it on.** We checked the OpenAI Admin Console on 2026-10-17. Under **External access**, a global admin can allow three kinds of access for apps: **Identity**, **Connected apps** and **ChatGPT Ads**. None of them covers ChatGPT plan usage. Individual apps can be allowed only if they appear in that list. Smart Subtitles registers its own connection the first time each person signs in, so it never appears there in advance. Setting the organization defaults to **Allowed** does not help either.
+
+What works:
+
+1. **Use your personal ChatGPT account.** In **Translator settings → ChatGPT**, click **Cancel**, then **Continue with ChatGPT** again. When OpenAI asks which account or workspace to use, choose your personal one, not the work one. OpenAI offers plan usage in other apps on Go, Plus and Pro. It also says supported open-source tools are available to all ChatGPT users. ([OpenAI: Using your ChatGPT plan in other apps](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites))
+2. **Use another translator:** **Browser translation** (free, no account), or **Your own API key** (Google Cloud, OpenAI API, Claude, DeepSeek, Qwen or a local model).
+3. **Ask OpenAI to allow it for your workspace.** Only OpenAI can do this today. Contact [OpenAI Support](https://help.openai.com/) with the app name (Smart Subtitles), your workspace name, the error code and the `request_id` from **Copy diagnostics** on the error page.
 
 Sign-in credentials stay in memory while Chrome runs. After fully quitting Chrome or reloading the extension, sign in again using the saved account entry. Closing a settings tab does not sign you out. **Sign out** disconnects this extension and asks OpenAI to revoke its token; other apps' logins are separate. Account labels are saved locally so you can reconnect later.
 
@@ -157,7 +169,19 @@ Codex 的计时来自旧版 CLI 连接，**不代表新版浏览器内 ChatGPT �
 
 登录途中切回了设置页，可以点 **Return to sign-in** 回到登录标签页，或点 **Cancel** 取消。关掉登录页或等待超时后，设置页会显示原因，可以重新登录。
 
-不需要 API key，也不需要安装本地程序。账号是否支持、模型和额度以 OpenAI 实际返回为准。ChatGPT Business、Enterprise、Edu 工作区可能不允许第三方应用使用工作区额度：这时 OpenAI 页面会显示 “Your organization hasn't enabled access for this app”（`3p_delegated_access_policy_denied`），管理后台也没有对应开关。请改用个人 Plus 或 Pro 账号登录，或换用其他翻译器。[Manage usage](https://chatgpt.com/settings/usage) 可以查看分配给扩展的额度。额度用完会暂停，不会偷偷改用单独收费的 API。参见[官方订阅共享说明](https://developers.openai.com/siwc/token-sharing-open-source)。
+不需要 API key，也不需要安装本地程序。账号是否支持、模型和额度以 OpenAI 实际返回为准。[Manage usage](https://chatgpt.com/settings/usage) 可以查看分配给扩展的额度。额度用完会暂停，不会偷偷改用单独收费的 API。参见[官方订阅共享说明](https://developers.openai.com/siwc/token-sharing-open-source)。
+
+#### 工作账号（ChatGPT Business、Enterprise、Edu）
+
+如果 OpenAI 页面显示 **“Your organization hasn't enabled access for this app”**（错误代码 `3p_delegated_access_policy_denied`），说明你所在的工作区不允许外部应用使用它的 ChatGPT 额度。重新登录或反复重试都不会改变。
+
+**管理员目前打不开这个权限。** 我们在 2026-10-17 检查过 OpenAI 管理后台（Admin Console）：**External access** 页面里，全局管理员只能给应用开放三类权限：**Identity**（身份登录）、**Connected apps**、**ChatGPT Ads**，没有任何一项对应“使用 ChatGPT 额度”。单个应用只有出现在那个列表里才能单独放行；Smart Subtitles 是每个人第一次登录时才各自注册连接，所以不会事先出现在列表里。把组织默认值（Organization defaults）全部设成 **Allowed** 也没用。
+
+可行的办法：
+
+1. **改用个人 ChatGPT 账号。** 在 **Translator settings → ChatGPT** 点 **Cancel**，再点 **Continue with ChatGPT**；OpenAI 让你选账号或工作区时，选个人账号，不要选工作区。OpenAI 说明 Go、Plus、Pro 可以在其他应用中使用额度，并且受支持的开源工具对所有 ChatGPT 用户开放（[OpenAI 官方说明](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)）。
+2. **换用其他翻译器：** **Browser translation**（免费，无需账号），或 **Your own API key**（Google Cloud、OpenAI API、Claude、DeepSeek、Qwen 或本地模型）。
+3. **请 OpenAI 为你的工作区开放。** 目前只有 OpenAI 能处理。联系 [OpenAI Support](https://help.openai.com/)，附上应用名称（Smart Subtitles）、工作区名称、错误代码，以及错误页 **Copy diagnostics** 里的 `request_id`。
 
 登录凭据只留在内存里。彻底退出 Chrome 或重新加载扩展后，需要选择保存的账号重新登录；关掉设置标签页不影响使用。**Sign out** 会退出当前扩展并请求 OpenAI 撤销令牌，其他应用的登录独立。扩展会保存账号名称等信息，方便下次连接。
 
@@ -220,7 +244,19 @@ Usamos [Basic v2, compatible con claves API](https://docs.cloud.google.com/trans
 
 Mientras inicias sesión, **Return to sign-in** te lleva de vuelta a esa pestaña y **Cancel** cancela el intento. Si cierras la pestaña o se agota el tiempo, verás el motivo y podrás volver a intentarlo.
 
-No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos y límites están disponibles. Los espacios de trabajo Business, Enterprise y Edu pueden no permitir que las apps usen su plan: OpenAI muestra “Your organization hasn't enabled access for this app” (`3p_delegated_access_policy_denied`) y la consola de administración no tiene un ajuste para ello. Inicia sesión con una cuenta personal Plus o Pro, o usa otro traductor. Consulta la cuota compartida con la extensión en [Manage usage](https://chatgpt.com/settings/usage). Al agotarse, la traducción se pausa; no cambia a una API de pago. Más información en la [documentación oficial](https://developers.openai.com/siwc/token-sharing-open-source).
+No necesitas clave API ni programa local. OpenAI determina qué cuentas, modelos y límites están disponibles. Consulta la cuota compartida con la extensión en [Manage usage](https://chatgpt.com/settings/usage). Al agotarse, la traducción se pausa; no cambia a una API de pago. Más información en la [documentación oficial](https://developers.openai.com/siwc/token-sharing-open-source).
+
+#### Cuentas de trabajo (ChatGPT Business, Enterprise, Edu)
+
+Si la página de OpenAI dice **“Your organization hasn't enabled access for this app”** (error `3p_delegated_access_policy_denied`), tu espacio de trabajo no permite que apps externas usen su plan de ChatGPT. Volver a iniciar sesión o reintentar no lo cambia.
+
+**Un administrador no puede activarlo.** Lo comprobamos en la consola de administración de OpenAI el 2026-10-17. En **External access**, un administrador global solo puede permitir tres tipos de acceso: **Identity**, **Connected apps** y **ChatGPT Ads**. Ninguno cubre el uso del plan de ChatGPT. Solo se pueden permitir apps concretas si aparecen en esa lista. Smart Subtitles registra su propia conexión la primera vez que cada persona inicia sesión, así que nunca aparece ahí de antemano. Poner los valores predeterminados de la organización en **Allowed** tampoco sirve.
+
+Qué funciona:
+
+1. **Usa tu cuenta personal de ChatGPT.** En **Translator settings → ChatGPT**, pulsa **Cancel** y después **Continue with ChatGPT**. Cuando OpenAI pregunte qué cuenta o espacio de trabajo usar, elige la personal, no la de trabajo. OpenAI ofrece el uso del plan en otras apps con Go, Plus y Pro, y dice que las herramientas de código abierto compatibles están disponibles para todos los usuarios de ChatGPT ([documentación de OpenAI](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)).
+2. **Usa otro traductor:** **Browser translation** (gratis, sin cuenta) o **Your own API key** (Google Cloud, OpenAI API, Claude, DeepSeek, Qwen o un modelo local).
+3. **Pide a OpenAI que lo permita para tu espacio de trabajo.** Por ahora solo OpenAI puede hacerlo. Contacta con [OpenAI Support](https://help.openai.com/) indicando la app (Smart Subtitles), el espacio de trabajo, el código de error y el `request_id` de **Copy diagnostics** en la página de error.
 
 Las credenciales permanecen en memoria mientras Chrome está abierto. Tras cerrar Chrome por completo o recargar la extensión, vuelve a iniciar sesión con la cuenta guardada. Cerrar la pestaña de ajustes no cierra la sesión. **Sign out** cierra la sesión de esta extensión y solicita a OpenAI que revoque su token; las sesiones de otras aplicaciones son independientes. Se guardan las etiquetas de las cuentas para facilitar el próximo acceso.
 

@@ -21,7 +21,7 @@ const planState = value => ['granted', 'denied'].includes(value) ? value : '';
 function apiError(status, data, fallback) {
   const code = safeCode(data?.error?.code || data?.error);
   const messages = {
-    subscription_sharing_user_not_eligible: 'OpenAI says ChatGPT plan usage is not allowed for the workspace this connection belongs to. A connection stays tied to the workspace chosen when it was added: if your admin has allowed it, sign in to a different account in Translator settings and pick that workspace.',
+    subscription_sharing_user_not_eligible: 'OpenAI does not allow ChatGPT plan usage for the account or workspace this connection belongs to. Work workspaces (ChatGPT Business, Enterprise, Edu) may not let apps use their plan, and their admins have no setting for it. In Translator settings, sign in with your personal ChatGPT account instead, or choose another translator.',
     subscription_sharing_usage_limit_exceeded: 'ChatGPT usage limit reached. Open Manage usage in Translator settings.',
     subscription_sharing_usage_unavailable: 'ChatGPT usage could not be checked. Try again later.',
     subscription_sharing_route_not_supported: 'OpenAI has not enabled this request route for this connection.',
@@ -95,7 +95,7 @@ export class ChatGPTClient {
     if (account?.email) query.set('login_hint', account.email);
     // Do not put an ID token into a browser URL/history. OpenAI supports login_hint alone.
     // A returning sign-in silently reuses the previous grant. Ask again whenever that grant was not
-    // known to include plan usage, e.g. it was made before a workspace admin allowed it.
+    // known to include plan usage, e.g. it was declined or made in another workspace.
     if (enablePlan || (account && account.plan !== 'granted')) query.set('prompt', 'consent');
     return { url: `${AUTH_ORIGIN}/api/accounts/authorize?${query}`, tabId };
   }
