@@ -8,7 +8,7 @@ const hosts = ['https://*.hulu.com/*', 'https://hulu.com/*', 'https://*.disneypl
 export async function checkExtensionSecurity(directory) {
   const manifest = JSON.parse(await readFile(path.join(directory, 'manifest.json'), 'utf8'));
   assert.equal(manifest.manifest_version, 3);
-  assert.deepEqual([...manifest.permissions].sort(), ['storage', 'activeTab', 'scripting', 'offscreen', 'alarms', 'declarativeNetRequestWithHostAccess'].sort(), 'Review any change to release permissions');
+  assert.deepEqual([...manifest.permissions].sort(), ['storage', 'scripting', 'offscreen', 'alarms', 'declarativeNetRequestWithHostAccess'].sort(), 'Review any change to release permissions');
   assert.deepEqual([...(manifest.host_permissions || [])].sort(), [...hosts].sort(), 'No development or unrestricted hosts in the release');
   assert.ok(!manifest.externally_connectable && !manifest.update_url && !manifest.sandbox, 'No external messaging, private updater, or sandboxed remote code');
   assert.ok(!manifest.optional_permissions?.length);
