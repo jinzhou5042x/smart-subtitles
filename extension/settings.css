@@ -80,6 +80,8 @@ section h2{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .hint:empty{display:none}
 .saved{display:flex;align-items:center;gap:12px;min-height:34px;font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .saved .link{letter-spacing:0}
+.key-actions{display:flex;gap:14px;margin-left:auto}
+.hint .link{font-size:12.5px;margin-left:10px}
 .hint a{margin-right:6px}
 input:not([type=range]),select{display:block;width:100%;min-width:0;height:34px;padding:0 10px;border:1px solid var(--field);border-radius:6px;background:var(--group);font-size:13.5px;transition:border-color .12s,box-shadow .12s}
 select{padding-right:28px;text-overflow:ellipsis;cursor:pointer}

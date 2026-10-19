@@ -102,7 +102,9 @@ function renderCloud() {
   $('modelRow').hidden = provider === 'google'; $('model').value = p.model || preset.model || '';
   $('endpointRow').hidden = !!preset.baseUrl; $('baseUrl').value = p.baseUrl || preset.baseUrl || '';
   $('endpointHelp').textContent = provider === 'qwen' ? 'Your region’s base URL from Model Studio.' : '';
-  $('remove').hidden = !profiles[provider]; $('remove').textContent = provider === 'custom' ? 'Remove' : 'Remove key';
+  // Change and Remove sit with the saved key; a local server set up without a key removes from below.
+  $('cancelKey').hidden = !(editingKey && p.keyHint);
+  $('removeSetup').hidden = !profiles[provider] || !!p.keyHint;
 }
 $('cloud').onsubmit = e => {
   e.preventDefault(); const provider = opened, switching = preferences.provider !== provider;
@@ -117,13 +119,16 @@ $('cloud').onsubmit = e => {
     return switching ? `Connected. Now using ${PROVIDERS[provider].name}.` : 'Saved.';
   }, { button: $('connect'), busy: 'Testing…' });
 };
-$('changeKey').onclick = () => { editingKey = true; renderCloud(); $('key').focus(); };
-$('remove').onclick = () => run(async () => {
+$('changeKey').onclick = () => { editingKey = true; say(''); renderCloud(); $('key').focus(); };
+$('cancelKey').onclick = () => { editingKey = false; say(''); renderCloud(); };
+const removeProfile = button => run(async () => {
   const provider = opened, wasActive = preferences.provider === provider;
   preferences = await call({ type: 'removeProfile', provider }); profiles = await call({ type: 'profiles' });
   renderCloud(); render();
   return wasActive ? 'Removed. Now using browser translation.' : 'Removed.';
-}, { button: $('remove') });
+}, { button });
+$('remove').onclick = () => removeProfile($('remove'));
+$('removeSetup').onclick = () => removeProfile($('removeSetup'));
 
 // ChatGPT
 const accountCall = (action, extra = {}) => withDeadline(call({ type: 'chatgptAccount', action, ...extra }), action === 'begin' ? 23000 : 12000, action === 'begin' ? 'ChatGPT did not open. Please try again.' : 'The connection did not respond. Reload this page and try again.');
