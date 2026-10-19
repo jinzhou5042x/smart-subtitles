@@ -216,7 +216,7 @@ try {
   assert.equal(inferenceCount, 2);
   await mkdir('dist/checks', { recursive: true }); await connected.screenshot({ path: 'dist/checks/chatgpt-settings.png', fullPage: true });
   await connected.locator('#signout').click(); await connected.getByText('Signed out of Smart Subtitles. Subtitles now use browser translation.', { exact: true }).waitFor();
-  await connected.getByText('Sign in again', { exact: true }).waitFor();
+  await connected.locator('#accountStatus', { hasText: /^Not signed in$/ }).waitFor();
   assert.equal(await connected.locator('[data-provider=builtin]').getAttribute('data-active'), 'true');
   // An unexpectedly closed offscreen document must recover without trapping the UI.
   await worker.evaluate(() => chrome.offscreen.closeDocument());

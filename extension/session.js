@@ -1,5 +1,9 @@
 // Translate the track in order, one batch at a time. Playback never changes the queue.
 (function (scope) {
+  // Pauses before trying a failed batch again, for failures the software can recover from (a
+  // dropped connection, a timeout, a server error). After the last one it waits for Retry, so a
+  // failing paid translator is never called without end.
+  const RETRY_PAUSES = [3000, 15000, 60000];
   function nextWindow(cues, lines) {
     const candidates = cues.filter(c => !lines.has(c.id));
     if (!candidates.length) return [];
@@ -12,7 +16,7 @@
       this.builtin = builtin || (scope.SubtitleBuiltin ? new scope.SubtitleBuiltin.BuiltinTranslator() : null);
       this.cues = []; this.lines = new Map(); this.epoch = id(); this.selection = { provider: 'builtin', target: 'zh-CN' }; this.clear();
     }
-    clear() { this.lines.clear(); this.episode = null; this.busy = false; this.complete = false; this.retryAt = 0; this.error = ''; this.awaiting = ''; this.redo = ''; this.stopped = ''; this.interrupted = ''; this.attempts = 0; }
+    clear() { this.lines.clear(); this.episode = null; this.busy = false; this.complete = false; this.retryAt = 0; this.error = ''; this.needsUser = false; this.awaiting = ''; this.interrupted = ''; this.attempts = 0; }
     configure(settings) {
       const changed = settings.provider !== this.selection.provider || settings.target !== this.selection.target;
       if (changed || !settings.enabled) this.reset();
@@ -21,8 +25,7 @@
     cancel() { const old = this.epoch; this.epoch = this.id(); this.busy = false; this.controller?.abort(); Promise.resolve(this.send({ type: 'cancel', epoch: old })).catch(() => {}); }
     reset() { this.cancel(); this.clear(); this.builtin?.close(); }
     use(cues) { this.reset(); this.cues = cues; }
-    retry() { this.error = ''; this.interrupted = ''; this.awaiting = ''; this.attempts = 0; this.retryAt = 0; }
-    again() { this.reset(); return !!this.cues.length; }
+    retry() { this.error = ''; this.needsUser = false; this.interrupted = ''; this.awaiting = ''; this.attempts = 0; this.retryAt = 0; }
     get working() { return this.busy; }
     get translated() { return this.lines.size; }
     apply(segments) { for (const segment of segments || []) for (const id of segment.sourceIds) this.lines.set(id, segment); this.complete = this.lines.size === this.cues.length; }
@@ -47,14 +50,15 @@
           await this.send({ type: 'saveBuiltin', request: { ...request, cues: result.missing }, segments, ...selection });
           if (stale()) return; this.apply(segments);
         }
-        this.error = ''; this.awaiting = ''; this.interrupted = ''; this.attempts = 0;
+        this.error = ''; this.needsUser = false; this.awaiting = ''; this.interrupted = ''; this.attempts = 0;
         this.episode = { status: this.complete ? 'done' : 'ready', cached: result.cached, usage: result.usage };
         this.retryAt = this.now() + 250;
       } catch (e) {
         if (stale() || controller.signal.aborted) return;
-        this.awaiting = e.awaiting || ''; this.episode = { status: 'error' };
-        // Do not repeatedly spend quota on timeouts, malformed output or invalid credentials.
-        this.error = e.message; this.attempts++;
+        this.awaiting = e.awaiting || ''; this.episode = { status: 'error' }; this.attempts++;
+        // What only the viewer can fix (a key, a sign-in, a quota, a language pack) waits for them.
+        if (!e.needsUser && this.attempts <= RETRY_PAUSES.length) { this.interrupted = e.message; this.retryAt = this.now() + RETRY_PAUSES[this.attempts - 1]; }
+        else { this.interrupted = ''; this.error = e.message; this.needsUser = !!e.needsUser; }
       } finally { clearInterval(heartbeat); if (!stale()) this.busy = false; }
     }
   }

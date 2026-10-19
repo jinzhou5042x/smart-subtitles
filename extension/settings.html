@@ -3,73 +3,58 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Settings · Smart Subtitles</title><link rel="stylesheet" href="settings.css"></head>
 <body>
 <main class="shell">
-  <header class="top">
-    <a class="brand" href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener"><img src="icon.svg" alt="" width="20" height="20">Smart Subtitles</a>
-    <span id="version" class="version"></span>
-  </header>
-  <h1 class="title">Settings</h1>
+  <header class="top"><h1>Smart Subtitles</h1><span id="version" class="version"></span></header>
 
   <section aria-labelledby="translatorHeading">
-    <h2 id="translatorHeading" class="heading">Translator</h2>
-    <p class="lede">Choose who translates the subtitles. Click a provider to set it up.</p>
+    <h2 id="translatorHeading">Translator</h2>
     <div id="kinds"></div>
 
     <!-- The open provider's setup; settings.js places it under that provider's row. -->
     <div id="detail" class="detail" hidden>
-      <div class="detail-head"><p id="detailBlurb"></p><button type="button" class="primary" id="use">Use</button></div>
-
-      <div class="panel" id="builtin" hidden>
-        <ul class="facts"><li>Chrome downloads a language pack the first time.</li><li>If the video shows <strong>Start subtitles</strong>, click it once.</li><li>Fast, but slang may be translated literally.</li></ul>
-      </div>
+      <p id="detailBlurb" class="blurb"></p>
+      <p id="attention" class="attention" hidden></p>
 
       <div class="panel" id="chatgpt" hidden>
         <div id="loginPanel" class="login" data-state="idle" aria-live="polite" aria-atomic="true">
           <p class="login-title"><span class="indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></p>
           <p id="loginDetail" class="note"></p>
           <div class="actions"><button id="signin" type="button" class="primary">Continue with ChatGPT</button><button id="returnLogin" type="button" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" type="button" class="link" hidden>Cancel</button><button id="otherAccount" type="button" class="link" hidden>Use a different account</button></div>
+          <p class="fine">Personal accounts only (Go, Plus or Pro). Work workspaces cannot share their plan with apps. <a href="https://github.com/jinzhou5042x/smart-subtitles#work-accounts-chatgpt-business-enterprise-edu" target="_blank" rel="noopener">Why&nbsp;↗</a></p>
         </div>
         <div id="chatgptReady" class="fields" hidden>
           <div class="field"><label for="account">Account</label><select id="account"></select></div>
           <div class="field"><label for="chatgptModel">Model</label><select id="chatgptModel"></select></div>
-          <div class="actions"><button id="testChatgpt" type="button" class="secondary">Test</button><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage usage&nbsp;↗</a><button id="signout" type="button" class="link push">Sign out</button></div>
+          <div class="actions"><button id="testChatgpt" type="button" class="secondary">Test</button><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Usage&nbsp;↗</a><button id="signout" type="button" class="link push">Sign out</button></div>
         </div>
-        <p class="fine"><strong>Personal accounts only.</strong> Use a personal ChatGPT account (Go, Plus or Pro). Business, Enterprise and Edu workspaces cannot share their plan with apps, and their admins have no setting for it. <a href="https://github.com/jinzhou5042x/smart-subtitles#work-accounts-chatgpt-business-enterprise-edu" target="_blank" rel="noopener">Why&nbsp;↗</a></p>
       </div>
 
       <form class="panel" id="cloud" hidden novalidate>
         <div class="fields">
-          <div class="field" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><a id="guide" target="_blank" rel="noopener">Get an API key&nbsp;↗</a></div></div>
+          <div class="field" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><span class="hint"><a id="guide" target="_blank" rel="noopener">Get a key&nbsp;↗</a> Kept until Chrome closes.</span></div></div>
           <div class="field" id="modelRow"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
           <div class="field" id="endpointRow"><label for="baseUrl">Server</label><div class="stack"><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><span id="endpointHelp" class="hint"></span></div></div>
         </div>
-        <div class="actions"><button id="connect" class="primary" type="submit">Connect</button><button id="remove" type="button" class="link push" hidden>Disconnect</button></div>
-        <p class="fine">Connect sends one short test line, then switches subtitles to this provider. Keys are kept only until Chrome closes; server and model are remembered.</p>
+        <div class="actions"><button id="connect" class="primary" type="submit">Connect</button><button id="remove" type="button" class="link push" hidden>Remove key</button></div>
       </form>
+
+      <div class="actions" id="useRow" hidden><button type="button" class="primary" id="use">Use</button></div>
       <p id="result" class="feedback" role="status" aria-live="polite"></p>
       <p id="usageLimit" class="feedback-link" hidden><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage ChatGPT usage&nbsp;↗</a></p>
     </div>
   </section>
 
   <section aria-labelledby="subtitlesHeading">
-    <h2 id="subtitlesHeading" class="heading">Subtitles</h2>
+    <h2 id="subtitlesHeading">Subtitles</h2>
     <div class="group">
       <div class="item"><label for="target">Translate into</label><select id="target" class="inline"></select></div>
       <div class="item"><label for="fontSize">Size</label><div class="range"><input id="fontSize" type="range" min="18" max="100"><output id="fontSizeValue" for="fontSize"></output></div></div>
+      <div class="item storage"><p>Saved translations <span id="cacheBytes" class="muted">Checking…</span></p><button id="clear" type="button" class="secondary" aria-haspopup="dialog">Clear…</button></div>
     </div>
     <p id="subtitlesResult" class="feedback" role="status" aria-live="polite"></p>
   </section>
 
-  <section aria-labelledby="storageHeading">
-    <h2 id="storageHeading" class="heading">Saved translations</h2>
-    <div class="group">
-      <div class="item storage"><div><p><span id="cacheCount">—</span> lines <span id="cacheBytes" class="muted">Checking storage…</span></p><div class="meter" aria-hidden="true"><div id="cacheProgress"></div></div></div><button id="clear" type="button" class="secondary" aria-haspopup="dialog">Clear…</button></div>
-    </div>
-    <p class="caption">Reused when you come back to a video. Up to 100,000 lines; the oldest are removed first.</p>
-    <p id="storageResult" class="feedback" role="status" aria-live="polite"></p>
-  </section>
-
   <footer><a href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener">User guide</a><a href="legal.html" target="_blank">Privacy</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues" target="_blank" rel="noopener">Feedback</a></footer>
 </main>
-<dialog id="clearDialog"><h2>Clear saved translations?</h2><p>Subtitles will be translated again next time. Your sign-in and keys stay connected.</p><div class="actions"><button id="cancelClear" type="button" class="secondary">Keep</button><button id="confirmClear" type="button" class="primary destructive">Clear translations</button></div></dialog>
+<dialog id="clearDialog"><h2>Clear saved translations?</h2><p>Videos you watched before will be translated again. Your sign-in and keys stay connected.</p><div class="actions"><button id="cancelClear" type="button" class="secondary">Keep</button><button id="confirmClear" type="button" class="primary destructive">Clear</button></div></dialog>
 <script type="module" src="settings.js"></script>
 </body></html>

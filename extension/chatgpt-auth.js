@@ -14,6 +14,8 @@ const TERMINAL_REFRESH = new Set(['invalid_grant', 'invalid_refresh_token', 'tok
 const encode = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const random = () => encode(crypto.getRandomValues(new Uint8Array(32)));
 const fail = (message, code = '', status = 0) => Object.assign(new Error(message), { code, status, needsUser: true });
+// A failure that may pass by itself (network, timeout, server error): the page tries the batch again.
+const transient = (message, code = '', status = 0) => Object.assign(new Error(message), { code, status, needsUser: false });
 const safeCode = value => typeof value === 'string' && /^[a-zA-Z0-9_.-]{1,100}$/.test(value) ? value : '';
 const safeText = value => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : '';
 const planState = value => ['granted', 'denied'].includes(value) ? value : '';
@@ -29,7 +31,9 @@ function apiError(status, data, fallback) {
     chatpass_v2_scope_not_authorized: 'OpenAI has not authorized this connection to use your ChatGPT plan. In Translator settings, Continue with ChatGPT and allow plan usage again.',
     chatpass_v2_invalid_authorization_context: 'OpenAI did not accept this ChatGPT authorization. Sign in again.',
   };
-  return fail(messages[code] || `${fallback} (HTTP ${status}${code ? `, ${code}` : ''}).`, code, status);
+  // Only what the viewer can change waits for them: their account, plan, quota or request.
+  const needsUser = (!!messages[code] && code !== 'subscription_sharing_usage_unavailable') || [400, 401, 403, 404, 429].includes(status);
+  return (needsUser ? fail : transient)(messages[code] || `${fallback} (HTTP ${status}${code ? `, ${code}` : ''}).`, code, status);
 }
 
 export class ChatGPTClient {
@@ -58,7 +62,7 @@ export class ChatGPTClient {
     catch (e) {
       if (signal.aborted && signal.reason?.name !== 'TimeoutError') throw e;
       const host = new URL(url).hostname;
-      throw fail(`${stage}: ${signal.aborted ? 'request timed out' : 'Chrome could not complete the request'} to ${host}. Try connecting again. If it keeps failing, check this extension’s site access and your network connection.`, signal.aborted ? 'openai_timeout' : 'openai_network_error');
+      throw transient(`${stage}: ${signal.aborted ? 'request timed out' : 'Chrome could not complete the request'} to ${host}. Try connecting again. If it keeps failing, check this extension’s site access and your network connection.`, signal.aborted ? 'openai_timeout' : 'openai_network_error');
     }
     const data = await readJSON(response);
     if (!response.ok) throw apiError(response.status, data, 'OpenAI request failed');
@@ -149,7 +153,7 @@ export class ChatGPTClient {
             const identity = await this.verify(data.id_token, id);
             if (identity.subject !== this.accounts.get(id)?.subject) throw fail('OpenAI returned a different account during renewal. Sign in again.');
           }
-          if (this.#tokens.get(id) !== token) throw fail('The ChatGPT connection changed. Retry when ready.');
+          if (this.#tokens.get(id) !== token) throw transient('The ChatGPT connection changed. Retry when ready.');
           const next = this.tokenSet(data, token); this.#tokens.set(id, next); return next;
         } catch (e) { if (TERMINAL_REFRESH.has(e.code) && this.#tokens.get(id) === token) this.#tokens.delete(id); throw e; }
         finally { this.#refreshes.delete(id); }
@@ -206,22 +210,22 @@ export class ChatGPTClient {
     let response;
     try {
       response = await this.fetcher(`${RESOURCE}/responses`, { ...PRIVATE_REQUEST, method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token.access}` }, body: JSON.stringify({ model: account.model, instructions: subtitleInstructions, input: [{ role: 'user', content: subtitlePrompt(request, target) }], store: false, stream: true, ...(account.model.startsWith('gpt-6') ? { reasoning: { effort: 'low' } } : {}) }) });
-    } catch (e) { if (signal?.aborted) throw e; throw fail('Could not reach OpenAI. Retry when your connection is ready.'); }
+    } catch (e) { if (signal?.aborted) throw e; throw transient('Could not reach OpenAI. Retry when your connection is ready.'); }
     if (!response.ok) { let data; try { data = await readJSON(response); } catch {} throw this.denied(id, apiError(response.status, data, 'ChatGPT translation failed')); }
     return readResponsesStream(response, request.cues, signal);
   }
 }
 
 export async function readResponsesStream(response, cues, signal) {
-  if (!response.body) throw fail('OpenAI returned no response stream.');
+  if (!response.body) throw transient('OpenAI returned no response stream.');
   const reader = response.body.getReader(), decoder = new TextDecoder();
   let buffer = '', text = '', total = 0, usage, completed = false;
   const event = block => {
     const payload = block.split('\n').filter(line => line.startsWith('data:')).map(line => line.slice(5).trimStart()).join('\n');
     if (!payload || payload === '[DONE]') return;
-    let data; try { data = JSON.parse(payload); } catch { throw fail('OpenAI returned an unreadable response stream.'); }
+    let data; try { data = JSON.parse(payload); } catch { throw transient('OpenAI returned an unreadable response stream.'); }
     if (['response.failed', 'error'].includes(data.type)) throw apiError(200, data.response || data, 'ChatGPT translation failed');
-    if (data.type === 'response.incomplete') throw fail('ChatGPT did not finish this subtitle batch. Retry or choose another model.');
+    if (data.type === 'response.incomplete') throw transient('ChatGPT did not finish this subtitle batch. Retry or choose another model.');
     if (data.type === 'response.output_text.delta') text += data.delta || '';
     if (data.type === 'response.completed') {
       const full = data.response?.output?.flatMap(o => o.content || []).filter(c => c.type === 'output_text').map(c => c.text).join('');
@@ -234,13 +238,13 @@ export async function readResponsesStream(response, cues, signal) {
       signal?.throwIfAborted();
       const { value, done } = await reader.read();
       if (done) break;
-      total += value.byteLength; if (total > 2_000_000) throw fail('OpenAI returned too much data for this subtitle batch.');
+      total += value.byteLength; if (total > 2_000_000) throw transient('OpenAI returned too much data for this subtitle batch.');
       buffer = (buffer + decoder.decode(value, { stream: true })).replace(/\r\n/g, '\n');
       let boundary;
       while ((boundary = buffer.indexOf('\n\n')) !== -1) { const block = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2); event(block); }
     }
     buffer += decoder.decode(); if (buffer.trim()) event(buffer);
-    if (!completed) throw fail('The ChatGPT response was interrupted. Retry this subtitle batch.');
+    if (!completed) throw transient('The ChatGPT response was interrupted. Retry this subtitle batch.');
     return { segments: parseModelSegments(text, cues), usage };
   } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
 }

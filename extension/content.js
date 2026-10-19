@@ -19,42 +19,42 @@
   // title's subtitles only then, so waiting is counted from it, never during pre-roll ads.
   let capture = {}, captureError = '', contentStarted = 0;
   const titleSeconds = track => site.titleSeconds(video, track);
-  const durationLabel = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
-  // What the popup shows: one status, one line of detail, and whether Retry can help.
+  // What the popup shows: one status in the viewer's words, one line of detail, and the one action
+  // that can help: 'retry', 'settings' (a key, a sign-in, a model), 'usage' (the ChatGPT plan's
+  // limit) or none. Counts of captured files stay in the diagnostics (snapshot).
   function progressInfo() {
     const seconds = contentStarted ? Math.floor((Date.now() - contentStarted) / 1000) : 0, waiting = seconds >= 20;
-    const cues = session.cues, episode = session.episode;
-    const checked = [capture.metadata && `${capture.metadata} playback info`, capture.manifests && `${capture.manifests} stream manifests`].filter(Boolean).join(' · ');
+    const cues = session.cues, lines = `${session.translated.toLocaleString('en-US')} / ${cues.length.toLocaleString('en-US')} lines`;
     if (session.complete) return { status: 'Subtitles ready', detail: 'Saved in this browser' };
-    if (session.error) return { status: session.awaiting ? 'Prepare browser translation' : 'Translation paused', detail: session.error, retry: !session.awaiting };
-    if (!video) return { status: `Waiting for a ${site.name} video`, detail: '' };
+    if (session.awaiting) return { status: 'Click Start subtitles on the video', detail: 'Chrome downloads its translation for this language once.' };
+    if (session.error) return { status: 'Translation paused', detail: session.error, action: /usage limit/i.test(session.error) ? 'usage' : session.needsUser ? 'settings' : 'retry' };
+    if (!video) return { status: `Play a video on ${site.name}`, detail: '' };
     if (selected) {
-      return { status: 'Translating subtitles…', detail: `${session.translated.toLocaleString()} / ${cues.length.toLocaleString()} lines · In order from the beginning. Seeking ahead may require a wait.` };
+      if (session.interrupted) return { status: 'Reconnecting…', detail: `${session.interrupted.replace(/\.?$/, '.')} Trying again in ${Math.max(1, Math.ceil((session.retryAt - Date.now()) / 1000))} s.` };
+      return { status: 'Translating subtitles…', detail: `${lines}, in order from the start` };
     }
     // Pre-roll ads: the title's subtitles are only requested once it starts.
-    if (site.adBreak()) return { status: 'Waiting for the ads to finish', detail: 'Subtitles load when the episode starts' };
+    if (site.adBreak()) return { status: 'Waiting for the ads to finish', detail: 'Subtitles start with the episode.' };
     if (!contentStarted && !tracks.length && !capture.pending) return { status: 'Waiting for the episode to start', detail: '' };
-    if (capture.pending > 0) return { status: 'Reading subtitle files', detail: `${capture.pending} pending · ${capture.received || 0} received`, retry: waiting };
     if (tracks.length) {
       const judged = T.assess(tracks, titleSeconds);
-      if (!judged.some(a => a.seconds)) return { status: site.lengthFrom === 'track' ? 'Looking for the complete English subtitles' : 'Subtitles parsed, waiting for the player timeline', detail: `${tracks.length} subtitle files so far`, retry: waiting };
-      const english = judged.filter(a => a.track.detected !== 'other');
-      if (!english.length) return { status: 'No English subtitles found', detail: `${tracks.length} parsed, all in other languages`, retry: true };
-      return { status: 'Subtitle timing failed the completeness check', detail: `subtitles to ${durationLabel(Math.max(...english.map(a => a.track.cues.at(-1)?.end || 0)))} · video ${durationLabel(Math.max(...english.map(a => a.seconds)))}`, retry: true };
+      if (!judged.some(a => a.seconds)) return { status: 'Looking for English subtitles…', detail: '', action: waiting ? 'retry' : '' };
+      if (!judged.some(a => a.track.detected !== 'other')) return { status: 'No English subtitles found', detail: 'This video has subtitles only in other languages.', action: 'retry' };
+      return { status: 'The subtitles do not match this video', detail: 'Reload the video, then try again.', action: 'retry' };
     }
-    if (captureError) return { status: 'Could not read or parse the subtitles', detail: captureError, retry: true };
-    if (checked) return { status: waiting ? 'No subtitle file found for this episode' : 'Looking for the episode subtitles', detail: `Checked ${checked} · ${seconds} s${waiting ? ' · turn on captions in the player, or reload the video' : ''}`, retry: waiting };
-    return { status: waiting ? 'No playback information received' : 'Waiting for the episode subtitles', detail: waiting ? 'Reload the video to try again' : '', retry: waiting };
+    if (captureError) return { status: 'Could not read the subtitles', detail: captureError, action: 'retry' };
+    if (waiting) return { status: 'No subtitles found yet', detail: 'Turn on captions in the player once, or reload the video.', action: 'retry' };
+    return { status: 'Looking for English subtitles…', detail: '' };
   }
 
   // The same reason on the picture, for ten seconds each time it changes: the viewer is watching
-  // the film, not the popup. Only what stops the subtitles (a state that offers Retry).
+  // the film, not the popup. Only what stops the subtitles (a state with an action).
   let noticed = { status: '', until: 0 };
   function problemNotice(info) {
-    if (!info.retry || session.complete) { noticed = { status: '', until: 0 }; return ''; }
+    if (!info.action || session.complete) { noticed = { status: '', until: 0 }; return ''; }
     if (info.status !== noticed.status) noticed = { status: info.status, until: Date.now() + 10000 };
-    return Date.now() < noticed.until ? `${info.status} · open Smart Subtitles for details` : '';
+    return Date.now() < noticed.until ? `${info.status} · open Smart Subtitles ${info.action === 'retry' ? 'for details' : 'to fix it'}` : '';
   }
 
   // ---- Which track ----
@@ -112,7 +112,7 @@
     overlay.position = settings.subtitleOffset;
     overlay.draw({ parent: site.overlayParent(), rect, fontSize: Math.max(18, Math.min(100, Number(settings.fontSize) || 60)),
       translated: [...new Set(active.map(c => session.lines.get(c.id)))].map(s => s.text).join(' '), original: active.map(c => c.text).join(' '),
-      notice: cues.length && site.awaitingClock(video) ? 'Move your pointer over the video or pause once to sync subtitles' : session.redo ? `Translating again · ${session.translated.toLocaleString()} / ${cues.length.toLocaleString()}` : problemNotice(info) });
+      notice: cues.length && site.awaitingClock(video) ? 'Move your pointer over the video or pause once to sync subtitles' : problemNotice(info) });
   }
   let loadingSettings = false, nextSettingsAttempt = 0;
   async function loadSettings() {
@@ -150,7 +150,7 @@
       video: video ? { id: video.id, currentTime: video.currentTime, duration: video.duration, paused: video.paused, seeking: video.seeking, readyState: video.readyState, width: Math.round(video.getBoundingClientRect().width) } : null,
       ad: site.adBreak(), clock: { policy: site.clockPolicy, subtitleTime: Number.isFinite(time) ? time : null, awaitingViewer: video ? site.awaitingClock(video) : false, ...(video ? site.clockState(video) : {}) },
       tracks: T.describe(tracks, titleSeconds, selected), source,
-      translation: { lines: session.cues.length, held: session.lines.size, complete: session.complete, working: session.working, service: session.episode?.status || null, error: session.error, interrupted: session.interrupted, attempts: session.attempts, awaiting: session.awaiting, again: !!session.redo },
+      translation: { lines: session.cues.length, held: session.lines.size, complete: session.complete, working: session.working, service: session.episode?.status || null, error: session.error, interrupted: session.interrupted, attempts: session.attempts, awaiting: session.awaiting, needsUser: session.needsUser },
       capture: { ...capture, error: captureError }, popup: progressInfo(),
       // The player's own captions against the file's times, in seconds; empty unless they are turned on.
       playerCaptions: probe.summary() };
@@ -165,13 +165,12 @@
     } else if (m.type === 'diagnostics') {
       const info = progressInfo();
       // tone: done, working, error or waiting; the popup draws the progress from these fields.
-      const tone = session.complete ? 'done' : session.error ? 'error' : session.working || session.interrupted ? 'working' : info.retry ? 'error' : 'waiting';
-      respond({ version, video: !!video, source, total: session.cues.length, translated: session.translated, complete: session.complete, redo: !!session.redo, provider: settings?.provider, busy: session.busy, ...info, tone,
+      const tone = session.complete ? 'done' : session.awaiting ? 'waiting' : session.error ? 'error' : session.working || session.interrupted || selected ? 'working' : info.action ? 'error' : 'waiting';
+      respond({ version, video: !!video, source, total: session.cues.length, translated: session.translated, complete: session.complete, provider: settings?.provider, busy: session.busy, ...info, tone,
         cached: !!session.episode?.cached, elapsedMs: session.episode && !session.episode.cached ? session.episode.elapsedMs : null, usage: session.episode?.usage || null, error: session.error, captureError, episodeId: session.episode?.id,
         files: tracks.map(t => ({ name: t.name, language: t.language, cues: t.cues.length })) });
     } else if (m.type === 'snapshot') respond(snapshot());
     else if (m.type === 'retry') { session.retry(); captureError = ''; window.postMessage({ type: 'smart-subtitles-replay', retry: true }, location.origin); respond({ ok: true }); }
-    else if (m.type === 'retranslate') respond(session.again() ? { ok: true } : { ok: false, error: 'Nothing to translate again yet' });
     else if (m.type === 'importSubtitles') {
       try { imported = T.parse(m.text, { name: 'imported', declared: true }, parseXml); adopt(imported, 'Imported episode subtitles'); respond({ ok: true, count: imported.cues.length }); }
       catch (e) { respond({ ok: false, error: e.message }); }

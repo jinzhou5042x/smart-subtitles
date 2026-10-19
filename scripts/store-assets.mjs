@@ -50,9 +50,9 @@ p{position:absolute;left:40px;top:612px;width:860px;margin:0;font-size:22px;line
 <div class="popup"><img src="${popupImage}"></div><p>${caption}</p></body></html>`;
 
 const screens = [
-  ['screenshot-1.png', 'Understand every line, <span class="mark">in your language</span>', 'Il m’a fait porter le chapeau.', 'He threw me under the bus.', await popup('fr', { tone: 'done', status: 'Subtitles ready', detail: '', total: 2310, translated: 2310, elapsedMs: 452000, usage: { input: 61840, cachedInput: 38200, output: 70510, reasoning: 3120 } }, 295),
+  ['screenshot-1.png', 'Understand every line, <span class="mark">in your language</span>', 'Il m’a fait porter le chapeau.', 'He threw me under the bus.', await popup('fr', { tone: 'done', status: 'Subtitles ready', detail: 'Saved in this browser', total: 2310, translated: 2310, complete: true, elapsedMs: 452000, usage: { input: 61840, cachedInput: 38200, output: 70510, reasoning: 3120 } }, 343),
     'The original English subtitles stay on screen, with a natural translation right above them. Use browser translation or connect your own cloud translator.'],
-  ['screenshot-2.png', 'Choose <span class="mark">your translator</span>', 'Genial. Justo lo que me faltaba.', 'Oh, great. Just what I needed.', await popup('es', { tone: 'working', status: 'Translating subtitles…', total: 2310, translated: 412, elapsedMs: 92000, usage: { input: 30920, cachedInput: 0, output: 12580, reasoning: 640 } }, 341),
+  ['screenshot-2.png', 'Choose <span class="mark">your translator</span>', 'Genial. Justo lo que me faltaba.', 'Oh, great. Just what I needed.', await popup('es', { tone: 'working', status: 'Translating subtitles…', detail: '412 / 2,310 lines, in order from the start', total: 2310, translated: 412, elapsedMs: 92000, usage: { input: 30920, cachedInput: 0, output: 12580, reasoning: 640 } }, 357),
     'Pick a language and a translator. Subtitles translate in order from the beginning; drag them up or down, and set the size you like.']
 ];
 for (const [file, title, translation, original, popupImage, caption] of screens) {

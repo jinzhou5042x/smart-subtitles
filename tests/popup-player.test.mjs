@@ -18,10 +18,10 @@ test('popup diagnostics target the main frame instead of racing child frames', a
 test('a refreshing or disconnected player is not reported as an unrelated page', () => {
   for (const url of ['https://www.disneyplus.com/play/episode', 'https://www.hulu.com/watch/episode']) {
     assert.equal(playerState({ url, status: 'loading' }, null, true).status, 'Connecting to the video…');
-    assert.equal(playerState({ url, status: 'complete' }, null, true).status, '');
-    const loading = { video: false, status: 'Waiting for a Disney+ video', tone: 'waiting' };
-    const failure = { video: false, status: 'Translation paused', detail: 'Connection failed', tone: 'error', error: 'Connection failed' };
-    assert.equal(playerState({ url }, loading, true).status, '');
+    assert.equal(playerState({ url, status: 'complete' }, null, true).status, 'Connecting to the video…');
+    const loading = { video: false, status: 'Play a video on Disney+', tone: 'waiting' };
+    const failure = { video: false, status: 'Translation paused', detail: 'Connection failed', tone: 'error', error: 'Connection failed', action: 'retry' };
+    assert.equal(playerState({ url }, loading, true), loading);
     assert.equal(playerState({ url }, failure, true), failure);
   }
   assert.equal(playerState({ url: 'https://example.com' }, null, true).status, 'Open a video on Hulu or Disney+');
@@ -75,10 +75,10 @@ test('denied injection is contained and throttled instead of looping', async () 
 });
 
 
-test('subtitle discovery and timeout diagnostics stay out of the popup', () => {
+test('the popup shows why subtitles have not started, as the page reports it', () => {
   const tab = { url: 'https://www.disneyplus.com/play/episode' };
-  for (const status of ['Looking for the episode subtitles', 'No subtitle file found for this episode']) {
-    assert.deepEqual(playerState(tab, { status, detail: 'Checked 16 playback info', retry: true, total: 0 }, true), { status: '', detail: '', retry: false });
+  for (const info of [{ status: 'Waiting for the ads to finish', detail: 'Subtitles start with the episode.', total: 0 }, { status: 'No English subtitles found', action: 'retry', total: 0 }]) {
+    assert.equal(playerState(tab, info, true), info);
   }
   const ready = { total: 341, translated: 341, tone: 'done' };
   assert.equal(playerState(tab, ready, true), ready);

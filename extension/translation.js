@@ -8,7 +8,7 @@ export const KINDS = {
   api: { name: 'API key', blurb: 'Your own key, billed by the provider.' },
 };
 export const PROVIDERS = {
-  builtin: { kind: 'browser', name: 'Browser translation', short: 'Chrome', blurb: 'Free and private. Chrome translates on this computer; no account.' },
+  builtin: { kind: 'browser', name: 'Browser translation', short: 'Chrome', blurb: 'Free and private: Chrome translates on this computer. The first time, click Start subtitles on the video.' },
   chatgpt: { kind: 'subscription', name: 'ChatGPT subscription', short: 'ChatGPT', blurb: 'Natural, context-aware subtitles using your personal ChatGPT plan.', model: 'gpt-6-luna' },
   google: { kind: 'api', name: 'Google Cloud', short: 'Google Cloud', blurb: 'Fast machine translation with a Cloud Translation key.', baseUrl: 'https://translation.googleapis.com/language/translate/v2', guide: 'https://docs.cloud.google.com/translate/docs/setup' },
   openai: { kind: 'api', name: 'OpenAI API', short: 'OpenAI', blurb: 'GPT models with an OpenAI API key, billed separately from ChatGPT.', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6-luna', guide: 'https://platform.openai.com/api-keys' },
@@ -72,7 +72,7 @@ export async function translateRemote(settings, profile, request, signal, fetche
   } else {
     const prompt = subtitlePrompt(request, settings.target), instructions = subtitleInstructions;
     const model = profile.model || PROVIDERS[provider].model;
-    if (!model) throw new Error('Choose a model in Translator settings');
+    if (!model) throw Object.assign(new Error('Choose a model in Translator settings'), { needsUser: true });
     if (provider === 'claude') {
       url += '/messages'; headers['x-api-key'] = profile.key; headers['anthropic-version'] = '2023-06-01'; headers['anthropic-dangerous-direct-browser-access'] = 'true';
       body = { model, max_tokens: 4096, system: instructions, messages: [{ role: 'user', content: prompt }] };

@@ -34,11 +34,11 @@ export async function chatgpt(command, args = {}, signal) {
   try {
     let reply;
     try { reply = await chrome.runtime.sendMessage({ target: 'chatgpt-runtime', id, command, args }); }
-    catch { initialized = false; throw new Error('The ChatGPT connection stopped. Sign in again.'); }
+    catch { initialized = false; throw Object.assign(new Error('The ChatGPT connection stopped. Sign in again.'), { needsUser: true }); }
     if (!reply || reply.error?.code === 'chatgpt_worker_stopped') {
       initialized = false;
       if (await hasRuntime()) await chrome.offscreen.closeDocument();
-      throw new Error('The ChatGPT connection stopped. Sign in again.');
+      throw Object.assign(new Error('The ChatGPT connection stopped. Sign in again.'), { needsUser: true });
     }
     await persist(reply); signal?.throwIfAborted();
     if (!reply?.ok) throw Object.assign(new Error(reply?.error?.message || 'The ChatGPT connection stopped. Sign in again.'), reply?.error || {});

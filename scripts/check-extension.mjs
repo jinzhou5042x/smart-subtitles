@@ -21,6 +21,7 @@ const vtt = 'WEBVTT\n\n' + Array.from({ length: 600 }, (_, i) => {
 }).join('\n');
 const server = http.createServer(async (req, res) => {
   if (req.url === '/v1/chat/completions') {
+    if (req.headers.authorization === 'Bearer wrong-key') { res.writeHead(401, { 'Content-Type': 'application/json' }); return res.end('{"error":{"message":"bad key"}}'); }
     assert.equal(req.headers.authorization, 'Bearer synthetic-api-key');
     assert.equal(req.headers.cookie, undefined, 'API requests must not carry browser login cookies');
     const chunks = []; for await (const c of req) chunks.push(c);
@@ -59,6 +60,11 @@ try {
   await settings.getByText('Connected. Subtitles now use Other / local model.').waitFor();
   assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-api-key/);
   assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
+  // A key that fails its test line is reported and never replaces the working one.
+  await settings.locator('#key').fill('wrong-key'); await settings.getByRole('button', { name: 'Save', exact: true }).click();
+  await settings.locator('#result[data-tone=error]', { hasText: 'HTTP 401' }).waitFor();
+  assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
+  assert.equal(await settings.locator('[data-provider=custom] .state').innerText(), 'In use');
   await context.addCookies([{ name: 'browserSession', value: 'must-not-be-forwarded', url: base }]);
   const page = await context.newPage(); await page.goto(base + '/demo');
   const setPlayback = (time, paused = false, seeking = false) => worker.evaluate(async playback => { const [tab] = await chrome.tabs.query({ url: 'http://127.0.0.1/*' }); await chrome.scripting.executeScript({ target: { tabId: tab.id }, args: [playback], func: playback => { globalThis.__testPlayback = playback; } }); }, { time, paused, seeking });
@@ -117,7 +123,7 @@ try {
   });
   const stats = await settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'cacheStats' })).data);
   assert.equal(stats.limit, 100000); assert.equal(stats.count, 31100);
-  await settings.reload(); await settings.getByText('31,100', { exact: true }).waitFor();
+  await settings.reload(); await settings.getByText('31,100 lines', { exact: false }).waitFor();
   await settings.locator('#clear').click(); await settings.locator('#cancelClear').click();
   assert.equal((await settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'cacheStats' })).data)).count, 31100);
   await settings.locator('#clear').click(); await settings.locator('#confirmClear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();

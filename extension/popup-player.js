@@ -7,7 +7,7 @@ export const PAGE_SCRIPTS = globalThis.SubtitleSites.pageScripts;
 const reconnecting = new Map();
 const attempted = new Map();
 const failures = new Map();
-const connectionIssue = detail => ({ connectionIssue: true, status: 'Extension connection unavailable', detail });
+const connectionIssue = detail => ({ connectionIssue: true, tone: 'error', status: 'Not connected to this page', detail });
 export async function playerMessage(tabs, message, tab, scripting) {
   if (!tab) [tab] = await tabs.query({ active: true, currentWindow: true });
   if (!tab) return null;
@@ -31,24 +31,17 @@ export async function playerMessage(tabs, message, tab, scripting) {
     catch (error) {
       // Preserve the actual failure locally; never label all failures as denied site access.
       console.warn('Subtitle connection recovery failed:', error);
-      const state = connectionIssue('Could not attach the subtitle extension to this page.');
+      const state = connectionIssue('Reload the page to connect Smart Subtitles.');
       failures.set(key, state); return state;
     }
     finally { reconnecting.delete(key); }
   }
 }
 
+// What the popup's card shows for the active tab: the page's own report when there is one.
 export function playerState(tab, info, enabled) {
-  if (!enabled) return { status: 'Bilingual subtitles are off' };
-  // Preserve loading, capture and connection errors reported by the content script,
-  // even before it has found a video element.
-  if (info) {
-    if (info.connectionIssue) return info;
-    // Capture diagnostics belong to internal inspection, not the watching UI.
-    if (!info.total && !info.error) return { status: '', detail: '', retry: false };
-    return info;
-  }
+  if (!enabled) return { tone: 'off', status: 'Bilingual subtitles are off', detail: 'Turn them on with the switch above.' };
+  if (info) return info;
   if (!globalThis.SubtitleSites.identify(tab?.url)) return { status: `Open a video on ${new Intl.ListFormat('en', { type: 'disjunction' }).format(globalThis.SubtitleSites.names)}` };
-  if (tab.status === 'loading') return { status: 'Connecting to the video…' };
-  return { status: '', detail: '', retry: false };
+  return { status: 'Connecting to the video…', detail: '' };
 }

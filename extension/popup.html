@@ -2,13 +2,12 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Subtitles</title><link rel="stylesheet" href="popup.css"></head>
 <body><main>
 <header><img class="logo" src="icon.svg" alt="" width="24" height="24"><h1>Smart Subtitles</h1><label class="switch"><input id="enabled" type="checkbox" role="switch" aria-label="Show bilingual subtitles"><span aria-hidden="true"></span></label></header>
-<section class="card" aria-live="polite"><p id="status" class="plain">Open a video on Hulu or Disney+.</p><p id="detail" class="note"></p><button id="retry" class="quiet" hidden>Retry translation</button></section>
+<section id="card" class="card" aria-live="polite" data-tone="waiting"><p id="status">Checking this tab…</p><div class="track" id="track" hidden><div class="fill" id="fill"></div></div><p id="detail"></p><div class="card-action"><button id="action" class="primary" hidden></button><a id="usage" class="button primary" href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener" hidden>Manage ChatGPT usage</a></div></section>
 <div class="group">
 <div class="row"><label for="target">Language</label><select id="target"></select></div>
 <div class="row"><label for="provider">Translator</label><select id="provider"></select></div>
-<div class="row"><p id="providerNote" class="note">Runs in your browser. No API key or companion app.</p><button id="configure" class="quiet">Translator settings</button></div>
 <div class="row"><label for="fontSize">Size</label><input id="fontSize" type="range" min="18" max="100" value="60"><output id="fontSizeValue" for="fontSize">60</output></div>
 </div>
-<p id="planUsage" hidden><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Manage ChatGPT usage</a></p>
-<footer><nav><a href="https://github.com/jinzhou5042x/smart-subtitles/issues/new" target="_blank" rel="noopener">Report an issue</a><a id="copy" href="#">Copy diagnostics</a><a href="legal.html" target="_blank">Terms &amp; Privacy</a></nav></footer>
+<p id="toast" role="status" aria-live="polite"></p>
+<footer><nav><a id="settings" href="#">Settings</a><a id="copy" href="#">Copy diagnostics</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues/new" target="_blank" rel="noopener">Report an issue</a><a href="legal.html" target="_blank">Privacy</a></nav></footer>
 </main><script src="popup.js" type="module"></script></body></html>

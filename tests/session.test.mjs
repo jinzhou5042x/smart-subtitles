@@ -5,7 +5,7 @@ const { TranslationSession, nextWindow } = globalThis.SubtitleSession;
 const cues = Array.from({ length: 600 }, (_, i) => ({ id: `c${i}`, text: `Line ${i}`, start: i * 3, end: i * 3 + 2.9 }));
 const segments = cues => cues.map(c => ({ sourceIds: [c.id], text: `Translated ${c.text}`, start: c.start, end: c.end }));
 const where = { session: 'video-one', title: 'Test', time: 0 };
-function setup(handler) { const asked = []; let serial = 0, clock = 0; const session = new TranslationSession({ id: () => String(++serial), now: () => clock, send: async m => { asked.push(m); if (['cancel', 'ping'].includes(m.type)) return {}; return handler(m); } }); session.use(cues); session.configure({ provider: 'google', target: 'zh-CN', enabled: true }); return { session, asked, advance: () => { clock += 1000; } }; }
+function setup(handler) { const asked = []; let serial = 0, clock = 0; const session = new TranslationSession({ id: () => String(++serial), now: () => clock, send: async m => { asked.push(m); if (['cancel', 'ping'].includes(m.type)) return {}; return handler(m); } }); session.use(cues); session.configure({ provider: 'google', target: 'zh-CN', enabled: true }); return { session, asked, advance: (ms = 1000) => { clock += ms; } }; }
 test('opening a video at 15 minutes still starts translation at the first cue', async () => {
  const { session, asked } = setup(m => ({ segments: segments(m.request.cues) }));
  await session.run({ ...where, time: 900 });
@@ -35,11 +35,26 @@ test('a language change discards an old response', async () => {
  const pending = session.run(where); await Promise.resolve(); session.configure({ provider: 'google', target: 'es', enabled: true }); finish(); await pending;
  assert.equal(session.lines.size, 0); assert.equal(session.busy, false);
 });
-test('quota errors and timeouts pause instead of making unbounded paid retries', async () => {
- const { session, asked } = setup(() => { throw new Error('Quota exceeded'); });
- await session.run(where); await session.run({ ...where, time: 900 }); await session.run({ ...where, time: 0 });
- assert.equal(asked.filter(m => m.type === 'translateWindow').length, 1); assert.match(session.error, /Quota/);
+test('what only the viewer can fix pauses at once and asks for them', async () => {
+ const { session, asked, advance } = setup(() => { throw Object.assign(new Error('Quota exceeded'), { needsUser: true }); });
+ await session.run(where); advance(120000); await session.run({ ...where, time: 900 }); await session.run({ ...where, time: 0 });
+ assert.equal(asked.filter(m => m.type === 'translateWindow').length, 1); assert.match(session.error, /Quota/); assert.equal(session.needsUser, true);
  session.retry(); await session.run(where); assert.equal(asked.filter(m => m.type === 'translateWindow').length, 2);
+});
+test('timeouts and dropped connections are retried a bounded number of times, then pause', async () => {
+ const { session, asked, advance } = setup(() => { throw new Error('Translation timed out.'); });
+ const sent = () => asked.filter(m => m.type === 'translateWindow').length;
+ await session.run(where); assert.equal(sent(), 1); assert.equal(session.error, ''); assert.match(session.interrupted, /timed out/);
+ await session.run(where); assert.equal(sent(), 1, 'waits before trying again');
+ for (const pause of [3000, 15000, 60000]) { advance(pause); await session.run(where); }
+ assert.equal(sent(), 4); assert.match(session.error, /timed out/); assert.equal(session.needsUser, false);
+ advance(600000); await session.run(where); assert.equal(sent(), 4, 'never retried without end');
+});
+test('a recovered connection carries on and resets the retry count', async () => {
+ let fail = true; const { session, asked, advance } = setup(m => { if (fail) { fail = false; throw new Error('Network error'); } return { segments: segments(m.request.cues) }; });
+ await session.run(where); advance(3000); await session.run(where);
+ assert.equal(session.interrupted, ''); assert.equal(session.attempts, 0); assert.ok(session.lines.size > 0);
+ assert.equal(asked.filter(m => m.type === 'translateWindow').length, 2);
 });
 test('batches are bounded and resume at the earliest untranslated cue, including cache gaps', () => {
  const held = new Map([...cues.slice(0, 10), ...cues.slice(20, 40)].map(c => [c.id, {}]));

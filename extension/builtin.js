@@ -37,7 +37,9 @@
       const host = document.createElement('div'); host.style.cssText = 'position:fixed;z-index:2147483647;bottom:80px;left:50%;transform:translateX(-50%);';
       const shadow = host.attachShadow({ mode: 'closed' }), button = document.createElement('button');
       button.textContent = 'Start subtitles'; button.style.cssText = 'font:15px system-ui;padding:12px 20px;border:0;border-radius:8px;background:#0f8a54;color:white;cursor:pointer;box-shadow:0 2px 12px #0008'; shadow.append(button);
-      (document.fullscreenElement || document.body).append(host); this.button = host;
+      // Full screen shows only the full-screen element: follow it in and out, as the subtitles do.
+      const place = () => { const parent = document.fullscreenElement || document.body; if (host.parentNode !== parent) parent.append(host); };
+      place(); document.addEventListener('fullscreenchange', place); this.button = host; this.unplace = () => document.removeEventListener('fullscreenchange', place);
       button.onclick = () => {
         button.disabled = true; button.textContent = 'Preparing translation…';
         const generation = this.generation, controller = new AbortController(); this.download = controller;
@@ -45,12 +47,12 @@
         this.pending = scope.Translator.create({ ...options, signal: AbortSignal.any([controller.signal, AbortSignal.timeout(300000)]), monitor: m => m.addEventListener('downloadprogress', e => { button.textContent = `Preparing translation… ${Math.round(e.loaded * 100)}%`; }) });
         this.pending.then(instance => {
           if (generation !== this.generation) { instance.destroy(); return; }
-          this.instance?.destroy(); this.instance = instance; host.remove(); this.button = null;
+          this.instance?.destroy(); this.instance = instance; host.remove(); this.button = null; this.unplace?.();
           scope.dispatchEvent(new Event('smart-subtitles-builtin-ready'));
         }, () => { if (generation === this.generation) { button.textContent = 'Download failed — retry'; button.disabled = false; } }).finally(() => { if (generation === this.generation) { this.pending = null; this.download = null; } });
       };
     }
-    close() { this.generation++; this.download?.abort(); this.download = null; this.pending = null; this.instance?.destroy(); this.instance = null; this.button?.remove(); this.button = null; }
+    close() { this.generation++; this.download?.abort(); this.download = null; this.pending = null; this.instance?.destroy(); this.instance = null; this.button?.remove(); this.button = null; this.unplace?.(); }
   }
   scope.SubtitleBuiltin = { BuiltinTranslator };
 })(globalThis);

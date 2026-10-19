@@ -7,7 +7,7 @@ const cues = [{ id: 'a', text: 'Hello\nthere', start: 1, end: 2 }];
 function harness(Translator) {
   const nodes = [], events = [];
   const element = tag => { const node = { tag, style: {}, append() {}, remove() { this.removed = true; }, attachShadow() { return { append() {} }; } }; nodes.push(node); return node; };
-  const scope = { Translator, AbortController, AbortSignal, DOMException, Event, navigator: { userActivation: { isActive: false } }, document: { createElement: element, body: { append() {} } }, dispatchEvent: e => events.push(e.type) };
+  const scope = { Translator, AbortController, AbortSignal, DOMException, Event, navigator: { userActivation: { isActive: false } }, document: { createElement: element, body: { append() {} }, addEventListener() {}, removeEventListener() {} }, dispatchEvent: e => events.push(e.type) };
   vm.runInNewContext(source, scope);
   return { client: new scope.SubtitleBuiltin.BuiltinTranslator(), nodes, events, scope };
 }
