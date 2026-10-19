@@ -39,6 +39,10 @@ In Settings, click your provider under **API key**, paste your key and click **C
 
 Google Cloud is fast and handled common idioms well in our small test. It does not receive the nearby context sent to LLMs. LLM requests include the video title and nearby dialogue; only the requested subtitle window is translated. Custom HTTPS servers and HTTP servers on localhost are supported. The extension asks for access to the server you select. Your own model server must already be running.
 
+### Is my API key safe?
+
+Yes, for this use. The key is encrypted (AES-256-GCM) before it is saved on your computer, with an encryption key Chrome keeps non-extractable. It is sent over HTTPS only to the provider you chose, never to us (there is no server of ours) and never to the video site; video pages and other extensions cannot read it. Settings show only its last four characters, and **Remove** deletes it. Like any app that keeps a key, it cannot be protected from malware already running on your computer, so set a spending limit with your provider. Details: [How your API key is protected](https://jinzhou5042x.github.io/smart-subtitles/#api-keys).
+
 ### Translation comparison
 
 We tested the same 36 English cues in Simplified Chinese, three times, without cache. Median time per window of 6–10 cues: **browser 0.098 s**, **Google 0.156 s**, **Codex 3.765 s**. Browser translation made several literal idiom errors. Google handled the selected idioms well. Codex sounded more natural but moved or repeated content between cues. Passing earlier translations as context kept the tested names consistent in the final runs. These are provider timings from one Windows machine, not general accuracy scores or full-player latency.
@@ -150,6 +154,10 @@ Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP �
 
 **Connect** 会发送一句简短的测试请求（可能使用付费额度），测试通过才保存 key 并让字幕改用这个服务；测试失败会提示原因，不会覆盖原来能用的 key。key 加密保存在当前浏览器配置里，重启 Chrome 后仍然有效；设置页只显示最后四位。key 只发给对应服务商的服务器，不会发给视频网站或其他任何地方。更换服务器需要重新填 key，**Remove** 删除 key。加密能防止配置文件夹被拷走后泄露 key，但挡不住已经在你电脑上运行的恶意软件，建议在服务商那里设置消费上限。
 
+### API key 安全吗？
+
+安全。key 保存前先用 AES-256-GCM 加密，加密用的钥匙由 Chrome 生成且不可导出。key 只通过 HTTPS 发给你选的服务商，不会发给我们（我们没有服务器），也不会发给视频网站；视频网页和其他扩展都读不到它。设置页只显示最后四位，**Remove** 可随时删除。和所有保存 key 的软件一样，它挡不住已经在你电脑上运行的恶意软件，所以建议在服务商那里设置消费上限。详见 [API key 如何保护](https://jinzhou5042x.github.io/smart-subtitles/#api-keys)。
+
 ### 实测对比
 
 同一组 36 条英文字幕翻成简体中文，重复 3 次、不用缓存。每窗口 6–10 条字幕的中位耗时：**内置 0.098 秒、Google 0.156 秒、Codex 3.765 秒**。内置有多处俚语直译；Google 在这组样本里表现稳定；Codex 更自然，但有跨行重复或调序；补上已译上下文后，本次人名保持一致。这是单台 Windows 机器的翻译引擎耗时，不是完整播放器延迟或通用准确率。
@@ -232,6 +240,10 @@ Pulsa el icono del engranaje arriba en la ventana de la extensión. Es una sola 
 En **Settings** puedes configurar Google Cloud, OpenAI API, DeepSeek, Claude API, Qwen o un servidor compatible con OpenAI Chat Completions. Pulsa tu proveedor en el grupo **API key**, introduce tu clave y modelo y pulsa **Connect**. En Qwen elige la región de tu clave (Singapur, EE. UU., Pekín, Hong Kong; **Other** para la URL de un espacio de trabajo); para un modelo local, usa `http://localhost:PUERTO/v1` y arranca tu propio servidor. Las conexiones remotas requieren HTTPS.
 
 La clave se guarda cifrada en este perfil del navegador y se conserva al reiniciar Chrome; los ajustes muestran solo sus cuatro últimos caracteres. Solo se envía al servidor del proveedor, nunca al sitio del video. **Remove** la elimina. Cambiar de servidor requiere introducirla de nuevo. El cifrado protege una copia de la carpeta del perfil, no frente a malware que ya se ejecute en tu equipo: fija un límite de gasto con tu proveedor. **Connect** envía una petición de prueba pequeña que puede consumir cuota de pago; solo se guarda una clave que responde, y entonces los subtítulos pasan a usar ese servicio. Una clave que falla nunca sustituye a una que funciona. La facturación API es independiente de las suscripciones de chat.
+
+### ¿Está segura mi clave API?
+
+Sí, para este uso. La clave se cifra (AES-256-GCM) antes de guardarse en tu equipo, con una clave de cifrado que Chrome mantiene no exportable. Solo se envía por HTTPS al proveedor que elegiste, nunca a nosotros (no tenemos servidor) ni al sitio del video; ni las páginas de video ni otras extensiones pueden leerla. Los ajustes muestran solo sus cuatro últimos caracteres y **Remove** la elimina. Como cualquier aplicación que guarda una clave, no puede protegerla de malware que ya se ejecute en tu equipo: fija un límite de gasto con tu proveedor. Detalles: [Cómo se protege tu clave API](https://jinzhou5042x.github.io/smart-subtitles/#api-keys).
 
 ### Comparación medida
 

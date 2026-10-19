@@ -11,7 +11,7 @@ a{color:#13a865}
 <h1>Smart Subtitles</h1>
 <nav aria-label="Project links"><a href="https://chromewebstore.google.com/detail/bpfhbkkdmommobklkndkfagejfpbnjno">Install from Chrome Web Store</a> · <a href="https://github.com/jinzhou5042x/smart-subtitles#readme">User guide</a></nav>
 <p>Install the extension, open Hulu or Disney+ with English subtitles, and choose your language. On Windows, macOS and Linux, everything runs in desktop Chrome; no separate app or ZIP is needed. Browser translation needs no account. If <strong>Start subtitles</strong> appears on the video, click it; Chrome prepares the language pack there. To use your ChatGPT plan, choose <strong>Continue with ChatGPT</strong> in Translator settings and sign in on OpenAI's page.</p>
-<p class="note">Terms of Use and Privacy Policy · Effective October 17, 2026</p>
+<p class="note">Terms of Use and Privacy Policy · Effective October 19, 2026</p>
 
 <div class="box"><strong>Independent and unofficial.</strong> Smart Subtitles is not affiliated with, endorsed by, sponsored by or approved by any streaming service, including Hulu, LLC and The Walt Disney Company, or any of their affiliates. The names of streaming services are trademarks of their owners and are used here only to say which websites this tool works with.</div>
 
@@ -69,6 +69,16 @@ a{color:#13a865}
 <li><strong>ChatGPT subscription:</strong> sign-in and token renewal go directly to <code>auth.openai.com</code>. Translation requests go directly to <code>api.openai.com</code>, with subtitle windows, nearby dialogue and saved translations as context, the video title when available, target language and instructions. Requests use <code>store: false</code>; provider retention is governed by <a href="https://openai.com/policies/privacy-policy/">OpenAI's Privacy Policy</a> and your account terms. Translation uses the ChatGPT allowance you authorize.</li>
 <li><strong>Sign-in callback:</strong> during login, a temporary Chrome rule redirects the exact <code>127.0.0.1:1455/auth/callback</code> navigation in the sign-in tab to an extension page. It receives the one-time authorization code, checks the pending login and clears the URL query. No local server or native application is started. The rule is removed after completion, cancellation or timeout.</li>
 <li>External providers receive connection and authentication information, including your IP address. Links, downloads and sign-in pages connect to the respective third parties. No project-operated server relays translation requests. The extension does not automatically switch to a paid provider.</li>
+</ul>
+
+<h3 id="api-keys">How your API key is protected</h3>
+<ul>
+<li><strong>Encrypted on your computer.</strong> The key is encrypted with AES-256-GCM before it is saved. The encryption key is created by Chrome as non-extractable, so it cannot be read out, and is kept apart from the encrypted key. A copied browser profile or backup contains only ciphertext.</li>
+<li><strong>Sent only to your provider.</strong> The key goes over HTTPS only to the address of the provider you chose (for example <code>api.openai.com</code>), without cookies, and requests that try to redirect elsewhere are refused.</li>
+<li><strong>Never to us or the video site.</strong> There is no server of ours. Video pages and the scripts the extension runs on them cannot read the extension's storage; other extensions cannot read it either. The key is not written to logs, error messages or copied diagnostics.</li>
+<li><strong>Shown only in part.</strong> After you save a key, the settings page receives only its last four characters.</li>
+<li><strong>Removable at any time.</strong> <strong>Remove</strong> deletes it; uninstalling the extension deletes all its storage.</li>
+<li><strong>The limit:</strong> software already running under your account on this computer (malware) could use this browser as you do, as it could with any app that keeps a key. Setting a spending limit with your provider, and restricting the key to the API it needs, limits what a leaked key can cost.</li>
 </ul>
 
 <h3>What is stored, and how to remove it</h3>

@@ -112,6 +112,7 @@ function renderCloud() {
   $('endpointHelp').textContent = regions.length ? 'Your workspace base URL from Model Studio.' : '';
   // Change and Remove sit with the saved key; a local server set up without a key removes from below.
   $('cancelKey').hidden = !(editingKey && p.keyHint);
+  $('secureText').textContent = `Your key is encrypted on this computer and sent only to ${provider === 'custom' ? 'your server' : preset.short}. Never to us or the video site.`;
   $('removeSetup').hidden = !profiles[provider] || !!p.keyHint;
 }
 $('cloud').onsubmit = e => {

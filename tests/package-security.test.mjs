@@ -28,3 +28,9 @@ test('release validation rejects private files, remote code, invalid connection 
   manifest.permissions.push('debugger'); await writeFile(file, JSON.stringify(manifest));
   await assert.rejects(checkExtensionSecurity(directory), /release permissions/);
 });
+
+test('the public privacy page is the same as the one in the extension', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8').then(text => text.replace(/\r\n/g, '\n'));
+  assert.equal(await read('index.html'), await read('extension/legal.html'), 'copy extension/legal.html to index.html');
+});

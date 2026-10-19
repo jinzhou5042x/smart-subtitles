@@ -121,6 +121,8 @@ button[aria-busy=true]:after{content:"";position:absolute;inset:0;margin:auto;wi
 section>.feedback{margin-left:2px}
 .feedback-link{margin:4px 0 0 15px;font-size:13px}
 
+.secure{display:flex;align-items:flex-start;gap:7px;margin-top:14px;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.secure svg{flex:none;width:13px;height:13px;margin-top:2px;fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linejoin:round}
 .storage p{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-width:0;flex:1}
 .muted{color:var(--muted);margin-left:6px}
 
