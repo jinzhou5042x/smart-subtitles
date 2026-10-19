@@ -19,6 +19,15 @@ const transient = (message, code = '', status = 0) => Object.assign(new Error(me
 const safeCode = value => typeof value === 'string' && /^[a-zA-Z0-9_.-]{1,100}$/.test(value) ? value : '';
 const safeText = value => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : '';
 const planState = value => ['granted', 'denied'].includes(value) ? value : '';
+// Reasoning effort: what a model lists (supported_reasoning_levels), or for a GPT-6 model that lists
+// nothing, the levels every GPT-6 model accepts. Subtitles default to the fastest, low.
+const EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+export const DEFAULT_EFFORT = 'low';
+function effortsOf(model) {
+  const listed = Array.isArray(model.supported_reasoning_levels) ? model.supported_reasoning_levels.map(level => typeof level === 'string' ? level : level?.effort).filter(level => EFFORTS.includes(level)) : [];
+  return listed.length ? [...new Set(listed)] : /^gpt-6/.test(model.slug) ? ['low', 'medium', 'high'] : [];
+}
+const effortFor = (model, wanted) => !model?.efforts.length ? '' : model.efforts.includes(wanted) ? wanted : model.efforts.includes(DEFAULT_EFFORT) ? DEFAULT_EFFORT : model.efforts[0];
 
 function apiError(status, data, fallback) {
   const code = safeCode(data?.error?.code || data?.error);
@@ -44,7 +53,7 @@ export class ChatGPTClient {
     this.fetcher = fetcher.bind(globalThis); this.now = now;
     this.hostId = metadata.hostId || `urn:uuid:${crypto.randomUUID()}`;
     this.active = metadata.active || '';
-    this.accounts = new Map((metadata.accounts || []).map(a => [a.id, { id: a.id, subject: a.subject || '', email: a.email || '', model: a.model || DEFAULT_MODEL, welcomed: !!a.welcomed, plan: planState(a.plan) }]));
+    this.accounts = new Map((metadata.accounts || []).map(a => [a.id, { id: a.id, subject: a.subject || '', email: a.email || '', model: a.model || DEFAULT_MODEL, effort: EFFORTS.includes(a.effort) ? a.effort : DEFAULT_EFFORT, welcomed: !!a.welcomed, plan: planState(a.plan) }]));
   }
   metadata() { return { hostId: this.hostId, active: this.active, accounts: [...this.accounts.values()] }; }
   status() {
@@ -122,7 +131,7 @@ export class ChatGPTClient {
     attempt.exchanging = true;
     // Retain the issued ID even if a one-time authorization code expires during exchange.
     const previous = this.accounts.get(id);
-    if (!previous) this.accounts.set(id, { id, subject: '', email: '', model: DEFAULT_MODEL, welcomed: false });
+    if (!previous) this.accounts.set(id, { id, subject: '', email: '', model: DEFAULT_MODEL, effort: DEFAULT_EFFORT, welcomed: false });
     try {
       const data = await this.json(`${AUTH_ORIGIN}/api/accounts/oauth/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', client_id: id, code, code_verifier: attempt.verifier, redirect_uri: CALLBACK, resource: RESOURCE }), signal: AbortSignal.any([attempt.controller.signal, AbortSignal.timeout(20000)]) });
       const identity = await this.verify(data.id_token, id, attempt.nonce);
@@ -168,15 +177,16 @@ export class ChatGPTClient {
     const data = await this.json(`${RESOURCE}/models`, { headers: { Authorization: `Bearer ${token.access}` } }).catch(e => { throw this.denied(id, e); });
     if (this.#tokens.get(id) !== token) throw fail('The ChatGPT connection changed.');
     if (!Array.isArray(data.models)) throw fail('OpenAI did not return the ChatGPT model list.');
-    token.models = data.models.filter(m => m.visibility === 'list' && typeof m.slug === 'string').map(m => ({ slug: m.slug, name: String(m.display_name || m.slug) }));
+    token.models = data.models.filter(m => m.visibility === 'list' && typeof m.slug === 'string').map(m => ({ slug: m.slug, name: String(m.display_name || m.slug), efforts: effortsOf(m) }));
     return token.models;
   }
-  use({ accountId = this.active, model }) {
+  use({ accountId = this.active, model, effort }) {
     const account = this.accounts.get(accountId), token = this.#tokens.get(accountId);
     if (!account || !token?.scopes.includes(PLAN_SCOPE)) throw fail('Sign in and allow ChatGPT plan usage first.');
-    const chosen = model || account.model;
-    if (!token.models.some(m => m.slug === chosen)) throw fail('Choose an available model for this ChatGPT account.');
-    account.model = chosen; this.active = accountId; return this.status();
+    const chosen = model || account.model, listed = token.models.find(m => m.slug === chosen);
+    if (!listed) throw fail('Choose an available model for this ChatGPT account.');
+    // A model that lacks the chosen effort keeps the closest default rather than failing a request.
+    account.model = chosen; account.effort = effortFor(listed, listed.efforts.includes(effort) ? effort : account.effort) || account.effort; this.active = accountId; return this.status();
   }
   // OpenAI refused the plan grant: the next sign-in for this registration must ask for consent again.
   denied(id, error) {
@@ -209,7 +219,7 @@ export class ChatGPTClient {
     if (!token.models.some(m => m.slug === account.model)) throw fail('The default model is not available to this account. Choose a model in Translator settings.');
     let response;
     try {
-      response = await this.fetcher(`${RESOURCE}/responses`, { ...PRIVATE_REQUEST, method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token.access}` }, body: JSON.stringify({ model: account.model, instructions: subtitleInstructions, input: [{ role: 'user', content: subtitlePrompt(request, target) }], store: false, stream: true, ...(account.model.startsWith('gpt-6') ? { reasoning: { effort: 'low' } } : {}) }) });
+      response = await this.fetcher(`${RESOURCE}/responses`, { ...PRIVATE_REQUEST, method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token.access}` }, body: JSON.stringify({ model: account.model, instructions: subtitleInstructions, input: [{ role: 'user', content: subtitlePrompt(request, target) }], store: false, stream: true, ...(effortFor(token.models.find(m => m.slug === account.model), account.effort) ? { reasoning: { effort: effortFor(token.models.find(m => m.slug === account.model), account.effort) } } : {}) }) });
     } catch (e) { if (signal?.aborted) throw e; throw transient('Could not reach OpenAI. Retry when your connection is ready.'); }
     if (!response.ok) { let data; try { data = await readJSON(response); } catch {} throw this.denied(id, apiError(response.status, data, 'ChatGPT translation failed')); }
     return readResponsesStream(response, request.cues, signal);

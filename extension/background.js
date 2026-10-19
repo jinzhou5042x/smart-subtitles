@@ -131,7 +131,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       }
       case 'chatgptAccount': {
         if (!ui) throw new Error('Settings page only');
-        const { action, accountId, model, enablePlan, activate = true } = message;
+        const { action, accountId, model, effort, enablePlan, activate = true } = message;
         if (action === 'begin') return beginLogin({ accountId, enablePlan });
         if (action === 'status') return loginStatus();
         if (action === 'models') return chatgpt('models', { accountId });
@@ -141,8 +141,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         if (action === 'signOut') { cancelAll(); const result = await chatgpt('signOut', { accountId }); await clearLoginRule(); await broadcast(true); return result; }
         if (action === 'use') {
           // Choosing an account or model while another translator is in use only saves the choice.
-          if (!activate) { await chatgpt('use', { accountId, model }); return {}; }
-          cancelAll(); await chatgpt('use', { accountId, model });
+          if (!activate) { await chatgpt('use', { accountId, model, effort }); return {}; }
+          cancelAll(); await chatgpt('use', { accountId, model, effort });
           await updatePreferences(current => ({ ...current, provider: 'chatgpt' }));
           await broadcast(true); return {};
         }

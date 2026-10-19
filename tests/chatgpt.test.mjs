@@ -209,3 +209,15 @@ test('connection errors identify the failing step without disclosing request sec
   const controller = new AbortController(); controller.abort(new DOMException('expired', 'TimeoutError'));
   await assert.rejects(client.json(`${AUTH_ORIGIN}/.well-known/jwks.json`, { signal: controller.signal }), error => error.code === 'openai_timeout' && /timed out/.test(error.message));
 });
+
+test('the chosen reasoning effort is saved per account, sent with translations and kept valid for the model', async () => {
+  const f = fixture(); await f.login();
+  const account = () => f.client.status().accounts[0];
+  assert.equal(account().effort, 'low'); assert.deepEqual(account().models.find(m => m.slug === 'gpt-6-luna').efforts, ['low', 'medium', 'high']);
+  f.client.use({ model: 'gpt-6-luna', effort: 'high' });
+  assert.equal(account().effort, 'high'); assert.equal(f.client.metadata().accounts[0].effort, 'high');
+  await f.client.translate({ request, target: 'zh-CN' }, new AbortController().signal);
+  assert.equal(JSON.parse(f.calls.filter(c => c.url.endsWith('/responses')).at(-1).init.body).reasoning.effort, 'high');
+  f.client.use({ model: 'gpt-6-luna', effort: 'unsupported' });
+  assert.equal(account().effort, 'high', 'an effort the model does not list is not taken');
+});

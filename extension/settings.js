@@ -181,6 +181,12 @@ function renderChatgpt() {
     const models = [...(account.models.some(m => m.slug === account.model) ? [] : [['', 'Choose a model']]), ...account.models.map(m => [m.slug, m.name])];
     if ($('chatgptModel').dataset.items !== JSON.stringify(models)) { $('chatgptModel').dataset.items = JSON.stringify(models); $('chatgptModel').replaceChildren(...models.map(([id, label]) => new Option(label, id))); }
     if (document.activeElement !== $('chatgptModel')) $('chatgptModel').value = account.models.some(m => m.slug === account.model) ? account.model : '';
+    // Effort: the levels the chosen model accepts; Low is the default and the fastest for subtitles.
+    const efforts = account.models.find(m => m.slug === account.model)?.efforts || [];
+    $('effortRow').hidden = !efforts.length;
+    const effortItems = efforts.map(level => [level, EFFORT_NAMES[level] || level]);
+    if ($('chatgptEffort').dataset.items !== JSON.stringify(effortItems)) { $('chatgptEffort').dataset.items = JSON.stringify(effortItems); $('chatgptEffort').replaceChildren(...effortItems.map(([id, label]) => new Option(label, id))); }
+    if (document.activeElement !== $('chatgptEffort') && efforts.length) $('chatgptEffort').value = efforts.includes(account.effort) ? account.effort : efforts[0];
     $('testChatgpt').disabled = !account.ready || account.id !== accountState.active;
   }
 }
@@ -249,6 +255,13 @@ $('chatgptModel').onchange = () => run(async () => {
   await accountCall('use', { accountId: selectedAccount, model: $('chatgptModel').value, activate: using });
   preferences = await call({ type: 'settings' }); await refreshAccount();
   return `Model: ${name}.`;
+});
+const EFFORT_NAMES = { none: 'None', minimal: 'Minimal', low: 'Low · fastest', medium: 'Medium', high: 'High', xhigh: 'Extra high', max: 'Max · slowest' };
+$('chatgptEffort').onchange = () => run(async () => {
+  const using = preferences.provider === 'chatgpt', effort = $('chatgptEffort').value;
+  await accountCall('use', { accountId: selectedAccount, model: $('chatgptModel').value, effort, activate: using });
+  preferences = await call({ type: 'settings' }); await refreshAccount();
+  return `Effort: ${EFFORT_NAMES[effort] || effort}.`;
 });
 $('signout').onclick = () => run(async () => {
   const r = await accountCall('signOut', { accountId: selectedAccount });
