@@ -41,7 +41,7 @@ async function run(action, { button, out = $('result'), busy = '' } = {}) {
 const ready = id => kindOf(id) === 'browser' || (id === 'chatgpt' ? !!accountState.accounts.find(a => a.id === accountState.active)?.ready : !!profiles[id]?.configured);
 // Set up once, but its sign-in or key ended when Chrome closed.
 const lapsed = id => !ready(id) && (id === 'chatgpt' ? accountsLoaded && accountState.accounts.length > 0 : !!profiles[id]);
-const needs = id => kindOf(id) === 'subscription' ? 'Sign in again' : 'Key needed';
+const needs = id => kindOf(id) === 'subscription' ? 'Signed out' : 'Key needed';
 // What a row says, and its tone: in use and working, in use but stopped, set up, or nothing.
 function stateOf(id) {
   if (preferences.provider === id) {
@@ -65,8 +65,10 @@ function render() {
   if (!opened) return;
   const row = rows.find(r => r.dataset.provider === opened);
   if (row.nextElementSibling !== $('detail')) row.after($('detail'));
+  // What a provider is matters before it is set up; afterwards its own state says enough.
   $('detailBlurb').textContent = PROVIDERS[opened].blurb;
-  // ChatGPT's sign-in view says this itself ("Sign in again").
+  $('detailBlurb').hidden = kindOf(opened) !== 'browser' && (ready(opened) || lapsed(opened));
+  // ChatGPT's sign-in view says this itself (the account, "Sign in again").
   $('attention').hidden = !attention(opened) || kindOf(opened) !== 'api';
   $('attention').textContent = 'The key ended when Chrome closed. Enter it again.';
   for (const panel of ['chatgpt', 'cloud']) $(panel).hidden = panelOf(opened) !== panel;
@@ -133,11 +135,14 @@ function renderChatgpt() {
     verifying: ['Finishing sign-in…', '', 'Finishing sign-in…'],
     cancelling: ['Cancelling sign-in…', '', 'Cancelling…'],
   };
-  const view = views[phase] || (error ? ['Could not connect', error, 'Continue with ChatGPT']
-    : account?.connected && account.plan === 'denied' ? ['Plan usage was not allowed', 'Work accounts cannot share their plan. Use a different account and pick your personal one.', 'Continue with ChatGPT']
-    : account?.connected ? ['Allow ChatGPT plan usage', '', 'Continue with ChatGPT']
-    : account ? ['Not signed in', account.email ? `Sign in again as ${account.email}.` : '', 'Continue with ChatGPT']
-    : ['Sign in with ChatGPT', '', 'Continue with ChatGPT']);
+  // [title, detail, button]. A returning account is named by itself with one button; a first
+  // connection is just the button. Titles appear only for progress and problems.
+  const name = account?.email || 'Your ChatGPT account';
+  const view = views[phase] || (error ? ['Could not connect', error, 'Try again']
+    : account?.connected && account.plan === 'denied' ? ['Plan usage was not allowed', 'Work accounts cannot share their plan. Use another account and pick your personal one.', 'Try again']
+    : account?.connected ? [name, 'Allow plan usage to translate with it.', 'Continue']
+    : account ? [name, '', 'Sign in again']
+    : ['', '', 'Continue with ChatGPT']);
   $('loginPanel').hidden = connected; $('chatgptReady').hidden = !connected;
   $('loginPanel').dataset.state = busy ? phase : error ? 'error' : 'idle';
   $('accountStatus').textContent = view[0]; $('loginDetail').textContent = view[1];
@@ -146,7 +151,8 @@ function renderChatgpt() {
   $('cancelLogin').hidden = !busy; $('cancelLogin').disabled = phase === 'cancelling';
   const back = accounts.find(a => a.id === accountState.active && a.sharing);
   $('otherAccount').hidden = busy || !(account || back);
-  $('otherAccount').textContent = account ? 'Use a different account' : `Back to ${back?.email || 'the connected account'}`;
+  $('otherAccount').textContent = account ? 'Use another account' : `Back to ${back?.email || 'the connected account'}`;
+  $('personalNote').hidden = busy || !!account;
   if (connected) {
     const options = [...accounts.map(a => [a.id, `${a.email || 'ChatGPT account'} · ${a.id.slice(-6)}`]), ['', 'Add another account…']];
     if ($('account').dataset.items !== JSON.stringify(options)) { $('account').dataset.items = JSON.stringify(options); $('account').replaceChildren(...options.map(([id, label]) => new Option(label, id))); }

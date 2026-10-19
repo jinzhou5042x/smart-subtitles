@@ -165,7 +165,7 @@ try {
   assert.equal((await worker.evaluate(() => chrome.declarativeNetRequest.getSessionRules())).length, 0);
   await worker.evaluate(() => { chrome.declarativeNetRequest.updateSessionRules = realUpdateRules; });
   let opening = signInTab(settings);
-  await settings.getByRole('button', { name: 'Continue with ChatGPT', exact: true }).click();
+  await settings.locator('#signin', { hasText: 'Try again' }).click();
   let tabId = await opening;
   await settings.getByText('Finish signing in on OpenAI', { exact: true }).waitFor();
   assert.equal(await settings.locator('#signin').isVisible(), false);
@@ -216,7 +216,7 @@ try {
   assert.equal(inferenceCount, 2);
   await mkdir('dist/checks', { recursive: true }); await connected.screenshot({ path: 'dist/checks/chatgpt-settings.png', fullPage: true });
   await connected.locator('#signout').click(); await connected.getByText('Signed out of Smart Subtitles. Now using browser translation.', { exact: true }).waitFor();
-  await connected.locator('#accountStatus', { hasText: /^Not signed in$/ }).waitFor();
+  await connected.locator('#signin', { hasText: /^Sign in again$/ }).waitFor();
   assert.equal(await connected.locator('[data-provider=builtin]').getAttribute('data-active'), 'true');
   // An unexpectedly closed offscreen document must recover without trapping the UI.
   await worker.evaluate(() => chrome.offscreen.closeDocument());
