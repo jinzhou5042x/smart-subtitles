@@ -44,3 +44,52 @@ test('validated context retains bounded accepted translations and drops unrelate
  assert.equal(r.context[0].translation, '译文'); assert.equal(r.context[1].translation.length, 6000);
  assert.equal(r.context[0].credential, undefined);
 });
+const reply = { segments: cues.map(c => ({ id: c.id, text: 'translated' })) };
+const ok = provider => provider === 'claude' ? { content: [{ type: 'text', text: JSON.stringify(reply) }], stop_reason: 'end_turn' }
+  : provider === 'openai' ? { status: 'completed', output: [{ type: 'reasoning', summary: [] }, { type: 'message', content: [{ type: 'output_text', text: JSON.stringify(reply) }] }] }
+  : { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(reply) } }] };
+const profileFor = provider => ({ key: 'k', ...(provider === 'qwen' ? { baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' } : {}) });
+async function sent(provider) { let body; await translateRemote({ provider, target: 'es' }, profileFor(provider), request, undefined, async (url, o) => { body = { url, ...JSON.parse(o.body), headers: o.headers }; return Response.json(ok(provider)); }); return body; }
+test('each provider gets its documented request: JSON output, no default thinking, current models', async () => {
+  const openai = await sent('openai');
+  assert.equal(openai.url, 'https://api.openai.com/v1/responses'); assert.equal(openai.text.format.type, 'json_schema'); assert.equal(openai.text.format.strict, true); assert.equal(openai.reasoning.effort, 'low'); assert.equal(openai.store, false);
+  const claude = await sent('claude');
+  assert.equal(claude.model, 'claude-haiku-5-5'); assert.equal(claude.output_config.effort, 'low'); assert.equal(claude.output_config.format.type, 'json_schema');
+  assert.equal(claude.headers['anthropic-version'], '2023-06-01'); assert.ok(claude.max_tokens >= 16000);
+  const deepseek = await sent('deepseek');
+  assert.equal(deepseek.url, 'https://api.deepseek.com/chat/completions'); assert.deepEqual(deepseek.thinking, { type: 'disabled' }); assert.equal(deepseek.response_format.type, 'json_object');
+  const qwen = await sent('qwen');
+  assert.equal(qwen.model, 'qwen3.8-flash'); assert.equal(qwen.enable_thinking, false); assert.equal(qwen.response_format.type, 'json_object');
+  assert.match(JSON.stringify(qwen.messages), /JSON/, 'JSON mode requires the word JSON in the prompt');
+  assert.throws(() => endpoint('qwen', { baseUrl: 'https://evil.example/compatible-mode/v1' }));
+});
+async function failed(provider, status, body, headers = {}) {
+  return translateRemote({ provider, target: 'es' }, profileFor(provider), request, undefined, async () => Response.json(body, { status, headers })).then(() => null, e => e);
+}
+test('errors say whether the viewer must act (key, billing, quota) or a retry will do (rate limit, overload)', async () => {
+  for (const [provider, status, body, headers, needsUser, words] of [
+    ['openai', 429, { error: { type: 'insufficient_quota', code: 'credit_balance_exhausted' } }, {}, true, /credit/],
+    ['openai', 429, { error: { code: 'slow_down' } }, {}, false, /rate limit/],
+    ['claude', 402, { type: 'error', error: { type: 'billing_error' } }, {}, true, /balance|billing/],
+    ['claude', 429, { error: { type: 'rate_limit_error' } }, { 'retry-after': '5' }, false, /rate limit/],
+    ['claude', 429, { error: { type: 'rate_limit_error' } }, {}, true, /spending limit/],
+    ['claude', 529, { error: { type: 'overloaded_error' } }, {}, false, /busy/],
+    ['deepseek', 402, { error: { message: 'Insufficient Balance' } }, {}, true, /balance/],
+    ['qwen', 400, { code: 'Arrearage' }, {}, true, /overdue/],
+    ['qwen', 401, { code: 'InvalidApiKey' }, {}, true, /region/],
+    ['google', 403, { error: { errors: [{ reason: 'userRateLimitExceeded' }] } }, {}, false, /rate limit/],
+    ['google', 403, { error: { errors: [{ reason: 'dailyLimitExceeded' }] } }, {}, true, /daily quota/],
+    ['google', 403, { error: { details: [{ reason: 'SERVICE_DISABLED' }] } }, {}, true, /not enabled/],
+    ['google', 400, { error: { details: [{ reason: 'API_KEY_INVALID' }] } }, {}, true, /key/],
+  ]) {
+    const error = await failed(provider, status, body, headers);
+    assert.equal(error.needsUser, needsUser, `${provider} ${status} ${JSON.stringify(body)}`); assert.match(error.message, words);
+  }
+});
+test('cut-off, refused and empty replies are retried rather than shown', async () => {
+  for (const [provider, body] of [['openai', { status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } }], ['openai', { status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'no' }] }] }],
+    ['claude', { content: [], stop_reason: 'max_tokens' }], ['deepseek', { choices: [{ finish_reason: 'stop', message: { content: '' } }] }], ['qwen', { choices: [{ finish_reason: 'length', message: { content: '{"seg' } }] }]]) {
+    const error = await translateRemote({ provider, target: 'es' }, profileFor(provider), request, undefined, async () => Response.json(body)).then(() => null, e => e);
+    assert.ok(error && error.needsUser === false, `${provider} ${JSON.stringify(body)}`);
+  }
+});

@@ -100,15 +100,24 @@ function renderCloud() {
   $('key').placeholder = provider === 'custom' ? 'Optional' : 'Paste your key';
   $('guide').hidden = !preset.guide; $('guide').href = preset.guide || '#';
   $('modelRow').hidden = provider === 'google'; $('model').value = p.model || preset.model || '';
-  $('endpointRow').hidden = !!preset.baseUrl; $('baseUrl').value = p.baseUrl || preset.baseUrl || '';
-  $('endpointHelp').textContent = provider === 'qwen' ? 'Your region’s base URL from Model Studio.' : '';
+  // A provider with regions offers them by name; Other takes a URL of its own (a workspace address).
+  const regions = preset.regions || [], savedUrl = p.baseUrl || '';
+  $('regionRow').hidden = !regions.length;
+  if (regions.length) {
+    $('region').replaceChildren(...regions.map(([name, url]) => new Option(name, url)), new Option('Other…', ''));
+    $('region').value = !savedUrl || regions.some(([, url]) => url === savedUrl) ? savedUrl || regions[0][1] : '';
+  }
+  $('baseUrl').value = savedUrl || preset.baseUrl || '';
+  showServer();
+  $('endpointHelp').textContent = regions.length ? 'Your workspace base URL from Model Studio.' : '';
   // Change and Remove sit with the saved key; a local server set up without a key removes from below.
   $('cancelKey').hidden = !(editingKey && p.keyHint);
   $('removeSetup').hidden = !profiles[provider] || !!p.keyHint;
 }
 $('cloud').onsubmit = e => {
   e.preventDefault(); const provider = opened, switching = preferences.provider !== provider;
-  let baseUrl; try { baseUrl = endpoint(provider, { baseUrl: $('baseUrl').value }); } catch (error) { say(error.message, 'error'); return; }
+  const chosen = PROVIDERS[provider].regions && $('region').value;
+  let baseUrl; try { baseUrl = endpoint(provider, { baseUrl: chosen || $('baseUrl').value }); } catch (error) { say(error.message, 'error'); return; }
   // Requested directly in the click, while user activation is present.
   const permission = chrome.permissions.request({ origins: [new URL(baseUrl).origin + '/*'] });
   void run(async () => {
@@ -119,6 +128,8 @@ $('cloud').onsubmit = e => {
     return switching ? `Connected. Now using ${PROVIDERS[provider].name}.` : 'Saved.';
   }, { button: $('connect'), busy: 'Testing…' });
 };
+const showServer = () => { const preset = PROVIDERS[opened]; $('endpointRow').hidden = !!preset?.baseUrl || (!!preset?.regions && !!$('region').value); };
+$('region').onchange = () => { showServer(); if (!$('region').value) $('baseUrl').focus(); };
 $('changeKey').onclick = () => { editingKey = true; say(''); renderCloud(); $('key').focus(); };
 $('cancelKey').onclick = () => { editingKey = false; say(''); renderCloud(); };
 const removeProfile = button => run(async () => {
