@@ -11,12 +11,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: 24
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm test
@@ -25,7 +25,7 @@ jobs:
       - run: npm run check:extension
       - run: npm run check:chatgpt
       - run: npm run package
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -35,7 +35,7 @@ jobs:
             if (tag !== `v${version}`) throw new Error('Tag and extension versions differ');
             const name = `smart-subtitles-${version}.zip`;
             const data = fs.readFileSync(`dist/store/${name}`);
-            const body = `All translators now connect from the Chrome extension. No companion app, Node.js installation, terminal commands or native messaging.\n\n- Browser translation remains the default.\n- ChatGPT subscription: choose **Continue with ChatGPT** in Translator settings. Credentials stay in memory; sign in again after fully quitting Chrome. Account eligibility and limits are determined by OpenAI.\n- Google Cloud and other API providers connect directly using your own key.\n- Subtitles still translate in order from the beginning; seeking does not reorder the queue.\n\nThis ZIP is the same extension package for Windows, macOS and Linux, for store upload or developer-mode installation. This GitHub release does not update the Chrome Web Store listing.\n\n[User guide](https://github.com/jinzhou5042x/smart-subtitles#readme)`;
+            const body = `All translators now connect from the Chrome extension. No companion app, Node.js installation, terminal commands or native messaging.\n\n- Browser translation remains the default.\n- ChatGPT subscription: choose **Continue with ChatGPT** in Settings. Credentials stay in memory; sign in again after fully quitting Chrome. Account eligibility and limits are determined by OpenAI.\n- Google Cloud and other API providers connect directly using your own key.\n- Subtitles still translate in order from the beginning; seeking does not reorder the queue.\n\nThis ZIP is the same extension package for Windows, macOS and Linux, for store upload or developer-mode installation. This GitHub release does not update the Chrome Web Store listing.\n\n[User guide](https://github.com/jinzhou5042x/smart-subtitles#readme)`;
             const {data: release} = await github.rest.repos.createRelease({...context.repo, tag_name: tag, name: `Smart Subtitles ${version}`, body, draft: true});
             await github.rest.repos.uploadReleaseAsset({...context.repo, release_id: release.id, name, data});
             await github.rest.repos.uploadReleaseAsset({...context.repo, release_id: release.id, name: name + '.sha256.txt', data: Buffer.from(crypto.createHash('sha256').update(data).digest('hex') + '  ' + name + '\n')});

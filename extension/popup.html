@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Subtitles</title><link rel="stylesheet" href="popup.css"></head>
 <body><main>
-<header><img class="logo" src="icon.svg" alt="" width="24" height="24"><h1>Smart Subtitles</h1><label class="switch"><input id="enabled" type="checkbox" role="switch" aria-label="Show bilingual subtitles"><span aria-hidden="true"></span></label></header>
+<header><img class="logo" src="icon.svg" alt="" width="24" height="24"><h1>Smart Subtitles</h1><button id="settings" class="icon" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 12.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2Z"/><path d="M16.2 11.6l1.3 1-1.6 2.8-1.6-.6a6 6 0 0 1-1.7 1l-.3 1.7H9.1l-.3-1.7a6 6 0 0 1-1.7-1l-1.6.6-1.6-2.8 1.3-1a6 6 0 0 1 0-2l-1.3-1 1.6-2.8 1.6.6a6 6 0 0 1 1.7-1l.3-1.7h3.2l.3 1.7a6 6 0 0 1 1.7 1l1.6-.6 1.6 2.8-1.3 1a6 6 0 0 1 0 2Z"/></svg></button><label class="switch"><input id="enabled" type="checkbox" role="switch" aria-label="Show bilingual subtitles"><span aria-hidden="true"></span></label></header>
 <section id="card" class="card" aria-live="polite" data-tone="waiting"><p id="status">Checking this tab…</p><div class="track" id="track" hidden><div class="fill" id="fill"></div></div><p id="detail"></p><div class="card-action"><button id="action" class="primary" hidden></button><a id="usage" class="button primary" href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener" hidden>Manage ChatGPT usage</a></div></section>
 <div class="group">
 <div class="row"><label for="target">Language</label><select id="target"></select></div>
@@ -9,5 +9,5 @@
 <div class="row"><label for="fontSize">Size</label><input id="fontSize" type="range" min="18" max="100" value="60"><output id="fontSizeValue" for="fontSize">60</output></div>
 </div>
 <p id="toast" role="status" aria-live="polite"></p>
-<footer><nav><a id="settings" href="#">Settings</a><a id="copy" href="#">Copy diagnostics</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues/new" target="_blank" rel="noopener">Report an issue</a><a href="legal.html" target="_blank">Privacy</a></nav></footer>
+<footer><nav><a id="copy" href="#">Copy diagnostics</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues/new" target="_blank" rel="noopener">Report an issue</a><a href="legal.html" target="_blank">Privacy</a></nav></footer>
 </main><script src="popup.js" type="module"></script></body></html>

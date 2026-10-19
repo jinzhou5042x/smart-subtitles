@@ -72,7 +72,7 @@ try {
     $('action').disabled = true; $('action').textContent = 'Retrying…';
     try { await player({ type: 'retry' }); } finally { $('action').disabled = false; await refresh(); }
   };
-  $('settings').onclick = e => { e.preventDefault(); void openSettings(''); };
+  $('settings').onclick = () => openSettings('');
   $('copy').onclick = async e => {
     e.preventDefault();
     const snapshot = await player({ type: 'snapshot' }).catch(() => null);

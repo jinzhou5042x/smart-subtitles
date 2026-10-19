@@ -22,7 +22,7 @@ Chrome's [built-in Translator API](https://developer.chrome.com/docs/ai/translat
 
 ### Choose a translator
 
-Click **Settings** at the bottom of the popup. It is one page. Translators are listed in three groups: **Browser** (built in, free), **Subscription** (sign in with a plan you pay for, such as ChatGPT) and **API key** (your own key from Google Cloud, OpenAI, Claude, DeepSeek, Qwen or another server). Click a provider to open its setup under it. **In use** with a check mark is the translator subtitles use now; **Ready** is set up; **Sign in again** or **Key needed** means its sign-in or key ended when Chrome closed. **Use** switches to a provider that is ready, and finishing a setup switches to it automatically. Every button answers right below it: what it is doing, then what happened. Language, subtitle size and saved translations are on the same page. Switching to a paid provider is always your choice; the extension does not silently fall back to one.
+Click the gear icon at the top of the popup. It is one page. Translators are listed in three groups: **Browser** (built in, free), **Subscription** (sign in with a plan you pay for, such as ChatGPT) and **API key** (your own key from Google Cloud, OpenAI, Claude, DeepSeek, Qwen or another server). Click a provider to open its setup under it. **In use** with a check mark is the translator subtitles use now; **Ready** is set up; **Sign in again** or **Key needed** means its sign-in or key ended when Chrome closed. **Use** switches to a provider that is ready, and finishing a setup switches to it automatically. Every button answers right below it: what it is doing, then what happened. Language, subtitle size and saved translations are on the same page. Switching to a paid provider is always your choice; the extension does not silently fall back to one.
 
 | Translator | Setup |
 | --- | --- |
@@ -140,7 +140,7 @@ Windows、macOS、Linux 都只需要桌面版 Chrome 扩展，不用另下 ZIP �
 
 ### 设置页
 
-点弹窗底部的 **Settings**。设置只有一页，翻译器分三组列出：**Browser**（浏览器内置，免费）、**Subscription**（登录你已付费的订阅，比如 ChatGPT）、**API key**（你自己的 Google Cloud、OpenAI、Claude、DeepSeek、Qwen 或其他服务器的 key）。点一个服务商，它的设置就在下方展开。带勾的 **In use** 是正在使用的翻译器；**Ready** 表示已设置好；**Sign in again** 或 **Key needed** 表示 Chrome 关闭后登录或 key 已失效。已经可用的服务商点 **Use** 就切换，完成登录或连接后也会自动切换。每个按钮的结果都显示在它下方：先显示正在做什么，再显示结果。翻译语言、字幕大小和已保存的翻译（最多 100,000 行）也在同一页。
+点弹窗右上角的齿轮图标。设置只有一页，翻译器分三组列出：**Browser**（浏览器内置，免费）、**Subscription**（登录你已付费的订阅，比如 ChatGPT）、**API key**（你自己的 Google Cloud、OpenAI、Claude、DeepSeek、Qwen 或其他服务器的 key）。点一个服务商，它的设置就在下方展开。带勾的 **In use** 是正在使用的翻译器；**Ready** 表示已设置好；**Sign in again** 或 **Key needed** 表示 Chrome 关闭后登录或 key 已失效。已经可用的服务商点 **Use** 就切换，完成登录或连接后也会自动切换。每个按钮的结果都显示在它下方：先显示正在做什么，再显示结果。翻译语言、字幕大小和已保存的翻译（最多 100,000 行）也在同一页。
 
 ### 云端翻译和本地模型
 
@@ -225,7 +225,7 @@ La [traducción integrada de Chrome](https://developer.chrome.com/docs/ai/transl
 
 ### Ajustes
 
-Pulsa **Settings** al pie de la ventana de la extensión. Es una sola página. Los traductores aparecen en tres grupos: **Browser** (integrado, gratis), **Subscription** (inicia sesión con un plan que ya pagas, como ChatGPT) y **API key** (tu propia clave de Google Cloud, OpenAI, Claude, DeepSeek, Qwen u otro servidor). Pulsa un proveedor para abrir su configuración debajo. **In use** con una marca indica el traductor en uso; **Ready**, uno configurado; **Sign in again** o **Key needed**, que su sesión o clave terminó al cerrar Chrome. **Use** cambia a un proveedor que ya está listo, y al terminar una configuración se cambia automáticamente. Cada botón responde justo debajo: qué está haciendo y qué pasó. El idioma, el tamaño de los subtítulos y las traducciones guardadas (hasta 100.000 líneas) están en la misma página.
+Pulsa el icono del engranaje arriba en la ventana de la extensión. Es una sola página. Los traductores aparecen en tres grupos: **Browser** (integrado, gratis), **Subscription** (inicia sesión con un plan que ya pagas, como ChatGPT) y **API key** (tu propia clave de Google Cloud, OpenAI, Claude, DeepSeek, Qwen u otro servidor). Pulsa un proveedor para abrir su configuración debajo. **In use** con una marca indica el traductor en uso; **Ready**, uno configurado; **Sign in again** o **Key needed**, que su sesión o clave terminó al cerrar Chrome. **Use** cambia a un proveedor que ya está listo, y al terminar una configuración se cambia automáticamente. Cada botón responde justo debajo: qué está haciendo y qué pasó. El idioma, el tamaño de los subtítulos y las traducciones guardadas (hasta 100.000 líneas) están en la misma página.
 
 ### Proveedores
 
