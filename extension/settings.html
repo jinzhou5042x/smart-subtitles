@@ -19,7 +19,7 @@
           <p class="login-title"><span class="indicator" aria-hidden="true"></span><strong id="accountStatus">Connect your ChatGPT account</strong></p>
           <p id="loginDetail" class="note"></p>
           <div class="actions"><button id="signin" type="button" class="primary">Continue with ChatGPT</button><button id="returnLogin" type="button" class="primary" hidden>Return to sign-in</button><button id="cancelLogin" type="button" class="link" hidden>Cancel</button><button id="otherAccount" type="button" class="link" hidden>Use a different account</button></div>
-          <p class="fine">Personal accounts only (Go, Plus or Pro). Work workspaces cannot share their plan with apps. <a href="https://github.com/jinzhou5042x/smart-subtitles#work-accounts-chatgpt-business-enterprise-edu" target="_blank" rel="noopener">Why&nbsp;↗</a></p>
+          <p class="fine">Personal plans only. <a href="https://github.com/jinzhou5042x/smart-subtitles#work-accounts-chatgpt-business-enterprise-edu" target="_blank" rel="noopener">Why&nbsp;↗</a></p>
         </div>
         <div id="chatgptReady" class="fields" hidden>
           <div class="field"><label for="account">Account</label><select id="account"></select></div>
@@ -30,7 +30,7 @@
 
       <form class="panel" id="cloud" hidden novalidate>
         <div class="fields">
-          <div class="field" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><span class="hint"><a id="guide" target="_blank" rel="noopener">Get a key&nbsp;↗</a> Kept until Chrome closes.</span></div></div>
+          <div class="field" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><span class="hint"><a id="guide" target="_blank" rel="noopener">Get a key&nbsp;↗</a></span></div></div>
           <div class="field" id="modelRow"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
           <div class="field" id="endpointRow"><label for="baseUrl">Server</label><div class="stack"><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><span id="endpointHelp" class="hint"></span></div></div>
         </div>
@@ -55,6 +55,6 @@
 
   <footer><a href="https://github.com/jinzhou5042x/smart-subtitles#readme" target="_blank" rel="noopener">User guide</a><a href="legal.html" target="_blank">Privacy</a><a href="https://github.com/jinzhou5042x/smart-subtitles/issues" target="_blank" rel="noopener">Feedback</a></footer>
 </main>
-<dialog id="clearDialog"><h2>Clear saved translations?</h2><p>Videos you watched before will be translated again. Your sign-in and keys stay connected.</p><div class="actions"><button id="cancelClear" type="button" class="secondary">Keep</button><button id="confirmClear" type="button" class="primary destructive">Clear</button></div></dialog>
+<dialog id="clearDialog"><h2>Clear saved translations?</h2><p>Videos will be translated again. Sign-ins and keys stay.</p><div class="actions"><button id="cancelClear" type="button" class="secondary">Keep</button><button id="confirmClear" type="button" class="primary destructive">Clear</button></div></dialog>
 <script type="module" src="settings.js"></script>
 </body></html>

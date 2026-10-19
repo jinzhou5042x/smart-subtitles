@@ -8,14 +8,14 @@ export const KINDS = {
   api: { name: 'API key', blurb: 'Your own key, billed by the provider.' },
 };
 export const PROVIDERS = {
-  builtin: { kind: 'browser', name: 'Browser translation', short: 'Chrome', blurb: 'Free and private: Chrome translates on this computer. The first time, click Start subtitles on the video.' },
-  chatgpt: { kind: 'subscription', name: 'ChatGPT subscription', short: 'ChatGPT', blurb: 'Natural, context-aware subtitles using your personal ChatGPT plan.', model: 'gpt-6-luna' },
-  google: { kind: 'api', name: 'Google Cloud', short: 'Google Cloud', blurb: 'Fast machine translation with a Cloud Translation key.', baseUrl: 'https://translation.googleapis.com/language/translate/v2', guide: 'https://docs.cloud.google.com/translate/docs/setup' },
-  openai: { kind: 'api', name: 'OpenAI API', short: 'OpenAI', blurb: 'GPT models with an OpenAI API key, billed separately from ChatGPT.', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6-luna', guide: 'https://platform.openai.com/api-keys' },
-  claude: { kind: 'api', name: 'Claude API', short: 'Claude', blurb: 'Claude models with an Anthropic API key.', baseUrl: 'https://api.anthropic.com/v1', guide: 'https://platform.claude.com/settings/keys' },
-  deepseek: { kind: 'api', name: 'DeepSeek', short: 'DeepSeek', blurb: 'DeepSeek models with a DeepSeek API key.', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash', guide: 'https://platform.deepseek.com/api_keys' },
-  qwen: { kind: 'api', name: 'Qwen', short: 'Qwen', blurb: 'Qwen models from Alibaba Cloud Model Studio.', guide: 'https://www.alibabacloud.com/help/en/model-studio/get-api-key' },
-  custom: { kind: 'api', name: 'Other / local model', short: 'Other / local', blurb: 'Any OpenAI-compatible server, including a model on this computer.' },
+  builtin: { kind: 'browser', name: 'Browser translation', short: 'Chrome', blurb: 'Free and private, on this computer.' },
+  chatgpt: { kind: 'subscription', name: 'ChatGPT subscription', short: 'ChatGPT', blurb: 'Natural translation with your ChatGPT plan.', model: 'gpt-6-luna' },
+  google: { kind: 'api', name: 'Google Cloud', short: 'Google Cloud', blurb: 'Fast machine translation.', baseUrl: 'https://translation.googleapis.com/language/translate/v2', guide: 'https://docs.cloud.google.com/translate/docs/setup' },
+  openai: { kind: 'api', name: 'OpenAI API', short: 'OpenAI', blurb: 'Billed by OpenAI, separately from ChatGPT.', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6-luna', guide: 'https://platform.openai.com/api-keys' },
+  claude: { kind: 'api', name: 'Claude API', short: 'Claude', blurb: 'Billed by Anthropic.', baseUrl: 'https://api.anthropic.com/v1', guide: 'https://platform.claude.com/settings/keys' },
+  deepseek: { kind: 'api', name: 'DeepSeek', short: 'DeepSeek', blurb: 'Billed by DeepSeek.', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash', guide: 'https://platform.deepseek.com/api_keys' },
+  qwen: { kind: 'api', name: 'Qwen', short: 'Qwen', blurb: 'Billed by Alibaba Cloud.', guide: 'https://www.alibabacloud.com/help/en/model-studio/get-api-key' },
+  custom: { kind: 'api', name: 'Other / local model', short: 'Other / local', blurb: 'Any OpenAI-compatible server, or a model on this computer.' },
 };
 export const DEFAULTS = { enabled: true, target: 'zh-CN', provider: 'builtin', fontSize: 60, subtitleOffset: 0 };
 export function endpoint(provider, profile = {}) {

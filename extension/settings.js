@@ -51,7 +51,7 @@ function stateOf(id) {
   return ready(id) && kindOf(id) !== 'browser' ? ['Ready', ''] : lapsed(id) ? [needs(id), ''] : ['', ''];
 }
 const attention = id => preferences.provider === id && stateOf(id)[1] === 'warn';
-const NAMES = { builtin: 'browser translation', chatgpt: 'your ChatGPT plan' };
+const NAMES = { builtin: 'browser translation', chatgpt: 'ChatGPT' };
 
 // Opening a provider only shows its setup; Use, or finishing its setup, switches to it.
 function render() {
@@ -68,7 +68,7 @@ function render() {
   $('detailBlurb').textContent = PROVIDERS[opened].blurb;
   // ChatGPT's sign-in view says this itself ("Sign in again").
   $('attention').hidden = !attention(opened) || kindOf(opened) !== 'api';
-  $('attention').textContent = `Keys are kept only until Chrome closes. Enter your ${PROVIDERS[opened].short} key again to keep translating.`;
+  $('attention').textContent = 'The key ended when Chrome closed. Enter it again.';
   for (const panel of ['chatgpt', 'cloud']) $(panel).hidden = panelOf(opened) !== panel;
   // API providers switch with Connect; the others with Use once they are ready.
   $('useRow').hidden = kindOf(opened) === 'api' || preferences.provider === opened || !ready(opened);
@@ -85,18 +85,18 @@ function show(id) {
 $('use').onclick = () => run(async () => {
   const id = opened;
   preferences = await call({ type: 'saveSettings', settings: { provider: id } }); render();
-  return `Subtitles now use ${NAMES[id] || PROVIDERS[id].name}.`;
+  return `Now using ${NAMES[id] || PROVIDERS[id].name}.`;
 }, { button: $('use') });
 
 // Your own API key
 function renderCloud() {
   const provider = opened, preset = PROVIDERS[provider], p = profiles[provider] || {};
   $('key').value = '';
-  $('key').placeholder = p.configured && provider !== 'custom' ? 'Saved · leave blank to keep it' : provider === 'custom' ? 'Optional for local models' : 'Paste your API key';
+  $('key').placeholder = p.configured && provider !== 'custom' ? 'Saved' : provider === 'custom' ? 'Optional' : 'Paste your key';
   $('guide').hidden = !preset.guide; $('guide').href = preset.guide || '#';
   $('modelRow').hidden = provider === 'google'; $('model').value = p.model || preset.model || '';
   $('endpointRow').hidden = !!preset.baseUrl; $('baseUrl').value = p.baseUrl || preset.baseUrl || '';
-  $('endpointHelp').textContent = provider === 'qwen' ? 'The API base URL for your region, from Model Studio.' : 'OpenAI-compatible, e.g. http://localhost:11434/v1 for a model on this computer.';
+  $('endpointHelp').textContent = provider === 'qwen' ? 'Your region’s base URL from Model Studio.' : '';
   $('remove').hidden = !profiles[provider]; $('remove').textContent = provider === 'custom' ? 'Remove' : 'Remove key';
 }
 $('cloud').onsubmit = e => {
@@ -109,14 +109,14 @@ $('cloud').onsubmit = e => {
     // The background tests the key with one short line and saves it only if that works.
     preferences = await call({ type: 'connectProfile', provider, profile: { baseUrl, model: $('model').value, key: $('key').value } });
     profiles = await call({ type: 'profiles' }); renderCloud(); render();
-    return switching ? `Connected. Subtitles now use ${PROVIDERS[provider].name}.` : 'Saved and tested.';
-  }, { button: $('connect'), busy: 'Testing the connection…' });
+    return switching ? `Connected. Now using ${PROVIDERS[provider].name}.` : 'Saved.';
+  }, { button: $('connect'), busy: 'Testing…' });
 };
 $('remove').onclick = () => run(async () => {
   const provider = opened, wasActive = preferences.provider === provider;
   preferences = await call({ type: 'removeProfile', provider }); profiles = await call({ type: 'profiles' });
   renderCloud(); render();
-  return wasActive ? 'Removed. Subtitles now use browser translation.' : 'Removed.';
+  return wasActive ? 'Removed. Now using browser translation.' : 'Removed.';
 }, { button: $('remove') });
 
 // ChatGPT
@@ -127,17 +127,17 @@ function renderChatgpt() {
   const error = busy ? '' : signInError || accountState.loginError;
   const connected = !busy && !error && !!account?.sharing;
   const views = {
-    permission: ['Allow the connection in Chrome', 'Choose Allow in Chrome’s prompt. If you do not see it, look near the address bar.', 'Waiting for Chrome…'],
-    opening: ['Opening ChatGPT…', 'OpenAI’s sign-in page opens in a new tab.', 'Opening ChatGPT…'],
-    waiting: ['Finish signing in on OpenAI', 'Complete sign-in in the tab that opened and allow plan usage. You come back here automatically. If OpenAI says your organization hasn’t enabled access for this app, cancel and sign in with your personal account.', 'Waiting for sign-in…'],
-    verifying: ['Finishing sign-in…', 'Checking your account and its models.', 'Finishing sign-in…'],
+    permission: ['Allow the connection in Chrome', 'Choose Allow in Chrome’s prompt, near the address bar.', 'Waiting for Chrome…'],
+    opening: ['Opening ChatGPT…', '', 'Opening ChatGPT…'],
+    waiting: ['Finish signing in on OpenAI', 'Use your personal account in the new tab and allow plan usage.', 'Waiting for sign-in…'],
+    verifying: ['Finishing sign-in…', '', 'Finishing sign-in…'],
     cancelling: ['Cancelling sign-in…', '', 'Cancelling…'],
   };
   const view = views[phase] || (error ? ['Could not connect', error, 'Continue with ChatGPT']
-    : account?.connected && account.plan === 'denied' ? ['ChatGPT plan usage was not granted', 'OpenAI signed you in but did not allow plan usage. Work workspaces (Business, Enterprise, Edu) may not let apps use their plan. Use a different account and pick your personal one, or choose another translator.', 'Continue with ChatGPT']
-    : account?.connected ? ['Allow ChatGPT plan usage', 'You are signed in. Continue to allow subtitle translation with your plan.', 'Continue with ChatGPT']
-    : account ? ['Not signed in', `Continue to sign in${account.email ? ` as ${account.email}` : ''}. Sign-in ends when Chrome closes.`, 'Continue with ChatGPT']
-    : ['Connect your ChatGPT account', 'Sign in on OpenAI’s page and allow plan usage. You come back here automatically.', 'Continue with ChatGPT']);
+    : account?.connected && account.plan === 'denied' ? ['Plan usage was not allowed', 'Work accounts cannot share their plan. Use a different account and pick your personal one.', 'Continue with ChatGPT']
+    : account?.connected ? ['Allow ChatGPT plan usage', '', 'Continue with ChatGPT']
+    : account ? ['Not signed in', account.email ? `Sign in again as ${account.email}.` : '', 'Continue with ChatGPT']
+    : ['Sign in with ChatGPT', '', 'Continue with ChatGPT']);
   $('loginPanel').hidden = connected; $('chatgptReady').hidden = !connected;
   $('loginPanel').dataset.state = busy ? phase : error ? 'error' : 'idle';
   $('accountStatus').textContent = view[0]; $('loginDetail').textContent = view[1];
@@ -167,7 +167,7 @@ async function refreshAccount() {
     const active = accountState.accounts.find(a => a.id === accountState.active);
     if (active?.ready && !active.welcomed) {
       preferences = await call({ type: 'settings' });
-      opened = 'chatgpt'; say('Connected. Subtitles now use your ChatGPT plan.', 'success');
+      opened = 'chatgpt'; say('Connected. Now using ChatGPT.', 'success');
       await accountCall('welcome'); active.welcomed = true;
     }
     render(); renderChatgpt();
@@ -214,26 +214,26 @@ $('account').onchange = () => run(async () => {
   const using = preferences.provider === 'chatgpt';
   await accountCall('use', { accountId: account.id, model: account.model, activate: using });
   preferences = await call({ type: 'settings' }); await refreshAccount();
-  return using ? `Subtitles now use ChatGPT with ${account.email || 'this account'}.` : `${account.email || 'Account'} selected.`;
+  return using ? `Now using ${account.email || 'this account'}.` : 'Account selected.';
 });
 $('chatgptModel').onchange = () => run(async () => {
   if (!$('chatgptModel').value) return '';
   const using = preferences.provider === 'chatgpt', name = $('chatgptModel').selectedOptions[0].text;
   await accountCall('use', { accountId: selectedAccount, model: $('chatgptModel').value, activate: using });
   preferences = await call({ type: 'settings' }); await refreshAccount();
-  return using ? `Model saved. Subtitles use ${name} from the next line.` : `Model saved: ${name}.`;
+  return `Model: ${name}.`;
 });
 $('signout').onclick = () => run(async () => {
   const r = await accountCall('signOut', { accountId: selectedAccount });
-  if (preferences.provider === 'chatgpt') { preferences = await call({ type: 'saveSettings', settings: { provider: 'builtin' } }); await refreshAccount(); return `${r.message} Subtitles now use browser translation.`; }
+  if (preferences.provider === 'chatgpt') { preferences = await call({ type: 'saveSettings', settings: { provider: 'builtin' } }); await refreshAccount(); return `${r.message} Now using browser translation.`; }
   await refreshAccount(); return r.message;
 }, { button: $('signout') });
-$('testChatgpt').onclick = () => run(async () => `Connected: ${(await call({ type: 'testProfile', provider: 'chatgpt' })).text}`, { button: $('testChatgpt'), busy: 'Sending a test line…' });
+$('testChatgpt').onclick = () => run(async () => `Connected: ${(await call({ type: 'testProfile', provider: 'chatgpt' })).text}`, { button: $('testChatgpt'), busy: 'Testing…' });
 
 // Subtitles. The size follows the slider while it moves, so the video shows the change at once.
 $('target').onchange = () => run(async () => {
   preferences = await call({ type: 'saveSettings', settings: { target: $('target').value } });
-  return `Subtitles now in ${$('target').selectedOptions[0].text}. Open videos start again in this language.`;
+  return `Subtitles now in ${$('target').selectedOptions[0].text}.`;
 }, { out: $('subtitlesResult') });
 let sizeTimer;
 const saveSize = () => call({ type: 'saveSettings', settings: { fontSize: Number($('fontSize').value) } }).then(next => { preferences = next; }, e => say(e.message, 'error', $('subtitlesResult')));

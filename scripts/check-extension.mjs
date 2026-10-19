@@ -57,7 +57,7 @@ try {
   await settings.locator('#baseUrl').fill(base + '/v1'); await settings.locator('#model').fill('fixture-model');
   await settings.locator('#key').fill('synthetic-api-key');
   await settings.getByRole('button', { name: 'Connect', exact: true }).click();
-  await settings.getByText('Connected. Subtitles now use Other / local model.').waitFor();
+  await settings.getByText('Connected. Now using Other / local model.').waitFor();
   assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-api-key/);
   assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
   // A key that fails its test line is reported and never replaces the working one.
@@ -129,7 +129,7 @@ try {
   await settings.locator('#clear').click(); await settings.locator('#confirmClear').click(); await settings.getByText('Saved translations cleared.', { exact: true }).waitFor();
   await waitForCall(before + 1); assert.equal(calls[before].cues[0].text, 'Dialogue 0', 'clearing the cache starts fresh at the beginning');
   await settings.locator('[data-provider=builtin]').click(); await settings.locator('#use').click();
-  await settings.getByText('Subtitles now use browser translation.').waitFor();
+  await settings.getByText('Now using browser translation.').waitFor();
   await popup.reload(); await popup.locator('#provider').waitFor();
   assert.equal(await popup.locator('#provider').inputValue(), 'builtin');
   await popup.locator('body').screenshot({ path: 'dist/checks/popup.png' });
