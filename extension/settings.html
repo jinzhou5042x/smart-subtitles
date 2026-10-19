@@ -30,7 +30,7 @@
 
       <form class="panel" id="cloud" hidden novalidate>
         <div class="fields">
-          <div class="field" id="keyRow"><label for="key">API key</label><div class="stack"><input id="key" type="password" autocomplete="new-password" spellcheck="false"><span class="hint"><a id="guide" target="_blank" rel="noopener">Get a key&nbsp;↗</a></span></div></div>
+          <div class="field" id="keyRow"><label for="key">API key</label><div class="stack"><p id="keySaved" class="saved" hidden><span id="keyMask"></span><button id="changeKey" type="button" class="link">Change</button></p><input id="key" type="password" autocomplete="new-password" spellcheck="false"><span class="hint" id="keyHint"><a id="guide" target="_blank" rel="noopener">Get a key&nbsp;↗</a></span></div></div>
           <div class="field" id="modelRow"><label for="model">Model</label><input id="model" autocomplete="off" spellcheck="false" placeholder="Model name from your provider"></div>
           <div class="field" id="endpointRow"><label for="baseUrl">Server</label><div class="stack"><input id="baseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://your-provider.example/v1"><span id="endpointHelp" class="hint"></span></div></div>
         </div>

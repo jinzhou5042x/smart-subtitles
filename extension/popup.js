@@ -31,7 +31,7 @@ function setupState() {
   const p = PROVIDERS[current.provider];
   return current.provider === 'chatgpt'
     ? { tone: 'error', status: 'Sign in to ChatGPT again', detail: 'Sign-in ends when Chrome closes.', action: 'settings' }
-    : { tone: 'error', status: `Enter your ${p.short} key again`, detail: 'API keys are kept only until Chrome closes.', action: 'settings' };
+    : { tone: 'error', status: `Add your ${p.short} key`, detail: '', action: 'settings' };
 }
 async function refresh() {
   try {

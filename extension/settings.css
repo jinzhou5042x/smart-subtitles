@@ -53,7 +53,7 @@ section h2{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .option[aria-expanded=true] .chevron{transform:rotate(90deg)}
 .option[aria-expanded=true]{background:var(--sunken)}
 
-.detail{padding:0 14px 16px;background:var(--sunken)}
+.detail{display:flow-root;padding:0 14px 16px;background:var(--sunken)}
 .blurb{color:var(--muted);overflow-wrap:anywhere}
 .attention{margin-top:10px;padding:8px 10px;border-radius:6px;background:var(--warn-bg);color:var(--warn);overflow-wrap:anywhere}
 .panel{margin-top:14px}
@@ -78,6 +78,8 @@ section h2{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .stack{display:flex;flex-direction:column;gap:4px;min-width:0}
 .hint{font-size:12.5px;color:var(--muted)}
 .hint:empty{display:none}
+.saved{display:flex;align-items:center;gap:12px;min-height:34px;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.saved .link{letter-spacing:0}
 .hint a{margin-right:6px}
 input:not([type=range]),select{display:block;width:100%;min-width:0;height:34px;padding:0 10px;border:1px solid var(--field);border-radius:6px;background:var(--group);font-size:13.5px;transition:border-color .12s,box-shadow .12s}
 select{padding-right:28px;text-overflow:ellipsis;cursor:pointer}

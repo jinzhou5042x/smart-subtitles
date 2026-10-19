@@ -5,8 +5,9 @@ import { DEFAULTS, PROVIDERS, endpoint, validateWindow, validateSegments, cacheK
 import { readCache, writeCache, clearCache, cacheStats } from './cache.js';
 import { chatgpt, beginLogin, finishLogin, clearLoginRule, loginStatus, cancelLogin, focusLogin } from './chatgpt-connection.js';
 import { ProfileStore } from './profiles.js';
+import { createVault, browserKey } from './vault.js';
 
-const profileStore = new ProfileStore(chrome.storage), storageReady = profileStore.ready;
+const profileStore = new ProfileStore(chrome.storage, createVault(browserKey)), storageReady = profileStore.ready;
 const active = new Map();
 const isPage = sender => !!sender.tab && !!globalThis.SubtitleSites.identify(sender.url);
 const isUI = sender => ['popup.html', 'settings.html'].some(file => sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL(file));
@@ -87,7 +88,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       case 'profiles': {
         if (!ui) throw new Error('Settings page only');
         const profiles = await profileStore.all();
-        return Object.fromEntries(Object.entries(profiles).map(([id, { key, ...rest }]) => [id, { ...rest, configured: !!key || id === 'custom' }]));
+        // The last four characters only, so the page can show which key is saved.
+        return Object.fromEntries(Object.entries(profiles).map(([id, { key, ...rest }]) => [id, { ...rest, configured: !!key || id === 'custom', keyHint: key.length > 8 ? key.slice(-4) : key ? '••••' : '' }]));
       }
       case 'connectProfile': {
         // Test first, save only what worked, then switch to it: a wrong key never replaces a working one.

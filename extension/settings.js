@@ -9,7 +9,7 @@ const call = async m => { const r = await chrome.runtime.sendMessage(m); if (!r?
 const kindOf = id => PROVIDERS[id]?.kind;
 const providersOf = kind => Object.keys(PROVIDERS).filter(id => kindOf(id) === kind);
 const panelOf = id => kindOf(id) === 'api' ? 'cloud' : id;
-let preferences = {}, profiles = {}, opened = null;
+let preferences = {}, profiles = {}, opened = null, editingKey = false;
 let accountState = { accounts: [] }, accountsLoaded = false, selectedAccount, loginAction = null, signInError = '', loginAttempt = 0, refreshingAccount = false;
 
 $('version').textContent = 'v' + chrome.runtime.getManifest().version;
@@ -70,7 +70,7 @@ function render() {
   $('detailBlurb').hidden = kindOf(opened) !== 'browser' && (ready(opened) || lapsed(opened));
   // ChatGPT's sign-in view says this itself (the account, "Sign in again").
   $('attention').hidden = !attention(opened) || kindOf(opened) !== 'api';
-  $('attention').textContent = 'The key ended when Chrome closed. Enter it again.';
+  $('attention').textContent = 'The saved key could not be read. Enter it again.';
   for (const panel of ['chatgpt', 'cloud']) $(panel).hidden = panelOf(opened) !== panel;
   // API providers switch with Connect; the others with Use once they are ready.
   $('useRow').hidden = kindOf(opened) === 'api' || preferences.provider === opened || !ready(opened);
@@ -79,7 +79,7 @@ function render() {
 }
 function show(id) {
   const changed = opened !== id;
-  if (changed) say('');
+  if (changed) { say(''); editingKey = false; }
   opened = id;
   if (changed && kindOf(id) === 'api') renderCloud();
   render(); if (id === 'chatgpt') void refreshAccount();
@@ -93,8 +93,11 @@ $('use').onclick = () => run(async () => {
 // Your own API key
 function renderCloud() {
   const provider = opened, preset = PROVIDERS[provider], p = profiles[provider] || {};
-  $('key').value = '';
-  $('key').placeholder = p.configured && provider !== 'custom' ? 'Saved' : provider === 'custom' ? 'Optional' : 'Paste your key';
+  // A saved key shows as its last four characters; Change opens the field to replace it.
+  const saved = !!p.keyHint && !editingKey;
+  $('key').value = ''; $('key').hidden = saved; $('keyHint').hidden = saved;
+  $('keySaved').hidden = !saved; $('keyMask').textContent = `•••• ${p.keyHint || ''}`;
+  $('key').placeholder = provider === 'custom' ? 'Optional' : 'Paste your key';
   $('guide').hidden = !preset.guide; $('guide').href = preset.guide || '#';
   $('modelRow').hidden = provider === 'google'; $('model').value = p.model || preset.model || '';
   $('endpointRow').hidden = !!preset.baseUrl; $('baseUrl').value = p.baseUrl || preset.baseUrl || '';
@@ -110,10 +113,11 @@ $('cloud').onsubmit = e => {
     if (!await permission) throw new Error('Chrome did not allow access to this server. Click Connect and choose Allow.');
     // The background tests the key with one short line and saves it only if that works.
     preferences = await call({ type: 'connectProfile', provider, profile: { baseUrl, model: $('model').value, key: $('key').value } });
-    profiles = await call({ type: 'profiles' }); renderCloud(); render();
+    profiles = await call({ type: 'profiles' }); editingKey = false; renderCloud(); render();
     return switching ? `Connected. Now using ${PROVIDERS[provider].name}.` : 'Saved.';
   }, { button: $('connect'), busy: 'Testing…' });
 };
+$('changeKey').onclick = () => { editingKey = true; renderCloud(); $('key').focus(); };
 $('remove').onclick = () => run(async () => {
   const provider = opened, wasActive = preferences.provider === provider;
   preferences = await call({ type: 'removeProfile', provider }); profiles = await call({ type: 'profiles' });

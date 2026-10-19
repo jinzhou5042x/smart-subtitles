@@ -58,12 +58,18 @@ try {
   await settings.locator('#key').fill('synthetic-api-key');
   await settings.getByRole('button', { name: 'Connect', exact: true }).click();
   await settings.getByText('Connected. Now using Other / local model.').waitFor();
-  assert.doesNotMatch(JSON.stringify(await worker.evaluate(() => chrome.storage.local.get(null))), /synthetic-api-key/);
-  assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
+  // The key is saved encrypted: nothing in extension storage holds it in plain text.
+  const stored = async () => JSON.stringify(await worker.evaluate(async () => ({ local: await chrome.storage.local.get(null), session: await chrome.storage.session.get(null) })));
+  assert.doesNotMatch(await stored(), /synthetic-api-key/);
+  assert.match(await stored(), /"sealed"/);
+  const savedKey = () => settings.evaluate(async () => (await chrome.runtime.sendMessage({ type: 'profiles' })).data.custom);
+  assert.equal((await savedKey()).keyHint, '-key');
+  await settings.locator('#keySaved', { hasText: '•••• -key' }).waitFor();
   // A key that fails its test line is reported and never replaces the working one.
+  await settings.locator('#changeKey').click();
   await settings.locator('#key').fill('wrong-key'); await settings.getByRole('button', { name: 'Save', exact: true }).click();
   await settings.locator('#result[data-tone=error]', { hasText: 'HTTP 401' }).waitFor();
-  assert.equal((await worker.evaluate(() => chrome.storage.session.get('apiKeys'))).apiKeys.custom.key, 'synthetic-api-key');
+  assert.equal((await savedKey()).keyHint, '-key'); assert.doesNotMatch(await stored(), /wrong-key/);
   assert.equal(await settings.locator('[data-provider=custom] .state').innerText(), 'In use');
   await context.addCookies([{ name: 'browserSession', value: 'must-not-be-forwarded', url: base }]);
   const page = await context.newPage(); await page.goto(base + '/demo');
@@ -94,6 +100,7 @@ try {
   // Stop the real worker. Completed windows must remain available after it wakes again.
   const cdp = await context.newCDPSession(settings); await cdp.send('ServiceWorker.enable'); await cdp.send('ServiceWorker.stopAllWorkers');
   await page.reload(); worker = context.serviceWorkers().find(w => !w.isClosed?.()) || await context.waitForEvent('serviceworker'); await setPlayback(900); await page.waitForFunction(() => Number(document.querySelector('#smart-subtitles')?.dataset.translated) === 600, null, { timeout: 60000 });
+  assert.equal((await savedKey()).keyHint, '-key', 'the saved key still decrypts after the worker restarts');
   assert.equal(calls.length, before, 'a worker restart reuses the entire saved track');
   const builtin = await settings.evaluate(async () => ({ exposed: typeof Translator === 'function', availability: typeof Translator === 'function' ? await Translator.availability({ sourceLanguage: 'en', targetLanguage: 'es' }) : 'unavailable' }));
   console.log('Native browser Translator:', builtin);
